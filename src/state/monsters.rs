@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::data::{
-    Element, MonsterRole, MonsterSpeciesDefinition, PassiveSkill, Temperament, TownSkill,
+    Element, GameData, MonsterRole, MonsterSpeciesDefinition, PassiveSkill, Temperament, TownSkill,
 };
+use crate::state::MonsterArtProfile;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct MonsterRoster {
@@ -30,6 +31,16 @@ pub struct MonsterInstance {
     pub defense: i32,
     pub speed: i32,
     pub visual_seed: u64,
+    #[serde(default)]
+    pub condition: MonsterCondition,
+    #[serde(default)]
+    pub art_profile: MonsterArtProfile,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct MonsterCondition {
+    pub fatigue: u32,
+    pub injury_days: u32,
 }
 
 impl MonsterInstance {
@@ -57,7 +68,39 @@ impl MonsterInstance {
             defense: species.base_defense,
             speed: species.base_speed,
             visual_seed,
+            condition: MonsterCondition::default(),
+            art_profile: MonsterArtProfile::from_traits(
+                species,
+                species.element,
+                species.temperament,
+                species.passive,
+                species.town_skill,
+                visual_seed,
+            ),
         }
+    }
+
+    pub fn is_injured(&self) -> bool {
+        self.condition.injury_days > 0
+    }
+
+    pub fn is_battle_ready(&self) -> bool {
+        self.hp > 0 && !self.is_injured()
+    }
+
+    pub fn fatigue_penalty(&self) -> i32 {
+        ((self.condition.fatigue + 1) / 2).min(3) as i32
+    }
+
+    pub fn refresh_art_profile(&mut self, species: &MonsterSpeciesDefinition) {
+        self.art_profile = MonsterArtProfile::from_traits(
+            species,
+            self.element,
+            self.temperament,
+            self.passive,
+            self.town_skill,
+            self.visual_seed,
+        );
     }
 }
 
@@ -120,5 +163,16 @@ impl MonsterRoster {
         self.monsters
             .iter_mut()
             .find(|monster| monster.id == monster_id)
+    }
+
+    pub fn ensure_art_profiles(&mut self, data: &GameData) {
+        for monster in &mut self.monsters {
+            if !monster.art_profile.is_empty() {
+                continue;
+            }
+            if let Some(species) = data.species(&monster.species_id) {
+                monster.refresh_art_profile(species);
+            }
+        }
     }
 }

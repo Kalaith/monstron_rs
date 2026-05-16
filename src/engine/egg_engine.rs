@@ -1,4 +1,4 @@
-use crate::data::GameData;
+use crate::data::{GameData, MonsterRole};
 use crate::state::GameState;
 
 const HATCHERY_ID: &str = "hatchery";
@@ -121,7 +121,16 @@ pub fn hatch_egg(state: &mut GameState, data: &GameData, egg_id: u64) -> EggResu
         };
     };
 
-    let Some(species_id) = select_species_id(egg.palette_seed, &egg_type.possible_species) else {
+    let inherited = egg.inheritance.as_ref();
+    let species_pool = match inherited {
+        Some(inheritance) if !inheritance.species_options.is_empty() => {
+            inheritance.species_options.as_slice()
+        }
+        _ => egg_type.possible_species.as_slice(),
+    };
+    let mutation_active = inherited.is_some_and(|inheritance| inheritance.mutated);
+    let species_seed = if mutation_active { 0 } else { egg.palette_seed };
+    let Some(species_id) = select_species_id(species_seed, species_pool) else {
         return EggResult {
             summary: format!("{} has no possible species.", egg_type.name),
         };
@@ -139,17 +148,57 @@ pub fn hatch_egg(state: &mut GameState, data: &GameData, egg_id: u64) -> EggResu
         .add_monster(name.clone(), species, seed);
 
     if let Some(monster) = state.monster_roster.monster_mut(monster_id) {
-        if let Some(element) = select_by_seed(seed, &egg_type.element_bias) {
+        let trait_seed = if mutation_active { 0 } else { seed };
+        let element_pool = match inherited {
+            Some(inheritance) if !inheritance.element_options.is_empty() => {
+                inheritance.element_options.as_slice()
+            }
+            _ => egg_type.element_bias.as_slice(),
+        };
+        let temperament_pool = match inherited {
+            Some(inheritance) if !inheritance.temperament_options.is_empty() => {
+                inheritance.temperament_options.as_slice()
+            }
+            _ => egg_type.temperament_bias.as_slice(),
+        };
+        if let Some(element) = select_by_seed(trait_seed, element_pool) {
             monster.element = *element;
         }
-        if let Some(temperament) = select_by_seed(seed.rotate_left(7), &egg_type.temperament_bias) {
+        if let Some(temperament) = select_by_seed(trait_seed.rotate_left(7), temperament_pool) {
             monster.temperament = *temperament;
+        }
+        if let Some(inheritance) = inherited {
+            if let Some(passive) =
+                select_by_seed(trait_seed.rotate_left(13), &inheritance.passive_options)
+            {
+                monster.passive = *passive;
+            }
+            apply_lineage_quality(monster, inheritance.lineage_quality);
+        }
+        monster.refresh_art_profile(species);
+        if let Some(inheritance) = inherited {
+            if !inheritance.art_profile.lineage_code.is_empty() {
+                monster.art_profile.lineage_code = inheritance.art_profile.lineage_code.clone();
+            }
+            if inheritance.mutated {
+                monster.art_profile.markings = format!(
+                    "{} with asymmetric tower-mutation streaks",
+                    monster.art_profile.markings
+                );
+            }
         }
     }
 
+    let lineage_note = if mutation_active {
+        " A tower-borne mutation shows in its markings."
+    } else if inherited.is_some() {
+        " Its inherited traits carried through."
+    } else {
+        ""
+    };
     let summary = format!(
-        "{} hatched into {} the {}.",
-        egg_type.name, name, species.name
+        "{} hatched into {} the {}.{}",
+        egg_type.name, name, species.name, lineage_note
     );
     state.activity_log.add(state.day, summary.clone());
 
@@ -172,6 +221,23 @@ fn generated_name(seed: u64) -> String {
         "Kip",
     ];
     NAMES[(seed as usize) % NAMES.len()].to_owned()
+}
+
+fn apply_lineage_quality(monster: &mut crate::state::MonsterInstance, quality: u32) {
+    let bonus = quality.saturating_sub(1).min(4);
+    if bonus == 0 {
+        return;
+    }
+
+    monster.bond += bonus;
+    monster.max_hp += bonus as i32;
+    match monster.role {
+        MonsterRole::Scout => monster.speed += bonus as i32,
+        MonsterRole::Tank => monster.defense += bonus as i32,
+        MonsterRole::Support => monster.max_hp += bonus as i32,
+        MonsterRole::Striker => monster.attack += bonus as i32,
+    }
+    monster.hp = monster.max_hp;
 }
 
 fn cost_text(data: &GameData, cost: &[(String, i32)]) -> String {

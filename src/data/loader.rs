@@ -1,8 +1,8 @@
 use serde::Deserialize;
 
 use crate::data::{
-    BuildingDefinition, EggTypeDefinition, GameConfig, GameData, MonsterSpeciesDefinition,
-    NpcDefinition, ResourceDefinition, TowerFloorDefinition,
+    BuildingDefinition, EggTypeDefinition, EnemyDefinition, GameConfig, GameData,
+    MonsterSpeciesDefinition, NpcDefinition, ResourceDefinition, TowerFloorDefinition,
 };
 
 #[derive(Debug, Deserialize)]
@@ -36,6 +36,11 @@ struct TowerFloorsFile {
 }
 
 #[derive(Debug, Deserialize)]
+struct EnemiesFile {
+    enemies: Vec<EnemyDefinition>,
+}
+
+#[derive(Debug, Deserialize)]
 struct NpcsFile {
     npcs: Vec<NpcDefinition>,
 }
@@ -66,6 +71,8 @@ impl GameDataLoader {
             include_str!("../../assets/data/tower_floors.json"),
             "tower floors",
         )?;
+        let enemies: EnemiesFile =
+            parse_json(include_str!("../../assets/data/enemies.json"), "enemies")?;
         let npcs: NpcsFile = parse_json(include_str!("../../assets/data/npcs.json"), "npcs")?;
 
         GameData::from_parts(
@@ -75,6 +82,7 @@ impl GameDataLoader {
             species.monster_species,
             eggs.egg_types,
             tower_floors.tower_floors,
+            enemies.enemies,
             npcs.npcs,
         )
     }

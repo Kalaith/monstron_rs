@@ -3,21 +3,24 @@ use crate::state::{GameState, ResourceStack, TowerFoundEgg, TowerRunState};
 
 pub struct TowerResult {
     pub summary: String,
+    pub encounter: Option<TowerEncounterRequest>,
+}
+
+pub struct TowerEncounterRequest {
+    pub floor: u32,
+    pub is_boss: bool,
 }
 
 pub fn start_run(state: &mut GameState, data: &GameData) -> TowerResult {
     if state.tower_run.is_some() {
-        return TowerResult {
-            summary: "The party is already inside the tower.".to_owned(),
-        };
+        return result("The party is already inside the tower.");
     }
 
-    let party_count = party_count(state);
-    if party_count == 0 {
-        return TowerResult {
-            summary: "Assign at least one monster to the party before entering the tower."
-                .to_owned(),
-        };
+    let ready_count = battle_ready_party_count(state);
+    if ready_count == 0 {
+        return result(
+            "Assign at least one rested monster to the party before entering the tower.",
+        );
     }
 
     let start_floor = state
@@ -26,9 +29,7 @@ pub fn start_run(state: &mut GameState, data: &GameData) -> TowerResult {
         .max(1)
         .min(max_floor(data));
     let Some(floor) = data.tower_floor(start_floor) else {
-        return TowerResult {
-            summary: format!("Missing tower floor data for floor {start_floor}."),
-        };
+        return result(format!("Missing tower floor data for floor {start_floor}."));
     };
 
     state.tower_run = Some(TowerRunState::new(start_floor, floor.pressure_limit));
@@ -38,33 +39,30 @@ pub fn start_run(state: &mut GameState, data: &GameData) -> TowerResult {
     );
     state.activity_log.add(state.day, summary.clone());
 
-    TowerResult { summary }
+    result(summary)
 }
 
 pub fn explore_room(state: &mut GameState, data: &GameData) -> TowerResult {
     let Some(active_run) = &state.tower_run else {
-        return TowerResult {
-            summary: "No tower run is active.".to_owned(),
-        };
+        return result("No tower run is active.");
     };
 
     if active_run.pressure >= active_run.pressure_limit {
-        return TowerResult {
-            summary: "Tower pressure is maxed. Return to town with the current loot.".to_owned(),
-        };
+        return result("Tower pressure is maxed. Return to town with the current loot.");
     }
 
     let current_floor = active_run.current_floor;
     let Some(floor) = data.tower_floor(current_floor) else {
-        return TowerResult {
-            summary: format!("Missing tower floor data for floor {current_floor}."),
-        };
+        return result(format!(
+            "Missing tower floor data for floor {current_floor}."
+        ));
     };
 
     let room_number = active_run.rooms_explored + 1;
     let event_seed = tower_seed(state, floor, room_number);
     let event_kind = choose_event(floor, room_number, event_seed, max_floor(data));
     let mut reached_floor = None;
+    let mut encounter = None;
     let mut summary = String::new();
 
     if let Some(run) = &mut state.tower_run {
@@ -111,9 +109,13 @@ pub fn explore_room(state: &mut GameState, data: &GameData) -> TowerResult {
                 let extra_pressure = (2 + floor.floor / 5).min(4);
                 run.pressure = (run.pressure + extra_pressure).min(run.pressure_limit);
                 summary = format!(
-                    "{} blocks the route. The party avoids combat; pressure rises by {}.",
+                    "{} blocks the route. Combat starts; pressure rises by {}.",
                     floor.enemy_hint, extra_pressure
                 );
+                encounter = Some(TowerEncounterRequest {
+                    floor: floor.floor,
+                    is_boss: false,
+                });
                 run.add_event(summary.clone());
             }
             TowerEvent::Exit => {
@@ -134,23 +136,11 @@ pub fn explore_room(state: &mut GameState, data: &GameData) -> TowerResult {
             TowerEvent::Boss => {
                 let extra_pressure = 3;
                 run.pressure = (run.pressure + extra_pressure).min(run.pressure_limit);
-                if let Some(found_egg) = found_egg(floor, data, event_seed ^ 0xB055) {
-                    let egg_name = data
-                        .egg_type(&found_egg.egg_type_id)
-                        .map(|egg_type| egg_type.name.as_str())
-                        .unwrap_or(found_egg.egg_type_id.as_str())
-                        .to_owned();
-                    run.found_eggs.push(found_egg);
-                    summary = format!(
-                        "The {} stirs. The party claims a {} and retreats from combat.",
-                        floor.enemy_hint, egg_name
-                    );
-                } else {
-                    summary = format!(
-                        "The {} stirs. Combat will resolve this guardian in Phase 5.",
-                        floor.enemy_hint
-                    );
-                }
+                summary = format!("The {} stirs. Boss combat starts.", floor.enemy_hint);
+                encounter = Some(TowerEncounterRequest {
+                    floor: floor.floor,
+                    is_boss: true,
+                });
                 reached_floor = Some(floor.floor);
                 run.add_event(summary.clone());
             }
@@ -161,14 +151,12 @@ pub fn explore_room(state: &mut GameState, data: &GameData) -> TowerResult {
         record_floor_reached(state, data, floor);
     }
 
-    TowerResult { summary }
+    TowerResult { summary, encounter }
 }
 
 pub fn return_to_town(state: &mut GameState, data: &GameData) -> TowerResult {
     let Some(run) = state.tower_run.take() else {
-        return TowerResult {
-            summary: "No tower run is active.".to_owned(),
-        };
+        return result("No tower run is active.");
     };
 
     record_floor_reached(state, data, run.current_floor);
@@ -195,7 +183,7 @@ pub fn return_to_town(state: &mut GameState, data: &GameData) -> TowerResult {
     );
     state.activity_log.add(state.day, summary.clone());
 
-    TowerResult { summary }
+    result(summary)
 }
 
 pub fn cargo_text(data: &GameData, cargo: &[ResourceStack]) -> String {
@@ -223,6 +211,16 @@ pub fn party_count(state: &GameState) -> usize {
         .party_slots
         .iter()
         .filter(|slot| slot.is_some())
+        .count()
+}
+
+pub fn battle_ready_party_count(state: &GameState) -> usize {
+    state
+        .monster_roster
+        .party_slots
+        .iter()
+        .filter_map(|slot| state.monster_roster.monster((*slot)?))
+        .filter(|monster| monster.is_battle_ready())
         .count()
 }
 
@@ -299,6 +297,13 @@ fn max_floor(data: &GameData) -> u32 {
         .map(|floor| floor.floor)
         .max()
         .unwrap_or(1)
+}
+
+fn result(summary: impl Into<String>) -> TowerResult {
+    TowerResult {
+        summary: summary.into(),
+        encounter: None,
+    }
 }
 
 enum TowerEvent {

@@ -9,6 +9,7 @@ pub const TEXT: Color = Color::new(0.827, 0.851, 0.847, 1.0);
 pub const TEXT_BRIGHT: Color = Color::new(0.957, 0.965, 0.941, 1.0);
 pub const TEXT_DIM: Color = Color::new(0.572, 0.627, 0.627, 1.0);
 pub const ACCENT: Color = Color::new(0.604, 0.827, 0.608, 1.0);
+pub const WARN: Color = Color::new(0.914, 0.612, 0.369, 1.0);
 const BUTTON: Color = Color::new(0.173, 0.243, 0.275, 1.0);
 const BUTTON_HOVER: Color = Color::new(0.224, 0.337, 0.365, 1.0);
 const BUTTON_DISABLED: Color = Color::new(0.145, 0.157, 0.169, 1.0);
@@ -38,12 +39,12 @@ pub fn draw_button(rect: Rect, label: &str, enabled: bool) {
     draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 2.0, PANEL_EDGE);
 
     let text_color = if enabled { TEXT_BRIGHT } else { TEXT_DIM };
-    let font_size = if rect.h < 30.0 || rect.w < 96.0 {
-        16
-    } else if rect.h < 38.0 {
+    let font_size = if rect.h < 30.0 || rect.w < 80.0 {
         18
+    } else if rect.h < 38.0 {
+        20
     } else {
-        22
+        24
     };
     let measured = measure_text(label, None, font_size, 1.0);
     draw_text_ex(
@@ -69,7 +70,7 @@ pub fn draw_section_title(title: &str, x: f32, y: f32) {
         x,
         y,
         TextParams {
-            font_size: 25,
+            font_size: 28,
             color: TEXT_BRIGHT,
             ..Default::default()
         },
@@ -104,7 +105,7 @@ pub fn draw_status(status_message: &str) {
         rect.x + 12.0,
         rect.y + 20.0,
         TextParams {
-            font_size: 18,
+            font_size: 20,
             color: TEXT_DIM,
             ..Default::default()
         },

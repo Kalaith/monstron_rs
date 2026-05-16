@@ -2,6 +2,7 @@ use macroquad::prelude::*;
 
 use crate::assets;
 use crate::data::GameData;
+use crate::engine::monster_engine;
 use crate::state::GameState;
 use crate::ui;
 
@@ -28,7 +29,8 @@ pub fn handle_input(state: &GameState) -> Option<StableAction> {
     }
 
     for (index, monster) in state.monster_roster.monsters.iter().take(8).enumerate() {
-        if ui::button_clicked(roster_button_rect(index), true) {
+        let can_toggle = state.monster_roster.is_in_party(monster.id) || !monster.is_injured();
+        if ui::button_clicked(roster_button_rect(index), can_toggle) {
             return Some(StableAction::ToggleParty(monster.id));
         }
     }
@@ -135,7 +137,11 @@ fn draw_party(state: &GameState, data: &GameData) {
                     },
                 );
                 draw_text_ex(
-                    species_name,
+                    &format!(
+                        "{}  {}",
+                        species_name,
+                        monster_engine::condition_label(monster)
+                    ),
                     x + 54.0,
                     y + 63.0,
                     TextParams {
@@ -188,8 +194,12 @@ fn draw_roster(state: &GameState, data: &GameData) {
         );
         draw_text_ex(
             &format!(
-                "{} {}  {}  Passive: {}",
-                monster.element, monster.role, monster.temperament, monster.passive
+                "{} {}  {}  {}  Passive: {}",
+                monster.element,
+                monster.role,
+                monster.temperament,
+                monster_engine::condition_label(monster),
+                monster.passive
             ),
             x + 58.0,
             y + 24.0,
@@ -199,12 +209,19 @@ fn draw_roster(state: &GameState, data: &GameData) {
                 ..Default::default()
             },
         );
-        let label = if state.monster_roster.is_in_party(monster.id) {
+        let in_party = state.monster_roster.is_in_party(monster.id);
+        let label = if in_party {
             "Bench"
+        } else if monster.is_injured() {
+            "Rest"
         } else {
             "Party"
         };
-        ui::draw_button(roster_button_rect(index), label, true);
+        ui::draw_button(
+            roster_button_rect(index),
+            label,
+            in_party || !monster.is_injured(),
+        );
     }
 }
 

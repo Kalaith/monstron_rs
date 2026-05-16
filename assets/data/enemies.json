@@ -1,0 +1,150 @@
+{
+  "enemies": [
+    {
+      "id": "moss_mite",
+      "name": "Moss Mite",
+      "description": "A skittering mite wrapped in damp tower moss.",
+      "min_floor": 1,
+      "max_floor": 2,
+      "max_hp": 14,
+      "attack": 4,
+      "defense": 1,
+      "speed": 6,
+      "xp_reward": 5,
+      "rewards": [
+        { "resource_id": "coins", "amount": 3 },
+        { "resource_id": "herbs", "amount": 1 }
+      ]
+    },
+    {
+      "id": "lamp_gnat",
+      "name": "Lamp Gnat",
+      "description": "A bright-winged pest that dives at torchlight.",
+      "min_floor": 2,
+      "max_floor": 4,
+      "max_hp": 16,
+      "attack": 5,
+      "defense": 1,
+      "speed": 8,
+      "xp_reward": 6,
+      "rewards": [
+        { "resource_id": "coins", "amount": 4 },
+        { "resource_id": "herbs", "amount": 2 }
+      ]
+    },
+    {
+      "id": "root_snapper",
+      "name": "Root Snapper",
+      "description": "A biting root knot that lashes from old masonry.",
+      "min_floor": 3,
+      "max_floor": 5,
+      "max_hp": 22,
+      "attack": 6,
+      "defense": 3,
+      "speed": 3,
+      "xp_reward": 8,
+      "rewards": [
+        { "resource_id": "wood", "amount": 4 },
+        { "resource_id": "stone", "amount": 2 }
+      ]
+    },
+    {
+      "id": "ember_wisp",
+      "name": "Ember Wisp",
+      "description": "A floating coal spirit that burns through brambles.",
+      "min_floor": 4,
+      "max_floor": 6,
+      "max_hp": 20,
+      "attack": 8,
+      "defense": 2,
+      "speed": 7,
+      "xp_reward": 10,
+      "rewards": [
+        { "resource_id": "coins", "amount": 6 },
+        { "resource_id": "ore", "amount": 2 }
+      ]
+    },
+    {
+      "id": "glass_leech",
+      "name": "Glass Leech",
+      "description": "A translucent leech that clings to crystal runoff.",
+      "min_floor": 5,
+      "max_floor": 7,
+      "max_hp": 24,
+      "attack": 7,
+      "defense": 4,
+      "speed": 5,
+      "xp_reward": 12,
+      "rewards": [
+        { "resource_id": "crystal", "amount": 2 },
+        { "resource_id": "stone", "amount": 3 }
+      ]
+    },
+    {
+      "id": "hushed_sentry",
+      "name": "Hushed Sentry",
+      "description": "A cracked tower statue that moves when no one speaks.",
+      "min_floor": 6,
+      "max_floor": 8,
+      "max_hp": 30,
+      "attack": 8,
+      "defense": 6,
+      "speed": 3,
+      "xp_reward": 15,
+      "rewards": [
+        { "resource_id": "ore", "amount": 3 },
+        { "resource_id": "crystal", "amount": 2 }
+      ]
+    },
+    {
+      "id": "garden_shade",
+      "name": "Garden Shade",
+      "description": "A damp shadow tangled in sunken garden vines.",
+      "min_floor": 7,
+      "max_floor": 9,
+      "max_hp": 28,
+      "attack": 10,
+      "defense": 4,
+      "speed": 6,
+      "xp_reward": 18,
+      "rewards": [
+        { "resource_id": "herbs", "amount": 5 },
+        { "resource_id": "coins", "amount": 8 }
+      ]
+    },
+    {
+      "id": "iron_rook",
+      "name": "Iron Rook",
+      "description": "A bell-frame guardian plated in dark ore.",
+      "min_floor": 8,
+      "max_floor": 10,
+      "max_hp": 36,
+      "attack": 11,
+      "defense": 7,
+      "speed": 4,
+      "xp_reward": 22,
+      "rewards": [
+        { "resource_id": "ore", "amount": 5 },
+        { "resource_id": "crystal", "amount": 3 }
+      ]
+    },
+    {
+      "id": "verdant_crown",
+      "name": "Verdant Crown",
+      "description": "The first living crown rooted through the tower cap.",
+      "min_floor": 10,
+      "max_floor": 10,
+      "is_boss": true,
+      "max_hp": 78,
+      "attack": 13,
+      "defense": 7,
+      "speed": 5,
+      "xp_reward": 50,
+      "rewards": [
+        { "resource_id": "coins", "amount": 20 },
+        { "resource_id": "ore", "amount": 8 },
+        { "resource_id": "crystal", "amount": 8 }
+      ]
+    }
+  ]
+}

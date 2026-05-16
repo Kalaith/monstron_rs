@@ -1,7 +1,7 @@
 # Hatchspire - Build Plan
 
 > Project path: `H:\WebHatchery\RustGames\monstron`
-> Current state: Phase 0 through Phase 4 complete.
+> Current state: Phase 0 through Phase 5 complete.
 
 ## Current Decision
 
@@ -79,22 +79,24 @@ Goal: build the 10-floor dungeon loop.
 
 Deliverable: player can enter the tower, collect materials and eggs, return to town, and push deeper over time.
 
-Note: enemy and boss events intentionally use pressure-only placeholder resolution until Phase 5 adds turn-based combat.
+Note: enemy and boss events now hand off to the Phase 5 combat system.
 
 ## Phase 5 - Turn-Based Combat MVP
 
 Goal: ship the first real combat system around the 3-front, 3-back party structure.
 
-- [ ] Implement combat slots: three front, three back.
-- [ ] Implement enemy formation slots.
-- [ ] Add combat stats: HP, attack, defense, speed, morale.
-- [ ] Add action selection: attack, skill, defend, item, flee.
-- [ ] Add basic target rules where front slots shield back slots.
-- [ ] Add eight enemy types and one floor-10 boss.
-- [ ] Add combat rewards and monster XP.
-- [ ] Add defeat and rescue/return behavior.
+- [x] Implement combat slots: three front, three back.
+- [x] Implement enemy formation slots.
+- [x] Add combat stats: HP, attack, defense, speed, morale.
+- [x] Add action selection: attack, skill, defend, item, flee.
+- [x] Add basic target rules where front slots shield back slots.
+- [x] Add eight enemy types and one floor-10 boss.
+- [x] Add combat rewards and monster XP.
+- [x] Add defeat and rescue/return behavior.
 
 Deliverable: player can fight through the first 10 floors and defeat the MVP boss.
+
+Note: combat is intentionally deterministic for the MVP. Items use camp herbs, flee returns the current tower run to town, defeat drops run cargo, and victory sends rewards to tower cargo until the party returns.
 
 ## Phase 6 - Breeding And Progression
 

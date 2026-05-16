@@ -165,9 +165,10 @@ fn draw_run_overview(state: &GameState, data: &GameData, run: &TowerRunState) {
     draw_wrapped_line(theme, rect.x + 20.0, rect.y + 114.0, 44, ui::TEXT_DIM);
     draw_text_ex(
         &format!(
-            "Rooms {}  Party {}",
+            "Rooms {}  Party {}  Ready {}",
             run.rooms_explored,
-            tower_engine::party_count(state)
+            tower_engine::party_count(state),
+            tower_engine::battle_ready_party_count(state)
         ),
         rect.x + 20.0,
         rect.y + 186.0,
@@ -341,7 +342,7 @@ fn draw_empty_run() {
         },
     );
     draw_wrapped_line(
-        "Exploration collects materials and eggs. Combat encounters are pressure events until Phase 5.",
+        "Exploration collects materials and eggs. Enemy events start turn-based combat.",
         rect.x + 20.0,
         rect.y + 132.0,
         58,

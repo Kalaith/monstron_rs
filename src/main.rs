@@ -3,6 +3,7 @@ use macroquad::prelude::*;
 mod assets;
 mod data;
 mod engine;
+mod facility_actions;
 mod game;
 mod save;
 mod screens;

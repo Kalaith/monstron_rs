@@ -1,9 +1,15 @@
+pub mod breeding;
+pub mod combat;
 pub mod hatchery;
 pub mod menu;
 pub mod placeholder;
+pub mod shop;
 pub mod stable;
 pub mod tower;
 pub mod town;
+mod town_layout;
+mod town_panels;
+pub mod workshop;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AppScreen {
@@ -11,6 +17,9 @@ pub enum AppScreen {
     Town,
     Hatchery,
     Stable,
+    Breeding,
+    Workshop,
+    Shop,
     DungeonPrep,
     Tower,
     Combat,

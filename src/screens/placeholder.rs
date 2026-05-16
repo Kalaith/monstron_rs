@@ -6,14 +6,11 @@ use crate::ui;
 pub enum PlaceholderAction {
     ToTown,
     ToTower,
-    ToCombat,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PlaceholderKind {
     DungeonPrep,
-    Tower,
-    Combat,
     EndOfDay,
 }
 
@@ -24,10 +21,6 @@ pub fn handle_input(kind: PlaceholderKind) -> Option<PlaceholderAction> {
 
     if kind == PlaceholderKind::DungeonPrep && is_key_pressed(KeyCode::Enter) {
         return Some(PlaceholderAction::ToTower);
-    }
-
-    if kind == PlaceholderKind::Tower && is_key_pressed(KeyCode::Enter) {
-        return Some(PlaceholderAction::ToCombat);
     }
 
     if kind == PlaceholderKind::EndOfDay && is_key_pressed(KeyCode::Enter) {
@@ -62,7 +55,6 @@ pub fn draw(kind: PlaceholderKind, status_message: &str) {
         let label = match action {
             PlaceholderAction::ToTown => "Town",
             PlaceholderAction::ToTower => "Enter Tower",
-            PlaceholderAction::ToCombat => "Test Encounter",
         };
         ui::draw_button(button_rect, label, enabled);
     }
@@ -76,16 +68,6 @@ fn copy(kind: PlaceholderKind) -> (&'static str, &'static str, &'static str) {
             "Dungeon Prep",
             "The stable manages the six-slot party before a tower run.",
             "Enter starts tower exploration. Esc returns to town.",
-        ),
-        PlaceholderKind::Tower => (
-            "Tower Exploration",
-            "Floor events, loot, eggs, and exits will connect to this screen.",
-            "Enter opens the combat placeholder. Esc returns to town.",
-        ),
-        PlaceholderKind::Combat => (
-            "Combat Placeholder",
-            "The six-slot turn system will replace this screen in the combat phase.",
-            "Esc returns to town.",
         ),
         PlaceholderKind::EndOfDay => (
             "End Of Day",
@@ -111,19 +93,7 @@ fn buttons(kind: PlaceholderKind) -> Vec<(PlaceholderAction, Rect, bool)> {
                 true,
             ),
         ],
-        PlaceholderKind::Tower => vec![
-            (
-                PlaceholderAction::ToCombat,
-                Rect::new(center_x - 220.0, y, 200.0, 46.0),
-                true,
-            ),
-            (
-                PlaceholderAction::ToTown,
-                Rect::new(center_x + 20.0, y, 200.0, 46.0),
-                true,
-            ),
-        ],
-        PlaceholderKind::Combat | PlaceholderKind::EndOfDay => vec![(
+        PlaceholderKind::EndOfDay => vec![(
             PlaceholderAction::ToTown,
             Rect::new(center_x - 100.0, y, 200.0, 46.0),
             true,

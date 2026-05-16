@@ -1,25 +1,31 @@
 use macroquad::prelude::*;
 
 use crate::data::{GameData, GameDataLoader};
-use crate::engine::{day_engine, egg_engine, monster_engine, tower_engine, town_engine};
+use crate::engine::{
+    combat_engine::{self, CombatDestination},
+    day_engine, tower_engine, town_engine,
+};
 use crate::save::{SaveData, SaveRepository};
 use crate::screens::{
-    hatchery::{self, HatcheryAction},
+    breeding,
+    combat::{self, CombatAction},
+    hatchery,
     menu::{self, MenuAction},
     placeholder::{self, PlaceholderAction, PlaceholderKind},
-    stable::{self, StableAction},
+    shop, stable,
     tower::{self, TowerAction},
     town::{self, TownAction},
-    AppScreen,
+    workshop, AppScreen,
 };
 use crate::state::GameState;
 use crate::ui;
 
 pub struct Game {
-    data: GameData,
-    state: Option<GameState>,
-    screen: AppScreen,
-    status_message: String,
+    pub(crate) data: GameData,
+    pub(crate) state: Option<GameState>,
+    pub(crate) screen: AppScreen,
+    pub(crate) status_message: String,
+    pub(crate) town_menu_open: bool,
 }
 
 impl Game {
@@ -40,6 +46,7 @@ impl Game {
             state: None,
             screen: AppScreen::MainMenu,
             status_message,
+            town_menu_open: false,
         }
     }
 
@@ -53,7 +60,8 @@ impl Game {
             }
             AppScreen::Town => {
                 if let Some(state) = &self.state {
-                    if let Some(action) = town::handle_input(state, &self.data) {
+                    if let Some(action) = town::handle_input(state, &self.data, self.town_menu_open)
+                    {
                         self.apply_town_action(action);
                     }
                 } else {
@@ -81,6 +89,31 @@ impl Game {
                     self.status_message = "No active save. Start a new game.".to_owned();
                 }
             }
+            AppScreen::Breeding => {
+                if let Some(state) = &self.state {
+                    if let Some(action) = breeding::handle_input(state) {
+                        self.apply_breeding_action(action);
+                    }
+                } else {
+                    self.screen = AppScreen::MainMenu;
+                    self.status_message = "No active save. Start a new game.".to_owned();
+                }
+            }
+            AppScreen::Workshop => {
+                if let Some(state) = &self.state {
+                    if let Some(action) = workshop::handle_input(state) {
+                        self.apply_workshop_action(action);
+                    }
+                } else {
+                    self.screen = AppScreen::MainMenu;
+                    self.status_message = "No active save. Start a new game.".to_owned();
+                }
+            }
+            AppScreen::Shop => {
+                if let Some(action) = shop::handle_input() {
+                    self.apply_shop_action(action);
+                }
+            }
             AppScreen::DungeonPrep => {
                 if let Some(action) = placeholder::handle_input(PlaceholderKind::DungeonPrep) {
                     self.apply_placeholder_action(action);
@@ -97,8 +130,13 @@ impl Game {
                 }
             }
             AppScreen::Combat => {
-                if let Some(action) = placeholder::handle_input(PlaceholderKind::Combat) {
-                    self.apply_placeholder_action(action);
+                if let Some(state) = &self.state {
+                    if let Some(action) = combat::handle_input(state) {
+                        self.apply_combat_action(action);
+                    }
+                } else {
+                    self.screen = AppScreen::MainMenu;
+                    self.status_message = "No active save. Start a new game.".to_owned();
                 }
             }
             AppScreen::EndOfDay => {
@@ -119,7 +157,7 @@ impl Game {
             }
             AppScreen::Town => {
                 if let Some(state) = &self.state {
-                    town::draw(state, &self.data, &self.status_message);
+                    town::draw(state, &self.data, &self.status_message, self.town_menu_open);
                 }
             }
             AppScreen::Hatchery => {
@@ -132,6 +170,21 @@ impl Game {
                     stable::draw(state, &self.data, &self.status_message);
                 }
             }
+            AppScreen::Breeding => {
+                if let Some(state) = &self.state {
+                    breeding::draw(state, &self.data, &self.status_message);
+                }
+            }
+            AppScreen::Workshop => {
+                if let Some(state) = &self.state {
+                    workshop::draw(state, &self.data, &self.status_message);
+                }
+            }
+            AppScreen::Shop => {
+                if let Some(state) = &self.state {
+                    shop::draw(state, &self.data, &self.status_message);
+                }
+            }
             AppScreen::DungeonPrep => {
                 placeholder::draw(PlaceholderKind::DungeonPrep, &self.status_message);
             }
@@ -141,7 +194,9 @@ impl Game {
                 }
             }
             AppScreen::Combat => {
-                placeholder::draw(PlaceholderKind::Combat, &self.status_message);
+                if let Some(state) = &self.state {
+                    combat::draw(state, &self.data, &self.status_message);
+                }
             }
             AppScreen::EndOfDay => {
                 placeholder::draw(PlaceholderKind::EndOfDay, &self.status_message);
@@ -161,35 +216,52 @@ impl Game {
     fn apply_town_action(&mut self, action: TownAction) {
         match action {
             TownAction::Sleep => {
+                self.town_menu_open = false;
                 if let Some(state) = &mut self.state {
-                    let result = day_engine::sleep(state);
+                    let result = day_engine::sleep(state, &self.data);
                     self.status_message = result.summary;
                     self.screen = AppScreen::EndOfDay;
                 }
             }
             TownAction::DungeonPrep => {
+                self.town_menu_open = false;
                 self.screen = AppScreen::DungeonPrep;
                 self.status_message = "Choose a party before entering the tower.".to_owned();
             }
+            TownAction::OpenMenu => {
+                self.town_menu_open = true;
+            }
+            TownAction::CloseMenu => {
+                self.town_menu_open = false;
+            }
             TownAction::OpenHatchery => self.open_facility("hatchery", AppScreen::Hatchery),
             TownAction::OpenStable => self.open_facility("stable", AppScreen::Stable),
+            TownAction::OpenBreeding => {
+                self.open_facility("breeding_grove", AppScreen::Breeding);
+            }
+            TownAction::OpenWorkshop => self.open_facility("workshop", AppScreen::Workshop),
+            TownAction::OpenShop => self.open_facility("shop", AppScreen::Shop),
             TownAction::Scavenge => {
+                self.town_menu_open = false;
                 if let Some(state) = &mut self.state {
                     self.status_message = town_engine::scavenge_supplies(state).summary;
                 }
             }
             TownAction::AdvanceBuilding(building_id) => {
+                self.town_menu_open = false;
                 if let Some(state) = &mut self.state {
                     self.status_message =
                         town_engine::advance_building(state, &self.data, &building_id).summary;
                 }
             }
             TownAction::Trade(trade) => {
+                self.town_menu_open = false;
                 if let Some(state) = &mut self.state {
                     self.status_message = town_engine::trade_shop(state, &self.data, trade).summary;
                 }
             }
             TownAction::GreetNpc(npc_id) => {
+                self.town_menu_open = false;
                 if let Some(state) = &mut self.state {
                     self.status_message =
                         town_engine::greet_npc(state, &self.data, &npc_id).summary;
@@ -198,53 +270,9 @@ impl Game {
             TownAction::Save => self.save_game(),
             TownAction::Load => self.load_game(),
             TownAction::BackToMenu => {
+                self.town_menu_open = false;
                 self.screen = AppScreen::MainMenu;
                 self.status_message = "Returned to title.".to_owned();
-            }
-        }
-    }
-
-    fn apply_hatchery_action(&mut self, action: HatcheryAction) {
-        match action {
-            HatcheryAction::ToTown => {
-                self.screen = AppScreen::Town;
-                self.status_message = "Returned to tower camp.".to_owned();
-            }
-            HatcheryAction::DiscoverEgg => {
-                if let Some(state) = &mut self.state {
-                    self.status_message = egg_engine::discover_egg(state, &self.data).summary;
-                }
-            }
-            HatcheryAction::WarmEgg(egg_id) => {
-                if let Some(state) = &mut self.state {
-                    self.status_message = egg_engine::warm_egg(state, &self.data, egg_id).summary;
-                }
-            }
-            HatcheryAction::HatchEgg(egg_id) => {
-                if let Some(state) = &mut self.state {
-                    self.status_message = egg_engine::hatch_egg(state, &self.data, egg_id).summary;
-                }
-            }
-        }
-    }
-
-    fn apply_stable_action(&mut self, action: StableAction) {
-        match action {
-            StableAction::ToTown => {
-                self.screen = AppScreen::Town;
-                self.status_message = "Returned to tower camp.".to_owned();
-            }
-            StableAction::ToggleParty(monster_id) => {
-                if let Some(state) = &mut self.state {
-                    self.status_message =
-                        monster_engine::toggle_party_member(state, &self.data, monster_id).summary;
-                }
-            }
-            StableAction::RemoveSlot(slot_index) => {
-                if let Some(state) = &mut self.state {
-                    self.status_message =
-                        monster_engine::remove_party_slot(state, slot_index).summary;
-                }
             }
         }
     }
@@ -258,10 +286,6 @@ impl Game {
             PlaceholderAction::ToTower => {
                 self.enter_tower();
             }
-            PlaceholderAction::ToCombat => {
-                self.screen = AppScreen::Combat;
-                self.status_message = "Combat rules are not implemented yet.".to_owned();
-            }
         }
     }
 
@@ -269,7 +293,20 @@ impl Game {
         match action {
             TowerAction::Explore => {
                 if let Some(state) = &mut self.state {
-                    self.status_message = tower_engine::explore_room(state, &self.data).summary;
+                    let result = tower_engine::explore_room(state, &self.data);
+                    self.status_message = result.summary;
+                    if let Some(encounter) = result.encounter {
+                        let combat_result = combat_engine::start_encounter(
+                            state,
+                            &self.data,
+                            encounter.floor,
+                            encounter.is_boss,
+                        );
+                        self.status_message = combat_result.summary;
+                        if state.combat.is_some() {
+                            self.screen = AppScreen::Combat;
+                        }
+                    }
                 }
             }
             TowerAction::ReturnToTown => {
@@ -281,6 +318,28 @@ impl Game {
             TowerAction::ToTown => {
                 self.screen = AppScreen::Town;
                 self.status_message = "Returned to tower camp.".to_owned();
+            }
+        }
+    }
+
+    fn apply_combat_action(&mut self, action: CombatAction) {
+        match action {
+            CombatAction::Command(command) => {
+                if let Some(state) = &mut self.state {
+                    self.status_message =
+                        combat_engine::player_action(state, &self.data, command).summary;
+                }
+            }
+            CombatAction::Continue => {
+                if let Some(state) = &mut self.state {
+                    let finish = combat_engine::finish_combat(state, &self.data);
+                    self.status_message = finish.summary;
+                    self.screen = match finish.destination {
+                        CombatDestination::Combat => AppScreen::Combat,
+                        CombatDestination::Tower => AppScreen::Tower,
+                        CombatDestination::Town => AppScreen::Town,
+                    };
+                }
             }
         }
     }
@@ -302,6 +361,7 @@ impl Game {
         }
 
         self.screen = screen;
+        self.town_menu_open = false;
         self.status_message = "Facility opened.".to_owned();
     }
 
@@ -324,6 +384,7 @@ impl Game {
         let state = GameState::new(&self.data);
         self.state = Some(state);
         self.screen = AppScreen::Town;
+        self.town_menu_open = false;
         self.status_message = "New save started beside the ruined tower.".to_owned();
     }
 
@@ -360,8 +421,11 @@ impl Game {
                 }
 
                 let loaded_day = save_data.state.day;
-                self.state = Some(save_data.state);
+                let mut loaded_state = save_data.state;
+                loaded_state.monster_roster.ensure_art_profiles(&self.data);
+                self.state = Some(loaded_state);
                 self.screen = AppScreen::Town;
+                self.town_menu_open = false;
                 self.status_message = format!("Loaded save on day {loaded_day}.");
             }
             Err(error) => {

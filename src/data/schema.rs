@@ -129,6 +129,23 @@ pub struct TowerFloorDefinition {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct EnemyDefinition {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub min_floor: u32,
+    pub max_floor: u32,
+    #[serde(default)]
+    pub is_boss: bool,
+    pub max_hp: i32,
+    pub attack: i32,
+    pub defense: i32,
+    pub speed: i32,
+    pub xp_reward: u32,
+    pub rewards: Vec<ResourceAmount>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NpcDefinition {
     pub id: String,
     pub name: String,

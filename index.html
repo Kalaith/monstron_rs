@@ -51,8 +51,7 @@
             display: block;
             width: 100%;
             height: 100%;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
+            image-rendering: auto;
             outline: none;
         }
 
@@ -167,12 +166,16 @@
                         <li><kbd>D</kbd><span>Tower prep</span></li>
                         <li><kbd>H</kbd><span>Hatchery</span></li>
                         <li><kbd>R</kbd><span>Stable / return from tower</span></li>
+                        <li><kbd>B</kbd><span>Breeding Grove</span></li>
+                        <li><kbd>W</kbd><span>Workshop jobs</span></li>
+                        <li><kbd>T</kbd><span>Shop trades</span></li>
                         <li><kbd>C</kbd><span>Scavenge supplies</span></li>
                         <li><kbd>E</kbd><span>Recover egg in hatchery</span></li>
-                        <li><kbd>S</kbd><span>Save</span></li>
-                        <li><kbd>L</kbd><span>Load</span></li>
-                        <li><kbd>Esc</kbd><span>Title screen</span></li>
-                        <li><kbd>Mouse</kbd><span>Build, trade, greet</span></li>
+                        <li><kbd>A/S/D</kbd><span>Combat attack / skill / defend</span></li>
+                        <li><kbd>I/F</kbd><span>Combat herbs / flee</span></li>
+                        <li><kbd>Esc</kbd><span>Camp menu</span></li>
+                        <li><kbd>S/L/T</kbd><span>Save / load / title inside menu</span></li>
+                        <li><kbd>Mouse</kbd><span>Build, open, trade, greet</span></li>
                     </ul>
                 </section>
             </div>
@@ -231,7 +234,7 @@
         });
 
         document.getElementById('loading').style.display = 'none';
-        load("monstron.wasm?v=phase4-tower-1");
+        load("monstron.wasm?v=phase8-hardening-1");
 
         function toggleFullscreen() {
             const container = document.getElementById('game-container');

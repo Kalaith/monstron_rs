@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
 use crate::data::{
-    BuildingDefinition, EggTypeDefinition, Element, GameConfig, MonsterRole,
+    BuildingDefinition, EggTypeDefinition, Element, EnemyDefinition, GameConfig, MonsterRole,
     MonsterSpeciesDefinition, NpcDefinition, PassiveSkill, ResourceDefinition, Temperament,
     TowerFloorDefinition, TownSkill,
 };
@@ -16,6 +16,7 @@ pub struct GameData {
     pub monster_species: Vec<MonsterSpeciesDefinition>,
     pub egg_types: Vec<EggTypeDefinition>,
     pub tower_floors: Vec<TowerFloorDefinition>,
+    pub enemies: Vec<EnemyDefinition>,
     pub npcs: Vec<NpcDefinition>,
     #[serde(skip)]
     resource_index: HashMap<String, usize>,
@@ -28,6 +29,8 @@ pub struct GameData {
     #[serde(skip)]
     tower_floor_index: HashMap<u32, usize>,
     #[serde(skip)]
+    enemy_index: HashMap<String, usize>,
+    #[serde(skip)]
     npc_index: HashMap<String, usize>,
 }
 
@@ -39,6 +42,7 @@ impl GameData {
         monster_species: Vec<MonsterSpeciesDefinition>,
         egg_types: Vec<EggTypeDefinition>,
         tower_floors: Vec<TowerFloorDefinition>,
+        enemies: Vec<EnemyDefinition>,
         npcs: Vec<NpcDefinition>,
     ) -> Result<Self, String> {
         let mut data = Self {
@@ -48,12 +52,14 @@ impl GameData {
             monster_species,
             egg_types,
             tower_floors,
+            enemies,
             npcs,
             resource_index: HashMap::new(),
             building_index: HashMap::new(),
             species_index: HashMap::new(),
             egg_index: HashMap::new(),
             tower_floor_index: HashMap::new(),
+            enemy_index: HashMap::new(),
             npc_index: HashMap::new(),
         };
         data.build_indexes()?;
@@ -137,6 +143,23 @@ impl GameData {
                 unlocks_floor: 2,
                 is_boss_floor: false,
             }],
+            vec![EnemyDefinition {
+                id: "moss_mite".to_owned(),
+                name: "Moss Mite".to_owned(),
+                description: "A skittering tower pest.".to_owned(),
+                min_floor: 1,
+                max_floor: 3,
+                is_boss: false,
+                max_hp: 14,
+                attack: 4,
+                defense: 1,
+                speed: 5,
+                xp_reward: 5,
+                rewards: vec![crate::data::ResourceAmount {
+                    resource_id: "coins".to_owned(),
+                    amount: 3,
+                }],
+            }],
             Vec::new(),
         )
         .expect("fallback Hatchspire data must be valid")
@@ -172,6 +195,12 @@ impl GameData {
         self.tower_floor_index
             .get(&floor)
             .and_then(|index| self.tower_floors.get(*index))
+    }
+
+    pub fn enemy(&self, id: &str) -> Option<&EnemyDefinition> {
+        self.enemy_index
+            .get(id)
+            .and_then(|index| self.enemies.get(*index))
     }
 
     pub fn npc(&self, id: &str) -> Option<&NpcDefinition> {
@@ -214,6 +243,13 @@ impl GameData {
                 .iter()
                 .enumerate()
                 .map(|(index, floor)| (floor.floor, index)),
+        )?;
+        self.enemy_index = build_unique_index(
+            self.enemies
+                .iter()
+                .enumerate()
+                .map(|(index, enemy)| (&enemy.id, index)),
+            "enemy",
         )?;
         self.npc_index = build_unique_index(
             self.npcs
@@ -278,6 +314,23 @@ impl GameData {
                     return Err(format!(
                         "Tower floor {} references missing egg type '{}'",
                         floor.floor, egg_type_id
+                    ));
+                }
+            }
+        }
+
+        for enemy in &self.enemies {
+            if enemy.min_floor == 0 || enemy.max_floor < enemy.min_floor {
+                return Err(format!("Enemy '{}' has an invalid floor range", enemy.id));
+            }
+            if enemy.max_hp <= 0 {
+                return Err(format!("Enemy '{}' must have positive HP", enemy.id));
+            }
+            for reward in &enemy.rewards {
+                if !resource_ids.contains(&reward.resource_id) {
+                    return Err(format!(
+                        "Enemy '{}' references missing reward resource '{}'",
+                        enemy.id, reward.resource_id
                     ));
                 }
             }

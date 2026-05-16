@@ -34,6 +34,17 @@
       ]
     },
     {
+      "id": "breeding_grove",
+      "name": "Breeding Grove",
+      "description": "A sheltered grove where bonded monsters can prepare inherited eggs.",
+      "starting_level": 0,
+      "max_level": 3,
+      "upgrade_cost": [
+        { "resource_id": "wood", "amount": 8 },
+        { "resource_id": "herbs", "amount": 3 }
+      ]
+    },
+    {
       "id": "workshop",
       "name": "Workshop",
       "description": "The camp's repair bench for buildings and gear.",

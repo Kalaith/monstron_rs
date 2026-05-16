@@ -17,6 +17,7 @@ All notable planning and implementation changes for the `monstron` Rust project 
 - Added Phase 3 monster and egg systems: typed traits, hatchery inventory, egg warming, deterministic hatching, stable roster view, and six-slot party management.
 - Added deterministic egg placeholder visuals.
 - Added Phase 4 tower exploration: 10 floor definitions, run pressure, loot and egg cargo, floor event generation, best-floor/unlock tracking, and return-to-town loot summaries.
+- Added Phase 5 combat: enemy data, combat state, speed-based turns, role skills, items, flee/defeat handling, rewards, XP, level growth, and the Verdant Crown boss encounter.
 - Replaced placeholder project documentation with a Hatchspire-focused PRD.
 - Added Rust/Macroquad technical plan.
 - Added phased build plan for the Rust conversion.

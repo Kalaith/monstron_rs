@@ -20,7 +20,7 @@ Use the working title **Hatchspire** for planning and in-game presentation while
 
 The first product target is a compact playable MVP:
 
-- 5 town buildings.
+- 6 town buildings.
 - 3 NPCs.
 - 6 monster species.
 - 3 elements.
@@ -165,6 +165,7 @@ Screens:
 - Town.
 - Hatchery.
 - Stable.
+- Breeding Grove.
 - Workshop.
 - Shop.
 - Dungeon prep.
@@ -302,13 +303,25 @@ cargo build -p monstron
 cargo build -p monstron --target wasm32-unknown-unknown --release
 ```
 
-Status on 2026-05-16: the scaffold and vertical slice shell are in place, and the listed format/check/build commands pass. `.\publish.ps1 -WebGLOnly -SkipBuild -DryRun` also packages against the workspace target directory. The app includes placeholder dungeon prep, tower, combat, and end-of-day screens only; dungeon and combat rules remain unimplemented by design.
+Status on 2026-05-16: the scaffold and vertical slice shell are in place, and the listed format/check/build commands pass. `.\publish.ps1 -WebGLOnly -SkipBuild -DryRun` also packages against the workspace target directory. Dungeon prep and end-of-day remain lightweight transition screens; tower exploration and combat are implemented by the later MVP phases below.
 
 Phase 2 status on 2026-05-16: the town MVP can build and upgrade the five MVP buildings, validates resource spending, shows town rank, exposes three NPC service stubs with friendship greetings, and enables simple shop buy/sell trades once the shop is built. A temporary `Scavenge` action supplies resources until tower loot exists.
 
 Phase 3 status on 2026-05-16: monster traits are typed as elements, temperaments, roles, passives, and town skills; all 12 egg definitions include rarity, species, element, and temperament bias; the hatchery can recover fallback eggs, warm them with herbs, and hatch deterministic monsters into the roster; the stable can inspect monsters and manage the six-slot party.
 
-Phase 4 status on 2026-05-16: tower floor data now defines 10 floors with loot, egg pools, pressure limits, exit progression, and a boss-floor marker; tower runs track current floor, explored rooms, pressure, cargo, found eggs, event logs, best floor, and floor unlocks; the tower screen lets the party explore loot, egg, enemy, exit, and boss events, then return to town with a loot summary that deposits materials and eggs. Enemy and boss encounters are pressure-only placeholders until Phase 5 combat.
+Phase 4 status on 2026-05-16: tower floor data now defines 10 floors with loot, egg pools, pressure limits, exit progression, and a boss-floor marker; tower runs track current floor, explored rooms, pressure, cargo, found eggs, event logs, best floor, and floor unlocks; the tower screen lets the party explore loot, egg, enemy, exit, and boss events, then return to town with a loot summary that deposits materials and eggs. Enemy and boss events now hand off to Phase 5 combat.
+
+Phase 5 status on 2026-05-16: tower enemy and boss events now start turn-based combat using three front and three back allied slots, enemy formation slots, HP/attack/defense/speed/morale stats, speed-based turn order, action choices for attack, role skill, defend, herbs, and flee, front-row shielding target rules, eight enemy definitions plus the floor-10 Verdant Crown boss, combat rewards, monster XP and level growth, victory returns to the tower run, flee returns current cargo to town, and defeat rescues the party to town while dropping run cargo.
+
+Phase 6 status on 2026-05-16: Breeding Grove is now a buildable town facility with a dedicated screen, pair compatibility checks based on shared element, shared role, or combined bond, herb-based pairing costs, parent bond gains, a starter slime bond story hook, and bred eggs that persist inherited species family, element, temperament, passive, palette seed, parent IDs, origin floor, and floor-scaled mutation state. Hatching now applies inherited lineage data and reports inherited or mutated children.
+
+Phase 7 status on 2026-05-16: Workshop and Shop are now dedicated focused screens instead of only town-panel stubs. Workshop assigns monsters to persistent town jobs, including forage, quarry, workshop support, and egg care; daily sleep now resolves those jobs into resources, egg warmth, and bond growth using each monster's role, passive, and town skill. Shop has its own trade interface for resource conversion. Routing was split so facility action handlers stay outside `game.rs`, keeping screen and routing files under the 500-line hard limit.
+
+Hardening status on 2026-05-16: save serialization now has focused tests covering Phase 6 bred egg inheritance and Phase 7 town job assignments, plus compatibility for older saves missing those fields. `screens::town` was split so town input/backdrop stays in `town.rs` and panel rendering lives in `town_panels.rs`; all Rust source files remain below the 500-line hard limit. The recurring browser console message `glBindTexture called with an already deleted texture ID 17` was investigated: Hatchspire does not create, load, draw, or delete explicit `Texture2D` assets, and the WebGL bundle matches the `macroquad 0.4.14` crate bundle, so the issue is tracked as a Macroquad/miniquad WebGL runtime investigation rather than an app-level texture lifecycle bug.
+
+System depth status on 2026-05-16: monsters now carry save-compatible condition state for expedition fatigue and short injuries. Combat victory, fleeing, and defeat apply strain; tired monsters take small combat stat penalties and reduced town job output; injured monsters need rest before party assignment or workshop jobs; sleep restores HP, reduces fatigue, and clears injury timers. Stable, workshop, and tower screens now surface readiness so the player can make recovery decisions instead of treating HP as the only long-term cost.
+
+Breeding and art pipeline status on 2026-05-16: bred eggs now store lineage quality and a deterministic monster art profile built from inherited species, element, temperament, passive, town skill, and seed data. Hatching applies lineage quality as a small bond/stat bonus and refreshes the child's art profile after inherited traits resolve. Local ComfyUI integration is available through `tools/export_monster_art_prompts.mjs` and `tools/generate_monster_art.ps1`, using the `H:\VideoGeneration` ComfyUI scripts against `127.0.0.1:8188`; a sample Slime/Rillfin lineage image is generated under `assets/generated/monster_art/`.
 
 Before any shareable milestone:
 
@@ -318,10 +331,16 @@ Before any shareable milestone:
 - Native launch verified.
 - WebGL build verified through `publish.ps1`.
 
-## Open Design Questions
+## Post-MVP Backlog
 
-- Should town navigation be a walkable map at MVP, or a screen-based hub with later walkable upgrade?
-- Should the player physically accompany monsters in the tower from the start, or command them through room/event screens?
-- Should monster death be impossible, rare, or replaced with injury/rescue?
-- How much old Unity data should be manually reinterpreted into JSON after the Rust schema exists?
-- Should the public title remain `Hatchspire`, or should `Monstron` stay visible as the game title?
+These items are deliberately out of the compact MVP unless a later pass chooses to pull them forward.
+
+- Town navigation: keep the MVP as a screen-based hub; evaluate a walkable camp map only after the full loop is stable and worth expanding.
+- Tower presence: keep the MVP as command-based room and combat screens; consider a player avatar only if exploration becomes spatial.
+- Monster injury model: keep the current short-rest injury and fatigue model; evaluate deeper injury traits only after combat balance has more playthrough data.
+- Unity reinterpretation: import only concepts that improve the Rust data loop; avoid porting old Unity scene/controller structure directly.
+- Title and branding: keep `Hatchspire` as the player-facing title while the crate/package remains `monstron`.
+- WebGL runtime log: reproduce `glBindTexture called with an already deleted texture ID 17` in a minimal Macroquad WebGL sample, then decide whether to upgrade Macroquad/miniquad, patch the bundle, or leave it documented if harmless.
+- Polish pass: rebalance building costs, shop trades, job outputs, egg timers, and early tower rewards after several full-loop browser playthroughs.
+- Visual QA: capture browser screenshots for town, hatchery, stable, breeding grove, workshop, shop, tower, and combat after the next UI polish pass.
+- Art curation: review ComfyUI monster outputs, keep only approved images, then add a small runtime asset manifest once the visual style is stable.

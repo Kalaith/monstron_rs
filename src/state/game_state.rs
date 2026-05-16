@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::data::GameData;
 use crate::state::{
-    ActivityLog, EggInventory, MonsterInstance, MonsterRoster, ResourceInventory, TowerProgress,
-    TowerRunState, TownState,
+    ActivityLog, CombatState, EggInventory, MonsterInstance, MonsterRoster, ResourceInventory,
+    TowerProgress, TowerRunState, TownState,
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -16,6 +16,8 @@ pub struct GameState {
     pub tower_progress: TowerProgress,
     #[serde(default)]
     pub tower_run: Option<TowerRunState>,
+    #[serde(default)]
+    pub combat: Option<CombatState>,
     pub npc_relationships: Vec<NpcRelationship>,
     pub story_flags: StoryFlags,
     pub activity_log: ActivityLog,
@@ -30,6 +32,21 @@ pub struct NpcRelationship {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct StoryFlags {
     pub flags: Vec<String>,
+}
+
+impl StoryFlags {
+    pub fn has(&self, flag: &str) -> bool {
+        self.flags.iter().any(|existing| existing == flag)
+    }
+
+    pub fn add(&mut self, flag: &str) -> bool {
+        if self.has(flag) {
+            false
+        } else {
+            self.flags.push(flag.to_owned());
+            true
+        }
+    }
 }
 
 impl GameState {
@@ -70,6 +87,7 @@ impl GameState {
                 unlocked_floor: 1,
             },
             tower_run: None,
+            combat: None,
             npc_relationships: data
                 .npcs
                 .iter()
