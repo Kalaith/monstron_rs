@@ -1,0 +1,59 @@
+{
+  "buildings": [
+    {
+      "id": "house",
+      "name": "Player Tent",
+      "description": "A patched shelter for sleeping, saving, and planning the next day.",
+      "starting_level": 1,
+      "max_level": 3,
+      "upgrade_cost": [
+        { "resource_id": "wood", "amount": 8 },
+        { "resource_id": "stone", "amount": 4 }
+      ]
+    },
+    {
+      "id": "hatchery",
+      "name": "Hatchery",
+      "description": "A warm room for caring for tower eggs.",
+      "starting_level": 0,
+      "max_level": 3,
+      "upgrade_cost": [
+        { "resource_id": "wood", "amount": 10 },
+        { "resource_id": "herbs", "amount": 4 }
+      ]
+    },
+    {
+      "id": "stable",
+      "name": "Stable",
+      "description": "A roster hall where monsters rest between tower trips.",
+      "starting_level": 0,
+      "max_level": 3,
+      "upgrade_cost": [
+        { "resource_id": "wood", "amount": 12 },
+        { "resource_id": "stone", "amount": 6 }
+      ]
+    },
+    {
+      "id": "workshop",
+      "name": "Workshop",
+      "description": "The camp's repair bench for buildings and gear.",
+      "starting_level": 0,
+      "max_level": 3,
+      "upgrade_cost": [
+        { "resource_id": "wood", "amount": 14 },
+        { "resource_id": "stone", "amount": 8 }
+      ]
+    },
+    {
+      "id": "shop",
+      "name": "Shop",
+      "description": "A trader stall for basic supplies and selling surplus loot.",
+      "starting_level": 0,
+      "max_level": 3,
+      "upgrade_cost": [
+        { "resource_id": "coins", "amount": 20 },
+        { "resource_id": "wood", "amount": 6 }
+      ]
+    }
+  ]
+}

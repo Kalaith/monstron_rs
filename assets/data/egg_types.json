@@ -1,0 +1,124 @@
+{
+  "egg_types": [
+    {
+      "id": "mossy_egg",
+      "name": "Mossy Egg",
+      "rarity": "Common",
+      "hatch_days": 2,
+      "discovery_floor": 1,
+      "possible_species": ["slime", "rootling"],
+      "element_bias": ["Water", "Earth"],
+      "temperament_bias": ["Loyal", "Patient"]
+    },
+    {
+      "id": "glimmer_egg",
+      "name": "Glimmer Egg",
+      "rarity": "Common",
+      "hatch_days": 2,
+      "discovery_floor": 2,
+      "possible_species": ["glowmoth", "rillfin"],
+      "element_bias": ["Fire", "Water"],
+      "temperament_bias": ["Curious", "Gentle"]
+    },
+    {
+      "id": "pebble_egg",
+      "name": "Pebble Egg",
+      "rarity": "Common",
+      "hatch_days": 3,
+      "discovery_floor": 3,
+      "possible_species": ["rootling", "pebblepup"],
+      "element_bias": ["Earth"],
+      "temperament_bias": ["Patient", "Brave"]
+    },
+    {
+      "id": "ember_egg",
+      "name": "Ember Egg",
+      "rarity": "Uncommon",
+      "hatch_days": 3,
+      "discovery_floor": 4,
+      "possible_species": ["emberkit", "glowmoth"],
+      "element_bias": ["Fire"],
+      "temperament_bias": ["Restless", "Curious"]
+    },
+    {
+      "id": "ripple_egg",
+      "name": "Ripple Egg",
+      "rarity": "Uncommon",
+      "hatch_days": 3,
+      "discovery_floor": 5,
+      "possible_species": ["rillfin", "slime"],
+      "element_bias": ["Water"],
+      "temperament_bias": ["Gentle", "Loyal"]
+    },
+    {
+      "id": "rootbound_egg",
+      "name": "Rootbound Egg",
+      "rarity": "Uncommon",
+      "hatch_days": 4,
+      "discovery_floor": 6,
+      "possible_species": ["rootling", "pebblepup"],
+      "element_bias": ["Earth", "Water"],
+      "temperament_bias": ["Patient", "Brave"]
+    },
+    {
+      "id": "lantern_egg",
+      "name": "Lantern Egg",
+      "rarity": "Rare",
+      "hatch_days": 4,
+      "discovery_floor": 7,
+      "possible_species": ["glowmoth", "emberkit"],
+      "element_bias": ["Fire", "Earth"],
+      "temperament_bias": ["Curious", "Restless"]
+    },
+    {
+      "id": "garden_egg",
+      "name": "Garden Egg",
+      "rarity": "Rare",
+      "hatch_days": 4,
+      "discovery_floor": 8,
+      "possible_species": ["rillfin", "rootling"],
+      "element_bias": ["Water", "Earth"],
+      "temperament_bias": ["Gentle", "Patient"]
+    },
+    {
+      "id": "ore_veined_egg",
+      "name": "Ore-Veined Egg",
+      "rarity": "Rare",
+      "hatch_days": 5,
+      "discovery_floor": 9,
+      "possible_species": ["pebblepup", "emberkit"],
+      "element_bias": ["Earth", "Fire"],
+      "temperament_bias": ["Brave", "Restless"]
+    },
+    {
+      "id": "boss_egg",
+      "name": "Verdant Crown Egg",
+      "rarity": "Boss",
+      "hatch_days": 5,
+      "discovery_floor": 10,
+      "possible_species": ["rootling", "glowmoth", "rillfin"],
+      "element_bias": ["Earth", "Water", "Fire"],
+      "temperament_bias": ["Patient", "Curious", "Gentle"]
+    },
+    {
+      "id": "moonlit_egg",
+      "name": "Moonlit Egg",
+      "rarity": "Rare",
+      "hatch_days": 4,
+      "discovery_floor": 6,
+      "possible_species": ["slime", "glowmoth"],
+      "element_bias": ["Water", "Fire"],
+      "temperament_bias": ["Loyal", "Curious"]
+    },
+    {
+      "id": "sunken_egg",
+      "name": "Sunken Egg",
+      "rarity": "Rare",
+      "hatch_days": 4,
+      "discovery_floor": 8,
+      "possible_species": ["rillfin", "pebblepup"],
+      "element_bias": ["Water", "Earth"],
+      "temperament_bias": ["Gentle", "Brave"]
+    }
+  ]
+}

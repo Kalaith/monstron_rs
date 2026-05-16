@@ -1,0 +1,145 @@
+{
+  "tower_floors": [
+    {
+      "floor": 1,
+      "name": "Moss Gate",
+      "theme": "Collapsed flagstones, wet moss, and low rooms near daylight.",
+      "enemy_hint": "skittering mites",
+      "loot": [
+        { "resource_id": "wood", "amount": 5 },
+        { "resource_id": "herbs", "amount": 2 },
+        { "resource_id": "coins", "amount": 4 }
+      ],
+      "egg_types": ["mossy_egg"],
+      "pressure_limit": 9,
+      "unlocks_floor": 2
+    },
+    {
+      "floor": 2,
+      "name": "Lantern Hollows",
+      "theme": "Old keeper alcoves lit by pale fungal lamps.",
+      "enemy_hint": "lamp gnats",
+      "loot": [
+        { "resource_id": "wood", "amount": 4 },
+        { "resource_id": "herbs", "amount": 3 },
+        { "resource_id": "coins", "amount": 5 }
+      ],
+      "egg_types": ["mossy_egg", "glimmer_egg"],
+      "pressure_limit": 10,
+      "unlocks_floor": 3
+    },
+    {
+      "floor": 3,
+      "name": "Rooted Gallery",
+      "theme": "Thick roots curl through broken murals and loose stone.",
+      "enemy_hint": "root snappers",
+      "loot": [
+        { "resource_id": "wood", "amount": 4 },
+        { "resource_id": "stone", "amount": 4 },
+        { "resource_id": "herbs", "amount": 2 }
+      ],
+      "egg_types": ["mossy_egg", "glimmer_egg", "pebble_egg"],
+      "pressure_limit": 11,
+      "unlocks_floor": 4
+    },
+    {
+      "floor": 4,
+      "name": "Soot Stair",
+      "theme": "Charred steps circle a shaft of warm tower air.",
+      "enemy_hint": "ember wisps",
+      "loot": [
+        { "resource_id": "stone", "amount": 5 },
+        { "resource_id": "ore", "amount": 2 },
+        { "resource_id": "coins", "amount": 6 }
+      ],
+      "egg_types": ["pebble_egg", "ember_egg"],
+      "pressure_limit": 12,
+      "unlocks_floor": 5
+    },
+    {
+      "floor": 5,
+      "name": "Mirror Runoff",
+      "theme": "Clear channels run across cracked crystal floors.",
+      "enemy_hint": "glass leeches",
+      "loot": [
+        { "resource_id": "stone", "amount": 4 },
+        { "resource_id": "crystal", "amount": 2 },
+        { "resource_id": "coins", "amount": 7 }
+      ],
+      "egg_types": ["ember_egg", "ripple_egg"],
+      "pressure_limit": 13,
+      "unlocks_floor": 6
+    },
+    {
+      "floor": 6,
+      "name": "Moon Root Crossing",
+      "theme": "Roots and moonlit cracks bridge a missing floor.",
+      "enemy_hint": "hushed sentries",
+      "loot": [
+        { "resource_id": "wood", "amount": 5 },
+        { "resource_id": "crystal", "amount": 3 },
+        { "resource_id": "ore", "amount": 2 }
+      ],
+      "egg_types": ["rootbound_egg", "moonlit_egg"],
+      "pressure_limit": 14,
+      "unlocks_floor": 7
+    },
+    {
+      "floor": 7,
+      "name": "Ember Conservatory",
+      "theme": "Heat-glass planters glow under ash-veined vines.",
+      "enemy_hint": "cinder briars",
+      "loot": [
+        { "resource_id": "herbs", "amount": 4 },
+        { "resource_id": "ore", "amount": 3 },
+        { "resource_id": "crystal", "amount": 2 }
+      ],
+      "egg_types": ["lantern_egg", "rootbound_egg"],
+      "pressure_limit": 15,
+      "unlocks_floor": 8
+    },
+    {
+      "floor": 8,
+      "name": "Sunken Garden",
+      "theme": "Flooded beds, bronze trellises, and deep green quiet.",
+      "enemy_hint": "garden shades",
+      "loot": [
+        { "resource_id": "herbs", "amount": 5 },
+        { "resource_id": "crystal", "amount": 3 },
+        { "resource_id": "coins", "amount": 8 }
+      ],
+      "egg_types": ["garden_egg", "sunken_egg"],
+      "pressure_limit": 16,
+      "unlocks_floor": 9
+    },
+    {
+      "floor": 9,
+      "name": "Ore-Bound Belfry",
+      "theme": "Bell frames and ore ribs ring with each step.",
+      "enemy_hint": "iron rooks",
+      "loot": [
+        { "resource_id": "stone", "amount": 5 },
+        { "resource_id": "ore", "amount": 5 },
+        { "resource_id": "crystal", "amount": 3 }
+      ],
+      "egg_types": ["ore_veined_egg", "lantern_egg"],
+      "pressure_limit": 17,
+      "unlocks_floor": 10
+    },
+    {
+      "floor": 10,
+      "name": "Verdant Crown",
+      "theme": "The tower cap is split open around a living crown of roots.",
+      "enemy_hint": "the Verdant Crown",
+      "loot": [
+        { "resource_id": "coins", "amount": 12 },
+        { "resource_id": "ore", "amount": 5 },
+        { "resource_id": "crystal", "amount": 5 }
+      ],
+      "egg_types": ["boss_egg", "garden_egg"],
+      "pressure_limit": 18,
+      "unlocks_floor": 10,
+      "is_boss_floor": true
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "resources": [
+    { "id": "coins", "name": "Coins", "starting_amount": 30 },
+    { "id": "wood", "name": "Wood", "starting_amount": 12 },
+    { "id": "stone", "name": "Stone", "starting_amount": 8 },
+    { "id": "ore", "name": "Ore", "starting_amount": 0 },
+    { "id": "herbs", "name": "Herbs", "starting_amount": 5 },
+    { "id": "crystal", "name": "Crystal", "starting_amount": 0 }
+  ]
+}

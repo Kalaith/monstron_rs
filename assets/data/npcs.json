@@ -1,0 +1,22 @@
+{
+  "npcs": [
+    {
+      "id": "mara",
+      "name": "Mara",
+      "service": "Hatchery caretaker",
+      "description": "Keeps the old warming braziers from going cold."
+    },
+    {
+      "id": "bram",
+      "name": "Bram",
+      "service": "Workshop builder",
+      "description": "Turns tower salvage into livable rooms."
+    },
+    {
+      "id": "lio",
+      "name": "Lio",
+      "service": "Shop trader",
+      "description": "Trades camp supplies for the strange things monsters find."
+    }
+  ]
+}

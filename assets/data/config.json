@@ -1,0 +1,12 @@
+{
+  "config": {
+    "save_version": 1,
+    "starting_day": 1,
+    "starter_species_id": "slime",
+    "starter_name": "Pip",
+    "starting_log": [
+      "A ruined tower rises above the camp.",
+      "Pip the slime waits beside a cold hatchery brazier."
+    ]
+  }
+}

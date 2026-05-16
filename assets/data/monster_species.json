@@ -1,0 +1,82 @@
+{
+  "monster_species": [
+    {
+      "id": "slime",
+      "name": "Slime",
+      "element": "Water",
+      "temperament": "Loyal",
+      "role": "Scout",
+      "passive": "Finds small loot",
+      "town_skill": "Hatchery helper",
+      "base_hp": 18,
+      "base_attack": 4,
+      "base_defense": 3,
+      "base_speed": 6
+    },
+    {
+      "id": "rootling",
+      "name": "Rootling",
+      "element": "Earth",
+      "temperament": "Patient",
+      "role": "Tank",
+      "passive": "Resists poison",
+      "town_skill": "Farming",
+      "base_hp": 26,
+      "base_attack": 5,
+      "base_defense": 7,
+      "base_speed": 3
+    },
+    {
+      "id": "glowmoth",
+      "name": "Glowmoth",
+      "element": "Fire",
+      "temperament": "Curious",
+      "role": "Support",
+      "passive": "Detects eggs",
+      "town_skill": "Lighting",
+      "base_hp": 16,
+      "base_attack": 6,
+      "base_defense": 2,
+      "base_speed": 8
+    },
+    {
+      "id": "pebblepup",
+      "name": "Pebblepup",
+      "element": "Earth",
+      "temperament": "Brave",
+      "role": "Striker",
+      "passive": "Finds stone",
+      "town_skill": "Guarding",
+      "base_hp": 21,
+      "base_attack": 7,
+      "base_defense": 5,
+      "base_speed": 5
+    },
+    {
+      "id": "emberkit",
+      "name": "Emberkit",
+      "element": "Fire",
+      "temperament": "Restless",
+      "role": "Striker",
+      "passive": "Burns brambles",
+      "town_skill": "Workshop heat",
+      "base_hp": 19,
+      "base_attack": 8,
+      "base_defense": 3,
+      "base_speed": 7
+    },
+    {
+      "id": "rillfin",
+      "name": "Rillfin",
+      "element": "Water",
+      "temperament": "Gentle",
+      "role": "Support",
+      "passive": "Soothes injuries",
+      "town_skill": "Hatching",
+      "base_hp": 20,
+      "base_attack": 4,
+      "base_defense": 4,
+      "base_speed": 6
+    }
+  ]
+}
