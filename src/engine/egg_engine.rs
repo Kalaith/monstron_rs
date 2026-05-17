@@ -1,5 +1,6 @@
-use crate::data::{GameData, MonsterRole};
-use crate::state::GameState;
+use crate::data::{GameData, MonsterRole, Temperament};
+use crate::engine::town_engine;
+use crate::state::{EggCareFocus, EggInstance, GameState};
 
 const HATCHERY_ID: &str = "hatchery";
 
@@ -7,48 +8,15 @@ pub struct EggResult {
     pub summary: String,
 }
 
-pub fn discover_egg(state: &mut GameState, data: &GameData) -> EggResult {
+pub fn care_for_egg(
+    state: &mut GameState,
+    data: &GameData,
+    egg_id: u64,
+    care_focus: EggCareFocus,
+) -> EggResult {
     if state.town.building_level(HATCHERY_ID) == 0 {
         return EggResult {
-            summary: "Build the hatchery before keeping tower eggs.".to_owned(),
-        };
-    }
-
-    let eligible: Vec<_> = data
-        .egg_types
-        .iter()
-        .filter(|egg| egg.discovery_floor <= state.tower_progress.unlocked_floor.max(1))
-        .collect();
-
-    let Some(egg_type) = eligible
-        .get(((state.day as u64 + state.egg_inventory.next_id) as usize) % eligible.len().max(1))
-        .copied()
-    else {
-        return EggResult {
-            summary: "No egg definitions are available.".to_owned(),
-        };
-    };
-
-    let seed = 0xE66_0000 + state.day as u64 * 97 + state.egg_inventory.next_id * 31;
-    let id = state.egg_inventory.add_egg(
-        egg_type.id.clone(),
-        egg_type.hatch_days,
-        egg_type.discovery_floor,
-        seed,
-    );
-    let summary = format!(
-        "Recovered {} #{} from the tower edge. It will hatch in {} day(s).",
-        egg_type.name, id, egg_type.hatch_days
-    );
-    state.activity_log.add(state.day, summary.clone());
-
-    EggResult { summary }
-}
-
-pub fn warm_egg(state: &mut GameState, data: &GameData, egg_id: u64) -> EggResult {
-    if state.town.building_level(HATCHERY_ID) == 0 {
-        return EggResult {
-            summary: "Build the hatchery before warming eggs.".to_owned(),
+            summary: "Build the hatchery before caring for eggs.".to_owned(),
         };
     }
 
@@ -58,34 +26,40 @@ pub fn warm_egg(state: &mut GameState, data: &GameData, egg_id: u64) -> EggResul
         };
     };
 
-    if egg.days_remaining == 0 {
+    if egg.last_care_day == state.day {
+        return EggResult {
+            summary: "That egg has already received care today.".to_owned(),
+        };
+    }
+
+    if care_focus == EggCareFocus::Warm && egg.days_remaining == 0 {
         return EggResult {
             summary: "That egg is already ready to hatch.".to_owned(),
         };
     }
 
-    let cost = vec![("herbs".to_owned(), 1)];
-    if let Err(missing) = state.resources.spend(&cost) {
-        return EggResult {
-            summary: format!("Warming needs {}.", cost_text(data, &missing)),
-        };
+    let cost = care_cost(care_focus);
+    if !cost.is_empty() {
+        if let Err(missing) = state.resources.spend(&cost) {
+            return EggResult {
+                summary: format!("{} needs {}.", care_focus, cost_text(data, &missing)),
+            };
+        }
     }
 
+    let day = state.day;
     let Some(egg) = state.egg_inventory.egg_mut(egg_id) else {
         return EggResult {
             summary: "That egg is no longer in the hatchery.".to_owned(),
         };
     };
 
-    egg.days_remaining = egg.days_remaining.saturating_sub(1);
+    apply_care(egg, care_focus, day);
     let egg_name = data
         .egg_type(&egg.egg_type_id)
         .map(|egg_type| egg_type.name.as_str())
         .unwrap_or(egg.egg_type_id.as_str());
-    let summary = format!(
-        "Warmed {} #{}. {} day(s) remain.",
-        egg_name, egg.id, egg.days_remaining
-    );
+    let summary = format!("{care_focus} {} #{}. {}", egg_name, egg.id, care_bonus(egg));
     state.activity_log.add(state.day, summary.clone());
 
     EggResult { summary }
@@ -110,6 +84,16 @@ pub fn hatch_egg(state: &mut GameState, data: &GameData, egg_id: u64) -> EggResu
         };
     }
 
+    if !town_engine::has_monster_capacity(state) {
+        let current = state.monster_roster.monsters.len();
+        let capacity = town_engine::monster_capacity(state);
+        return EggResult {
+            summary: format!(
+                "Stable capacity is full ({current}/{capacity}). Build or upgrade the Stable before hatching."
+            ),
+        };
+    }
+
     let Some(egg) = state.egg_inventory.remove_egg(egg_id) else {
         return EggResult {
             summary: "That egg is no longer in the hatchery.".to_owned(),
@@ -128,7 +112,8 @@ pub fn hatch_egg(state: &mut GameState, data: &GameData, egg_id: u64) -> EggResu
         }
         _ => egg_type.possible_species.as_slice(),
     };
-    let mutation_active = inherited.is_some_and(|inheritance| inheritance.mutated);
+    let mutation_active =
+        inherited.is_some_and(|inheritance| inheritance.mutated) && !egg.stabilised;
     let species_seed = if mutation_active { 0 } else { egg.palette_seed };
     let Some(species_id) = select_species_id(species_seed, species_pool) else {
         return EggResult {
@@ -167,6 +152,18 @@ pub fn hatch_egg(state: &mut GameState, data: &GameData, egg_id: u64) -> EggResu
         if let Some(temperament) = select_by_seed(trait_seed.rotate_left(7), temperament_pool) {
             monster.temperament = *temperament;
         }
+        if egg.care_focus == EggCareFocus::Soothe && egg.care_points > 0 {
+            if let Some(temperament) = select_by_seed(
+                trait_seed.rotate_left(19),
+                &[
+                    Temperament::Gentle,
+                    Temperament::Loyal,
+                    Temperament::Patient,
+                ],
+            ) {
+                monster.temperament = *temperament;
+            }
+        }
         if let Some(inheritance) = inherited {
             if let Some(passive) =
                 select_by_seed(trait_seed.rotate_left(13), &inheritance.passive_options)
@@ -189,7 +186,10 @@ pub fn hatch_egg(state: &mut GameState, data: &GameData, egg_id: u64) -> EggResu
         }
     }
 
-    let lineage_note = if mutation_active {
+    let lineage_note = if inherited.is_some_and(|inheritance| inheritance.mutated) && egg.stabilised
+    {
+        " Care stabilised its tower mutation."
+    } else if mutation_active {
         " A tower-borne mutation shows in its markings."
     } else if inherited.is_some() {
         " Its inherited traits carried through."
@@ -203,6 +203,117 @@ pub fn hatch_egg(state: &mut GameState, data: &GameData, egg_id: u64) -> EggResu
     state.activity_log.add(state.day, summary.clone());
 
     EggResult { summary }
+}
+
+pub fn likely_species_text(egg: &EggInstance, data: &GameData) -> String {
+    let species_options: Option<&[String]> = egg
+        .inheritance
+        .as_ref()
+        .filter(|inheritance| !inheritance.species_options.is_empty())
+        .map(|inheritance| inheritance.species_options.as_slice())
+        .or_else(|| {
+            data.egg_type(&egg.egg_type_id)
+                .map(|egg_type| egg_type.possible_species.as_slice())
+        });
+    let Some(species_options) = species_options else {
+        return "Likely: unknown".to_owned();
+    };
+    let names = species_options
+        .iter()
+        .take(2)
+        .map(|species_id| {
+            data.species(species_id)
+                .map(|species| species.name.clone())
+                .unwrap_or_else(|| species_id.clone())
+        })
+        .collect::<Vec<_>>()
+        .join(" / ");
+    format!("Likely: {names}")
+}
+
+pub fn trait_preview_text(egg: &EggInstance, data: &GameData) -> String {
+    if !egg.studied && egg.inheritance.is_none() {
+        return "Traits: study for hints".to_owned();
+    }
+    if let Some(inheritance) = &egg.inheritance {
+        let element = inheritance
+            .element_options
+            .iter()
+            .take(2)
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join("/");
+        let temperament = inheritance
+            .temperament_options
+            .iter()
+            .take(2)
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join("/");
+        let mutation = if inheritance.mutated && !egg.stabilised {
+            "  Mutation risk"
+        } else if inheritance.mutated {
+            "  Stabilised"
+        } else {
+            ""
+        };
+        return format!("Traits: {element} {temperament}{mutation}");
+    }
+    let Some(egg_type) = data.egg_type(&egg.egg_type_id) else {
+        return "Traits: unknown".to_owned();
+    };
+    let element = egg_type
+        .element_bias
+        .iter()
+        .take(2)
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join("/");
+    let temperament = egg_type
+        .temperament_bias
+        .iter()
+        .take(2)
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join("/");
+    format!("Traits: {element} {temperament}")
+}
+
+pub fn care_bonus(egg: &EggInstance) -> String {
+    match egg.care_focus {
+        EggCareFocus::None => "No care bonus yet.".to_owned(),
+        EggCareFocus::Warm => format!("Care: warmed; {} day(s) remain.", egg.days_remaining),
+        EggCareFocus::Soothe => "Care: soothed; better gentle, loyal, or patient odds.".to_owned(),
+        EggCareFocus::Study => "Care: studied; species and trait hints improved.".to_owned(),
+        EggCareFocus::Stabilise => "Care: stabilised; mutation risk suppressed.".to_owned(),
+    }
+}
+
+fn care_cost(care_focus: EggCareFocus) -> Vec<(String, i32)> {
+    match care_focus {
+        EggCareFocus::Warm | EggCareFocus::Soothe | EggCareFocus::Stabilise => {
+            vec![("herbs".to_owned(), 1)]
+        }
+        EggCareFocus::Study | EggCareFocus::None => Vec::new(),
+    }
+}
+
+fn apply_care(egg: &mut EggInstance, care_focus: EggCareFocus, day: u32) {
+    egg.care_focus = care_focus;
+    egg.care_points += 1;
+    egg.last_care_day = day;
+    match care_focus {
+        EggCareFocus::Warm => {
+            egg.days_remaining = egg.days_remaining.saturating_sub(1);
+        }
+        EggCareFocus::Study => {
+            egg.studied = true;
+        }
+        EggCareFocus::Stabilise => {
+            egg.stabilised = true;
+        }
+        EggCareFocus::Soothe | EggCareFocus::None => {}
+    }
 }
 
 fn select_species_id<'a>(seed: u64, species_ids: &'a [String]) -> Option<&'a str> {
@@ -245,4 +356,61 @@ fn cost_text(data: &GameData, cost: &[(String, i32)]) -> String {
         .map(|(resource_id, amount)| format!("{} {}", amount, data.resource_name(resource_id)))
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::GameDataLoader;
+
+    #[test]
+    fn stable_capacity_blocks_hatching_without_consuming_egg() {
+        let data = GameDataLoader::load_embedded().expect("embedded data should load");
+        let mut state = GameState::new(&data);
+        state.town.set_building_level("hatchery", 1);
+
+        let rootling = data.species("rootling").expect("rootling should exist");
+        let rillfin = data.species("rillfin").expect("rillfin should exist");
+        state
+            .monster_roster
+            .add_monster("Root".to_owned(), rootling, 0x1001);
+        state
+            .monster_roster
+            .add_monster("Ripple".to_owned(), rillfin, 0x1002);
+        let egg_id = state
+            .egg_inventory
+            .add_egg("mossy_egg".to_owned(), 0, 1, 0x2001);
+
+        let result = hatch_egg(&mut state, &data, egg_id);
+
+        assert!(result.summary.contains("Stable capacity is full"));
+        assert_eq!(state.monster_roster.monsters.len(), 3);
+        assert!(state.egg_inventory.eggs.iter().any(|egg| egg.id == egg_id));
+    }
+
+    #[test]
+    fn upgraded_stable_allows_hatching_past_base_capacity() {
+        let data = GameDataLoader::load_embedded().expect("embedded data should load");
+        let mut state = GameState::new(&data);
+        state.town.set_building_level("hatchery", 1);
+        state.town.set_building_level("stable", 1);
+
+        let rootling = data.species("rootling").expect("rootling should exist");
+        let rillfin = data.species("rillfin").expect("rillfin should exist");
+        state
+            .monster_roster
+            .add_monster("Root".to_owned(), rootling, 0x1001);
+        state
+            .monster_roster
+            .add_monster("Ripple".to_owned(), rillfin, 0x1002);
+        let egg_id = state
+            .egg_inventory
+            .add_egg("mossy_egg".to_owned(), 0, 1, 0x2001);
+
+        let result = hatch_egg(&mut state, &data, egg_id);
+
+        assert!(result.summary.contains("hatched"));
+        assert_eq!(state.monster_roster.monsters.len(), 4);
+        assert!(state.egg_inventory.eggs.is_empty());
+    }
 }

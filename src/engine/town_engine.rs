@@ -2,6 +2,8 @@ use crate::data::{BuildingDefinition, GameData};
 use crate::state::GameState;
 
 const SHOP_ID: &str = "shop";
+const STABLE_ID: &str = "stable";
+const HATCHERY_ID: &str = "hatchery";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ShopTrade {
@@ -130,6 +132,32 @@ pub fn town_rank(state: &GameState) -> u32 {
     let tower_score = state.tower_progress.best_floor / 2;
 
     1 + (building_score + monster_score + tower_score) / 4
+}
+
+pub fn monster_capacity(state: &GameState) -> usize {
+    match state.town.building_level(STABLE_ID) {
+        0 => 3,
+        1 => 6,
+        2 => 9,
+        _ => 12,
+    }
+}
+
+pub fn egg_capacity(state: &GameState) -> usize {
+    match state.town.building_level(HATCHERY_ID) {
+        0 => 0,
+        1 => 3,
+        2 => 5,
+        _ => 8,
+    }
+}
+
+pub fn has_monster_capacity(state: &GameState) -> bool {
+    state.monster_roster.monsters.len() < monster_capacity(state)
+}
+
+pub fn has_egg_capacity(state: &GameState) -> bool {
+    state.egg_inventory.eggs.len() < egg_capacity(state)
 }
 
 pub fn next_cost(data: &GameData, building_id: &str, current_level: u32) -> Vec<(String, i32)> {

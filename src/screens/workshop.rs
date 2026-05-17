@@ -30,7 +30,11 @@ pub fn handle_input(state: &GameState) -> Option<WorkshopAction> {
 
     for (index, monster) in state.monster_roster.monsters.iter().take(6).enumerate() {
         for (job_index, job) in JOBS.iter().enumerate() {
-            if ui::button_clicked(job_button_rect(index, job_index), !monster.is_injured()) {
+            if ui::button_clicked(
+                job_button_rect(index, job_index),
+                monster_engine::can_take_daily_action(state, monster).is_ok()
+                    || state.town.monster_job(monster.id).is_some(),
+            ) {
                 return Some(WorkshopAction::Assign(monster.id, *job));
             }
         }
@@ -144,11 +148,11 @@ fn draw_worker_row(
     );
     draw_text_ex(
         &format!(
-            "{}  Bond {}  {}  Job: {}",
+            "{}  Bond {}  {}  Plan: {}",
             monster.town_skill,
             monster.bond,
             monster_engine::condition_label(monster),
-            job.map(job_engine::job_label).unwrap_or("Resting")
+            monster_engine::daily_plan_label(state, monster)
         ),
         rect.x + 76.0,
         y + 23.0,
@@ -176,7 +180,7 @@ fn draw_worker_row(
         ui::draw_button(
             job_button_rect(index, job_index),
             job_engine::job_label(*job_kind),
-            !monster.is_injured(),
+            monster_engine::can_take_daily_action(state, monster).is_ok() || job.is_some(),
         );
     }
     ui::draw_button(rest_button_rect(index), "Rest", true);

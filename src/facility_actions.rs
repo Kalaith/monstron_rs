@@ -12,14 +12,10 @@ impl Game {
                 self.screen = AppScreen::Town;
                 self.status_message = "Returned to tower camp.".to_owned();
             }
-            HatcheryAction::DiscoverEgg => {
+            HatcheryAction::CareEgg(egg_id, care_focus) => {
                 if let Some(state) = &mut self.state {
-                    self.status_message = egg_engine::discover_egg(state, &self.data).summary;
-                }
-            }
-            HatcheryAction::WarmEgg(egg_id) => {
-                if let Some(state) = &mut self.state {
-                    self.status_message = egg_engine::warm_egg(state, &self.data, egg_id).summary;
+                    self.status_message =
+                        egg_engine::care_for_egg(state, &self.data, egg_id, care_focus).summary;
                 }
             }
             HatcheryAction::HatchEgg(egg_id) => {

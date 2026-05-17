@@ -1,10 +1,22 @@
 use crate::data::{Element, GameData, PassiveSkill, Temperament};
+use crate::engine::{monster_engine, town_engine};
+use crate::state::DailyCommitment;
 use crate::state::{EggInheritance, GameState, MonsterArtProfile, MonsterInstance};
 
 const GROVE_ID: &str = "breeding_grove";
 
 pub struct BreedingResult {
     pub summary: String,
+}
+
+pub struct BreedingForecast {
+    pub egg_options: Vec<(String, u32)>,
+    pub species_options: Vec<String>,
+    pub element_options: Vec<Element>,
+    pub temperament_options: Vec<Temperament>,
+    pub passive_options: Vec<PassiveSkill>,
+    pub mutation_chance: u32,
+    pub lineage_quality: u32,
 }
 
 pub fn breed_pair(
@@ -21,6 +33,15 @@ pub fn breed_pair(
     if first_id == second_id {
         return BreedingResult {
             summary: "Choose two different monsters for a breeding pair.".to_owned(),
+        };
+    }
+    if !town_engine::has_egg_capacity(state) {
+        let current = state.egg_inventory.eggs.len();
+        let capacity = town_engine::egg_capacity(state);
+        return BreedingResult {
+            summary: format!(
+                "Hatchery egg capacity is full ({current}/{capacity}). Build or upgrade the Hatchery before breeding."
+            ),
         };
     }
 
@@ -42,6 +63,13 @@ pub fn breed_pair(
                 first.name, second.name
             ),
         };
+    }
+
+    if let Err(summary) = monster_engine::can_take_daily_action(state, &first) {
+        return BreedingResult { summary };
+    }
+    if let Err(summary) = monster_engine::can_take_daily_action(state, &second) {
+        return BreedingResult { summary };
     }
 
     let Some(egg_type) = select_egg_type(data, &first, &second, state.tower_progress.best_floor)
@@ -71,6 +99,7 @@ pub fn breed_pair(
         inheritance,
     );
     raise_parent_bonds(state, data, first.id, second.id);
+    commit_parent_recovery_time(state, first.id, second.id);
 
     let mutation_note = if mutated {
         " with a tower mutation"
@@ -88,6 +117,44 @@ pub fn breed_pair(
     );
     state.activity_log.add(state.day, summary.clone());
     BreedingResult { summary }
+}
+
+pub fn forecast_pair(
+    state: &GameState,
+    data: &GameData,
+    first: &MonsterInstance,
+    second: &MonsterInstance,
+) -> Option<BreedingForecast> {
+    if !pair_is_compatible(first, second) {
+        return None;
+    }
+    let origin_floor = state.tower_progress.best_floor.max(1);
+    let egg_options = eligible_egg_types(data, first, second, origin_floor)
+        .into_iter()
+        .take(3)
+        .enumerate()
+        .map(|(index, egg_type)| {
+            let weight = match index {
+                0 => 60,
+                1 => 30,
+                _ => 10,
+            };
+            (egg_type.name.clone(), weight)
+        })
+        .collect::<Vec<_>>();
+    let egg_type = select_egg_type(data, first, second, origin_floor)?;
+    let seed = breeding_seed(state, first, second);
+    let inheritance = build_inheritance(data, first, second, egg_type, origin_floor, seed);
+
+    Some(BreedingForecast {
+        egg_options,
+        species_options: inheritance.species_options,
+        element_options: inheritance.element_options,
+        temperament_options: inheritance.temperament_options,
+        passive_options: inheritance.passive_options,
+        mutation_chance: mutation_chance(origin_floor),
+        lineage_quality: lineage_quality(first, second, origin_floor),
+    })
 }
 
 pub fn pair_is_compatible(first: &MonsterInstance, second: &MonsterInstance) -> bool {
@@ -151,7 +218,21 @@ fn select_egg_type<'a>(
     second: &MonsterInstance,
     best_floor: u32,
 ) -> Option<&'a crate::data::EggTypeDefinition> {
-    let mut eligible: Vec<_> = data
+    let eligible = eligible_egg_types(data, first, second, best_floor);
+
+    let seed = first.visual_seed ^ second.visual_seed ^ best_floor as u64;
+    eligible
+        .get((seed as usize) % eligible.len().max(1))
+        .copied()
+}
+
+fn eligible_egg_types<'a>(
+    data: &'a GameData,
+    first: &MonsterInstance,
+    second: &MonsterInstance,
+    best_floor: u32,
+) -> Vec<&'a crate::data::EggTypeDefinition> {
+    let eligible = data
         .egg_types
         .iter()
         .filter(|egg_type| egg_type.discovery_floor <= best_floor.max(1))
@@ -159,15 +240,12 @@ fn select_egg_type<'a>(
             egg_type.possible_species.contains(&first.species_id)
                 || egg_type.possible_species.contains(&second.species_id)
         })
-        .collect();
+        .collect::<Vec<_>>();
     if eligible.is_empty() {
-        eligible = data.egg_types.iter().take(1).collect();
+        data.egg_types.iter().take(1).collect()
+    } else {
+        eligible
     }
-
-    let seed = first.visual_seed ^ second.visual_seed ^ best_floor as u64;
-    eligible
-        .get((seed as usize) % eligible.len().max(1))
-        .copied()
 }
 
 fn build_inheritance(
@@ -271,6 +349,15 @@ fn raise_parent_bonds(state: &mut GameState, data: &GameData, first_id: u64, sec
                 data.config.starter_name
             ),
         );
+    }
+}
+
+fn commit_parent_recovery_time(state: &mut GameState, first_id: u64, second_id: u64) {
+    for monster_id in [first_id, second_id] {
+        if let Some(monster) = state.monster_roster.monster_mut(monster_id) {
+            monster.condition.commitment = DailyCommitment::Breeding;
+            monster_engine::add_fatigue(monster, 1);
+        }
     }
 }
 
@@ -412,5 +499,31 @@ mod tests {
         assert!(inheritance.passive_options.contains(&child.passive));
         assert!(child.bond >= inheritance.lineage_quality);
         assert!(!child.art_profile.palette.is_empty());
+    }
+
+    #[test]
+    fn breeding_respects_hatchery_egg_capacity_before_spending_costs() {
+        let data = GameDataLoader::load_embedded().expect("embedded data should load");
+        let mut state = GameState::new(&data);
+        state.town.set_building_level("breeding_grove", 1);
+        state.town.set_building_level("hatchery", 1);
+        state.resources.add("herbs", 10);
+
+        for seed in 0..3 {
+            state
+                .egg_inventory
+                .add_egg("mossy_egg".to_owned(), 1, 1, 0x300 + seed);
+        }
+        let rillfin = data.species("rillfin").expect("rillfin should exist");
+        let second_id = state
+            .monster_roster
+            .add_monster("Ripple".to_owned(), rillfin, 0xBEE5_7001);
+        let herbs_before = state.resources.amount("herbs");
+
+        let result = breed_pair(&mut state, &data, 1, second_id);
+
+        assert!(result.summary.contains("Hatchery egg capacity is full"));
+        assert_eq!(state.resources.amount("herbs"), herbs_before);
+        assert_eq!(state.egg_inventory.eggs.len(), 3);
     }
 }

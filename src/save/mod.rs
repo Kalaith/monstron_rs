@@ -36,7 +36,7 @@ impl SaveRepository {
 mod tests {
     use super::*;
     use crate::data::GameDataLoader;
-    use crate::engine::{breeding_engine, job_engine};
+    use crate::engine::{breeding_engine, day_engine, job_engine};
     use crate::state::{GameState, TownJobKind};
 
     #[test]
@@ -44,6 +44,7 @@ mod tests {
         let data = GameDataLoader::load_embedded().expect("embedded data should load");
         let mut state = GameState::new(&data);
         state.town.set_building_level("breeding_grove", 1);
+        state.town.set_building_level("hatchery", 1);
         state.town.set_building_level("workshop", 1);
         state.resources.add("herbs", 10);
 
@@ -52,6 +53,7 @@ mod tests {
             .monster_roster
             .add_monster("Ripple".to_owned(), rillfin, 0xBEE5_7001);
         breeding_engine::breed_pair(&mut state, &data, 1, second_id);
+        day_engine::sleep(&mut state, &data);
         job_engine::assign_job(&mut state, &data, 1, TownJobKind::Forage);
 
         let save_data = SaveData {
@@ -123,6 +125,7 @@ mod tests {
         let data = GameDataLoader::load_embedded().expect("embedded data should load");
         let mut state = GameState::new(&data);
         state.town.set_building_level("breeding_grove", 1);
+        state.town.set_building_level("hatchery", 1);
         state.resources.add("herbs", 10);
 
         let rillfin = data.species("rillfin").expect("rillfin should exist");

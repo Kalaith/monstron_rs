@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 use crate::state::ResourceStack;
 
@@ -14,9 +15,22 @@ pub struct TowerRunState {
     pub rooms_explored: u32,
     pub pressure: u32,
     pub pressure_limit: u32,
+    #[serde(default)]
+    pub goal: TowerRunGoal,
     pub cargo: Vec<ResourceStack>,
     pub found_eggs: Vec<TowerFoundEgg>,
     pub event_log: Vec<String>,
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub enum TowerRunGoal {
+    #[default]
+    Balanced,
+    EggHunt,
+    Salvage,
+    Scout,
+    PushDeeper,
+    SafeRun,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -28,15 +42,16 @@ pub struct TowerFoundEgg {
 }
 
 impl TowerRunState {
-    pub fn new(current_floor: u32, pressure_limit: u32) -> Self {
+    pub fn new(current_floor: u32, pressure_limit: u32, goal: TowerRunGoal) -> Self {
         Self {
             current_floor,
             rooms_explored: 0,
             pressure: 0,
             pressure_limit,
+            goal,
             cargo: Vec::new(),
             found_eggs: Vec::new(),
-            event_log: vec![format!("Entered floor {current_floor}.")],
+            event_log: vec![format!("Entered floor {current_floor} on a {goal} run.")],
         }
     }
 
@@ -66,5 +81,43 @@ impl TowerRunState {
             let overflow = self.event_log.len() - 7;
             self.event_log.drain(0..overflow);
         }
+    }
+}
+
+impl TowerRunGoal {
+    pub const CHOICES: [Self; 5] = [
+        Self::EggHunt,
+        Self::Salvage,
+        Self::Scout,
+        Self::PushDeeper,
+        Self::SafeRun,
+    ];
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Balanced => "Balanced",
+            Self::EggHunt => "Egg Hunt",
+            Self::Salvage => "Salvage",
+            Self::Scout => "Scout",
+            Self::PushDeeper => "Push",
+            Self::SafeRun => "Safe Run",
+        }
+    }
+
+    pub fn detail(self) -> &'static str {
+        match self {
+            Self::Balanced => "Normal eggs, loot, danger, and floor progress.",
+            Self::EggHunt => "More nest events and egg hints; material caches are smaller.",
+            Self::Salvage => "More wood, stone, ore, and coins; egg finds are rarer.",
+            Self::Scout => "Fewer fights and more floor information; rewards are modest.",
+            Self::PushDeeper => "More stair events and progress; pressure climbs faster.",
+            Self::SafeRun => "Lower pressure and injury risk; fewer rewards.",
+        }
+    }
+}
+
+impl fmt::Display for TowerRunGoal {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(self.label())
     }
 }

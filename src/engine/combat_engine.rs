@@ -1,8 +1,9 @@
 use crate::data::GameData;
 use crate::engine::combat_support::{
     add_boss_egg, advance_to_player_or_outcome, advance_turn, ally_attack, ally_skill, award_xp,
-    build_allies, build_enemies, combined_rewards, defend, encounter_xp, rebuild_turn_order,
-    record_floor_reached, reward_text, sync_allies,
+    build_allies, build_enemies, combined_rewards, defend, encounter_xp, flee_chance,
+    flee_succeeds, rebuild_turn_order, record_floor_reached, reward_text, sync_allies,
+    victory_rewards,
 };
 use crate::engine::{monster_engine, tower_engine};
 use crate::state::{CombatOutcome, CombatSide, CombatState, GameState};
@@ -123,9 +124,15 @@ pub fn player_action(
         CombatCommand::Skill => ally_skill(combat, data, turn.slot),
         CombatCommand::Defend => defend(combat, turn.slot),
         CombatCommand::Flee => {
-            combat.outcome = Some(CombatOutcome::Fled);
-            combat.add_log("The party breaks away from the fight.".to_owned());
-            "The party flees toward town.".to_owned()
+            let chance = flee_chance(combat);
+            if flee_succeeds(combat) {
+                combat.outcome = Some(CombatOutcome::Fled);
+                combat.add_log(format!("The party breaks away from the fight ({chance}%)."));
+                "The party flees toward town.".to_owned()
+            } else {
+                combat.add_log(format!("Escape failed despite a {chance}% chance."));
+                "The party fails to find an escape route.".to_owned()
+            }
         }
         CombatCommand::Item => unreachable!("item command is handled before borrowing combat"),
     };
@@ -201,9 +208,10 @@ fn finish_victory(state: &mut GameState, data: &GameData, combat: CombatState) -
     award_xp(state, combat.xp_reward);
     apply_victory_strain(state, &combat);
     record_floor_reached(state, data, combat.floor);
+    let rewards = victory_rewards(&combat);
 
     if let Some(run) = &mut state.tower_run {
-        for reward in &combat.rewards {
+        for reward in &rewards {
             run.add_cargo(&reward.resource_id, reward.amount);
         }
         if combat.is_boss {
@@ -211,7 +219,7 @@ fn finish_victory(state: &mut GameState, data: &GameData, combat: CombatState) -
         }
         run.add_event(format!("Won combat on floor {}.", combat.floor));
     } else {
-        for reward in &combat.rewards {
+        for reward in &rewards {
             state.resources.add(&reward.resource_id, reward.amount);
         }
     }
@@ -220,7 +228,7 @@ fn finish_victory(state: &mut GameState, data: &GameData, combat: CombatState) -
         "Victory on floor {}. Gained {} XP and {}. The party gains expedition strain.",
         combat.floor,
         combat.xp_reward,
-        reward_text(data, &combat.rewards)
+        reward_text(data, &rewards)
     );
     state.activity_log.add(state.day, summary.clone());
     CombatFinish {
@@ -299,6 +307,7 @@ fn apply_flee_strain(state: &mut GameState, combat: &CombatState) {
 mod tests {
     use super::*;
     use crate::data::GameDataLoader;
+    use crate::state::CombatTurn;
 
     #[test]
     fn victory_adds_fatigue_to_surviving_party_members() {
@@ -327,5 +336,97 @@ mod tests {
         assert_eq!(starter.hp, 1);
         assert_eq!(starter.condition.injury_days, 2);
         assert_eq!(starter.condition.fatigue, 3);
+    }
+
+    #[test]
+    fn scout_mark_adds_victory_loot_bonus() {
+        let data = GameDataLoader::load_embedded().expect("embedded data should load");
+        let mut state = GameState::new(&data);
+        let starting_coins = state.resources.amount("coins");
+
+        start_encounter(&mut state, &data, 1, false);
+        let result = player_action(&mut state, &data, CombatCommand::Skill);
+        assert!(result.summary.contains("marks"));
+        assert!(state
+            .combat
+            .as_ref()
+            .unwrap()
+            .enemies
+            .iter()
+            .any(|enemy| enemy.is_marked));
+
+        state.combat.as_mut().unwrap().outcome = Some(CombatOutcome::Victory);
+        finish_combat(&mut state, &data);
+
+        assert!(state.resources.amount("coins") >= starting_coins + 5);
+    }
+
+    #[test]
+    fn tank_guard_redirects_back_row_pressure() {
+        let data = GameDataLoader::load_embedded().expect("embedded data should load");
+        let mut state = GameState::new(&data);
+        let rootling = data.species("rootling").expect("rootling should exist");
+        let rillfin = data.species("rillfin").expect("rillfin should exist");
+        let tank_id = state
+            .monster_roster
+            .add_monster("Root".to_owned(), rootling, 0x7007);
+        let back_id = state
+            .monster_roster
+            .add_monster("Ripple".to_owned(), rillfin, 0x7008);
+        state.monster_roster.party_slots =
+            vec![Some(tank_id), None, None, Some(back_id), None, None];
+
+        start_encounter(&mut state, &data, 3, false);
+        let tank_index = state
+            .combat
+            .as_ref()
+            .unwrap()
+            .allies
+            .iter()
+            .position(|ally| ally.monster_id == Some(tank_id))
+            .unwrap();
+        let enemy_index = 0;
+        {
+            let combat = state.combat.as_mut().unwrap();
+            combat.floor = 3;
+            combat.round = 1;
+            combat.turn_order = vec![
+                CombatTurn {
+                    side: CombatSide::Ally,
+                    slot: tank_index,
+                },
+                CombatTurn {
+                    side: CombatSide::Enemy,
+                    slot: enemy_index,
+                },
+            ];
+            combat.turn_index = 0;
+        }
+        let back_hp_before = state
+            .combat
+            .as_ref()
+            .unwrap()
+            .allies
+            .iter()
+            .find(|ally| ally.monster_id == Some(back_id))
+            .unwrap()
+            .hp;
+
+        let result = player_action(&mut state, &data, CombatCommand::Skill);
+        assert!(result.summary.contains("guards"));
+
+        let combat = state.combat.as_ref().unwrap();
+        let tank = combat
+            .allies
+            .iter()
+            .find(|ally| ally.monster_id == Some(tank_id))
+            .unwrap();
+        let back = combat
+            .allies
+            .iter()
+            .find(|ally| ally.monster_id == Some(back_id))
+            .unwrap();
+        assert!(tank.hp < tank.max_hp);
+        assert_eq!(back.hp, back_hp_before);
     }
 }

@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use std::fmt;
+
 use crate::data::{Element, PassiveSkill, Temperament};
 use crate::state::MonsterArtProfile;
 
@@ -33,6 +35,26 @@ pub struct EggInstance {
     pub palette_seed: u64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub inheritance: Option<EggInheritance>,
+    #[serde(default)]
+    pub care_focus: EggCareFocus,
+    #[serde(default)]
+    pub care_points: u32,
+    #[serde(default)]
+    pub studied: bool,
+    #[serde(default)]
+    pub stabilised: bool,
+    #[serde(default)]
+    pub last_care_day: u32,
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub enum EggCareFocus {
+    #[default]
+    None,
+    Warm,
+    Soothe,
+    Study,
+    Stabilise,
 }
 
 impl EggInventory {
@@ -52,6 +74,11 @@ impl EggInventory {
             origin_floor,
             palette_seed,
             inheritance: None,
+            care_focus: EggCareFocus::None,
+            care_points: 0,
+            studied: false,
+            stabilised: false,
+            last_care_day: 0,
         });
         id
     }
@@ -73,6 +100,11 @@ impl EggInventory {
             origin_floor,
             palette_seed,
             inheritance: Some(inheritance),
+            care_focus: EggCareFocus::None,
+            care_points: 0,
+            studied: false,
+            stabilised: false,
+            last_care_day: 0,
         });
         id
     }
@@ -84,5 +116,17 @@ impl EggInventory {
     pub fn remove_egg(&mut self, egg_id: u64) -> Option<EggInstance> {
         let index = self.eggs.iter().position(|egg| egg.id == egg_id)?;
         Some(self.eggs.remove(index))
+    }
+}
+
+impl fmt::Display for EggCareFocus {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(match self {
+            Self::None => "Uncared",
+            Self::Warm => "Warmed",
+            Self::Soothe => "Soothed",
+            Self::Study => "Studied",
+            Self::Stabilise => "Stabilised",
+        })
     }
 }

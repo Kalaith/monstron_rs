@@ -22,14 +22,11 @@ pub fn sleep(state: &mut GameState, data: &GameData) -> DayResult {
     let recovery = monster_engine::recover_monsters(state);
     let mut summary = if eggs_warmed > 0 {
         format!(
-            "Day {} ends. {} egg(s) warmed overnight and the monsters recovered.",
+            "Day {} ends. {} egg(s) warmed overnight.",
             previous_day, eggs_warmed
         )
     } else {
-        format!(
-            "Day {} ends. The camp rests, and every monster wakes recovered.",
-            previous_day
-        )
+        format!("Day {} ends.", previous_day)
     };
     if !job_result.summary.is_empty() {
         summary.push(' ');
@@ -44,6 +41,12 @@ pub fn sleep(state: &mut GameState, data: &GameData) -> DayResult {
         summary.push_str(&format!(
             " {} tired monster(s) shook off strain.",
             recovery.fatigue_reduced
+        ));
+    }
+    if recovery.rested > 0 {
+        summary.push_str(&format!(
+            " {} idle monster(s) rested well.",
+            recovery.rested
         ));
     }
     state.activity_log.add(state.day, summary.clone());

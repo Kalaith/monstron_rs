@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::data::MonsterRole;
 use crate::state::ResourceStack;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -41,6 +42,8 @@ pub struct Combatant {
     pub name: String,
     pub source_id: String,
     pub monster_id: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub role: Option<MonsterRole>,
     pub slot: usize,
     pub level: u32,
     pub max_hp: i32,
@@ -50,6 +53,10 @@ pub struct Combatant {
     pub speed: i32,
     pub morale: i32,
     pub is_defending: bool,
+    #[serde(default)]
+    pub is_guarding: bool,
+    #[serde(default)]
+    pub is_marked: bool,
     pub visual_seed: u64,
 }
 

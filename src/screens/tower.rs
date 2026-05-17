@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 
 use crate::assets;
 use crate::data::GameData;
-use crate::engine::tower_engine;
+use crate::engine::{tower_engine, town_engine};
 use crate::state::{GameState, TowerRunState};
 use crate::ui;
 
@@ -58,7 +58,7 @@ pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
 
     if let Some(run) = &state.tower_run {
         draw_run_overview(state, data, run);
-        draw_cargo(data, run);
+        draw_cargo(state, data, run);
         draw_events(run);
     } else {
         draw_empty_run();
@@ -165,7 +165,8 @@ fn draw_run_overview(state: &GameState, data: &GameData, run: &TowerRunState) {
     draw_wrapped_line(theme, rect.x + 20.0, rect.y + 114.0, 44, ui::TEXT_DIM);
     draw_text_ex(
         &format!(
-            "Rooms {}  Party {}  Ready {}",
+            "{}  Rooms {}  Party {}  Ready {}",
+            run.goal,
             run.rooms_explored,
             tower_engine::party_count(state),
             tower_engine::battle_ready_party_count(state)
@@ -182,7 +183,7 @@ fn draw_run_overview(state: &GameState, data: &GameData, run: &TowerRunState) {
     draw_pressure_bar(run, rect.x + 20.0, rect.y + 220.0, rect.w - 40.0);
 
     draw_wrapped_line(
-        "Pressure rises with each room and enemy patrol. Return before it maxes.",
+        pressure_rule_text(run),
         rect.x + 20.0,
         rect.y + 292.0,
         43,
@@ -195,6 +196,23 @@ fn draw_run_overview(state: &GameState, data: &GameData, run: &TowerRunState) {
         run.pressure < run.pressure_limit,
     );
     ui::draw_button(return_button_rect(), "Return", true);
+}
+
+fn pressure_rule_text(run: &TowerRunState) -> &'static str {
+    let ratio = if run.pressure_limit == 0 {
+        0.0
+    } else {
+        run.pressure as f32 / run.pressure_limit as f32
+    };
+    if ratio >= 0.9 {
+        "Panic pressure: return now or risk a forced escape check."
+    } else if ratio >= 0.66 {
+        "High pressure: rare nests appear, but enemy hits and patrols worsen."
+    } else if ratio >= 0.33 {
+        "Rising pressure: better caches appear, and patrols become more likely."
+    } else {
+        "Low pressure: safer rooms, normal loot, and room to change plans."
+    }
 }
 
 fn draw_pressure_bar(run: &TowerRunState, x: f32, y: f32, width: f32) {
@@ -224,7 +242,7 @@ fn draw_pressure_bar(run: &TowerRunState, x: f32, y: f32, width: f32) {
     draw_rectangle_lines(x, bar_y, width, 20.0, 1.5, ui::PANEL_EDGE);
 }
 
-fn draw_cargo(data: &GameData, run: &TowerRunState) {
+fn draw_cargo(state: &GameState, data: &GameData, run: &TowerRunState) {
     let rect = Rect::new(444.0, 124.0, 388.0, 476.0);
     ui::draw_panel(rect);
     ui::draw_section_title("Run Loot", rect.x + 20.0, rect.y + 34.0);
@@ -272,6 +290,20 @@ fn draw_cargo(data: &GameData, run: &TowerRunState) {
     }
 
     ui::draw_section_title("Found Eggs", rect.x + 20.0, rect.y + 288.0);
+    draw_text_ex(
+        &format!(
+            "Camp egg slots: {}/{}",
+            state.egg_inventory.eggs.len(),
+            town_engine::egg_capacity(state)
+        ),
+        rect.x + 190.0,
+        rect.y + 292.0,
+        TextParams {
+            font_size: 15,
+            color: ui::TEXT_DIM,
+            ..Default::default()
+        },
+    );
     if run.found_eggs.is_empty() {
         draw_text_ex(
             "No eggs found on this run.",

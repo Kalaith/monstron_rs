@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 
 use crate::assets;
 use crate::data::GameData;
-use crate::engine::monster_engine;
+use crate::engine::{monster_engine, town_engine};
 use crate::state::GameState;
 use crate::ui;
 
@@ -29,7 +29,8 @@ pub fn handle_input(state: &GameState) -> Option<StableAction> {
     }
 
     for (index, monster) in state.monster_roster.monsters.iter().take(8).enumerate() {
-        let can_toggle = state.monster_roster.is_in_party(monster.id) || !monster.is_injured();
+        let can_toggle = state.monster_roster.is_in_party(monster.id)
+            || monster_engine::can_take_daily_action(state, monster).is_ok();
         if ui::button_clicked(roster_button_rect(index), can_toggle) {
             return Some(StableAction::ToggleParty(monster.id));
         }
@@ -77,8 +78,9 @@ fn draw_header(state: &GameState) {
     );
     draw_text_ex(
         &format!(
-            "Roster {}  Party {}",
+            "Roster {}/{}  Party {}",
             state.monster_roster.monsters.len(),
+            town_engine::monster_capacity(state),
             state
                 .monster_roster
                 .party_slots
@@ -86,7 +88,7 @@ fn draw_header(state: &GameState) {
                 .filter(|slot| slot.is_some())
                 .count()
         ),
-        ui::VIEW_WIDTH - 270.0,
+        842.0,
         70.0,
         TextParams {
             font_size: 24,
@@ -170,7 +172,15 @@ fn draw_party(state: &GameState, data: &GameData) {
 fn draw_roster(state: &GameState, data: &GameData) {
     let rect = Rect::new(32.0, 300.0, ui::VIEW_WIDTH - 64.0, 306.0);
     ui::draw_panel(rect);
-    ui::draw_section_title("Roster", rect.x + 20.0, rect.y + 34.0);
+    ui::draw_section_title(
+        &format!(
+            "Roster ({}/{})",
+            state.monster_roster.monsters.len(),
+            town_engine::monster_capacity(state)
+        ),
+        rect.x + 20.0,
+        rect.y + 34.0,
+    );
 
     for (index, monster) in state.monster_roster.monsters.iter().take(8).enumerate() {
         let column = index % 2;
@@ -194,12 +204,12 @@ fn draw_roster(state: &GameState, data: &GameData) {
         );
         draw_text_ex(
             &format!(
-                "{} {}  {}  {}  Passive: {}",
+                "{} {}  {}  {}  Plan: {}",
                 monster.element,
                 monster.role,
                 monster.temperament,
                 monster_engine::condition_label(monster),
-                monster.passive
+                monster_engine::daily_plan_label(state, monster)
             ),
             x + 58.0,
             y + 24.0,
@@ -212,7 +222,7 @@ fn draw_roster(state: &GameState, data: &GameData) {
         let in_party = state.monster_roster.is_in_party(monster.id);
         let label = if in_party {
             "Bench"
-        } else if monster.is_injured() {
+        } else if monster_engine::can_take_daily_action(state, monster).is_err() {
             "Rest"
         } else {
             "Party"
@@ -220,7 +230,7 @@ fn draw_roster(state: &GameState, data: &GameData) {
         ui::draw_button(
             roster_button_rect(index),
             label,
-            in_party || !monster.is_injured(),
+            in_party || monster_engine::can_take_daily_action(state, monster).is_ok(),
         );
     }
 }

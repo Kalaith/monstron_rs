@@ -2,14 +2,15 @@ use macroquad::prelude::*;
 
 use crate::assets;
 use crate::data::GameData;
+use crate::engine::{egg_engine, town_engine};
+use crate::state::EggCareFocus;
 use crate::state::GameState;
 use crate::ui;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum HatcheryAction {
     ToTown,
-    DiscoverEgg,
-    WarmEgg(u64),
+    CareEgg(u64, EggCareFocus),
     HatchEgg(u64),
 }
 
@@ -17,24 +18,27 @@ pub fn handle_input(state: &GameState) -> Option<HatcheryAction> {
     if is_key_pressed(KeyCode::Escape) {
         return Some(HatcheryAction::ToTown);
     }
-    if is_key_pressed(KeyCode::E) {
-        return Some(HatcheryAction::DiscoverEgg);
-    }
 
     if ui::button_clicked(town_button_rect(), true) {
         return Some(HatcheryAction::ToTown);
     }
-    if ui::button_clicked(discover_button_rect(), true) {
-        return Some(HatcheryAction::DiscoverEgg);
-    }
 
     for (index, egg) in state.egg_inventory.eggs.iter().take(6).enumerate() {
-        let warm_enabled = egg.days_remaining > 0;
-        if ui::button_clicked(warm_button_rect(index), warm_enabled) {
-            return Some(HatcheryAction::WarmEgg(egg.id));
+        for (care_index, care_focus) in care_choices().iter().enumerate() {
+            if ui::button_clicked(
+                care_button_rect(index, care_index),
+                care_enabled(
+                    egg.days_remaining,
+                    egg.last_care_day,
+                    state.day,
+                    *care_focus,
+                ),
+            ) {
+                return Some(HatcheryAction::CareEgg(egg.id, *care_focus));
+            }
         }
 
-        let hatch_enabled = egg.days_remaining == 0;
+        let hatch_enabled = egg.days_remaining == 0 && town_engine::has_monster_capacity(state);
         if ui::button_clicked(hatch_button_rect(index), hatch_enabled) {
             return Some(HatcheryAction::HatchEgg(egg.id));
         }
@@ -82,11 +86,18 @@ fn draw_header(state: &GameState) {
         },
     );
     draw_text_ex(
-        &format!("Day {}  Eggs {}", state.day, state.egg_inventory.eggs.len()),
-        778.0,
+        &format!(
+            "Day {}  Eggs {}/{}  Monsters {}/{}",
+            state.day,
+            state.egg_inventory.eggs.len(),
+            town_engine::egg_capacity(state),
+            state.monster_roster.monsters.len(),
+            town_engine::monster_capacity(state)
+        ),
+        604.0,
         70.0,
         TextParams {
-            font_size: 24,
+            font_size: 22,
             color: ui::ACCENT,
             ..Default::default()
         },
@@ -97,12 +108,24 @@ fn draw_header(state: &GameState) {
 fn draw_egg_inventory(state: &GameState, data: &GameData) {
     let rect = Rect::new(32.0, 124.0, 780.0, 476.0);
     ui::draw_panel(rect);
-    ui::draw_section_title("Egg Inventory", rect.x + 20.0, rect.y + 34.0);
-    ui::draw_button(discover_button_rect(), "Recover Egg", true);
+    ui::draw_section_title(
+        &format!(
+            "Egg Inventory ({}/{})",
+            state.egg_inventory.eggs.len(),
+            town_engine::egg_capacity(state)
+        ),
+        rect.x + 20.0,
+        rect.y + 34.0,
+    );
 
     if state.egg_inventory.eggs.is_empty() {
+        let empty_label = if town_engine::egg_capacity(state) == 0 {
+            "Build the Hatchery before keeping tower eggs."
+        } else {
+            "No eggs are waiting. Bring eggs back from tower runs."
+        };
         draw_text_ex(
-            "No eggs are waiting. Recover one from the tower edge.",
+            empty_label,
             rect.x + 24.0,
             rect.y + 108.0,
             TextParams {
@@ -115,7 +138,7 @@ fn draw_egg_inventory(state: &GameState, data: &GameData) {
     }
 
     for (index, egg) in state.egg_inventory.eggs.iter().take(6).enumerate() {
-        let y = rect.y + 78.0 + index as f32 * 60.0;
+        let y = rect.y + 76.0 + index as f32 * 66.0;
         let egg_type = data.egg_type(&egg.egg_type_id);
         let name = egg_type
             .map(|egg_type| egg_type.name.as_str())
@@ -136,8 +159,8 @@ fn draw_egg_inventory(state: &GameState, data: &GameData) {
         );
         draw_text_ex(
             &format!(
-                "{}  Floor {}  {} day(s) remaining",
-                rarity, egg.origin_floor, egg.days_remaining
+                "{}  Floor {}  {} day(s) remaining  {}",
+                rarity, egg.origin_floor, egg.days_remaining, egg.care_focus
             ),
             rect.x + 82.0,
             y + 24.0,
@@ -147,8 +170,40 @@ fn draw_egg_inventory(state: &GameState, data: &GameData) {
                 ..Default::default()
             },
         );
-        ui::draw_button(warm_button_rect(index), "Warm", egg.days_remaining > 0);
-        ui::draw_button(hatch_button_rect(index), "Hatch", egg.days_remaining == 0);
+        draw_text_ex(
+            &format!(
+                "{}  {}",
+                egg_engine::likely_species_text(egg, data),
+                egg_engine::trait_preview_text(egg, data)
+            ),
+            rect.x + 82.0,
+            y + 42.0,
+            TextParams {
+                font_size: 13,
+                color: ui::TEXT_DIM,
+                ..Default::default()
+            },
+        );
+        for (care_index, care_focus) in care_choices().iter().enumerate() {
+            ui::draw_button(
+                care_button_rect(index, care_index),
+                care_focus.label(),
+                care_enabled(
+                    egg.days_remaining,
+                    egg.last_care_day,
+                    state.day,
+                    *care_focus,
+                ),
+            );
+        }
+        let hatch_ready = egg.days_remaining == 0;
+        let hatch_enabled = hatch_ready && town_engine::has_monster_capacity(state);
+        let hatch_label = if hatch_ready && !hatch_enabled {
+            "Full"
+        } else {
+            "Hatch"
+        };
+        ui::draw_button(hatch_button_rect(index), hatch_label, hatch_enabled);
     }
 }
 
@@ -189,14 +244,49 @@ fn town_button_rect() -> Rect {
     Rect::new(ui::VIEW_WIDTH - 148.0, 44.0, 86.0, 34.0)
 }
 
-fn discover_button_rect() -> Rect {
-    Rect::new(946.0, 44.0, 154.0, 34.0)
+fn care_choices() -> [EggCareFocus; 4] {
+    [
+        EggCareFocus::Warm,
+        EggCareFocus::Soothe,
+        EggCareFocus::Study,
+        EggCareFocus::Stabilise,
+    ]
 }
 
-fn warm_button_rect(index: usize) -> Rect {
-    Rect::new(596.0, 166.0 + index as f32 * 60.0, 82.0, 30.0)
+fn care_enabled(
+    days_remaining: u32,
+    last_care_day: u32,
+    current_day: u32,
+    care_focus: EggCareFocus,
+) -> bool {
+    last_care_day != current_day && (care_focus != EggCareFocus::Warm || days_remaining > 0)
+}
+
+fn care_button_rect(row: usize, column: usize) -> Rect {
+    Rect::new(
+        488.0 + column as f32 * 62.0,
+        160.0 + row as f32 * 66.0,
+        58.0,
+        28.0,
+    )
 }
 
 fn hatch_button_rect(index: usize) -> Rect {
-    Rect::new(688.0, 166.0 + index as f32 * 60.0, 82.0, 30.0)
+    Rect::new(736.0, 160.0 + index as f32 * 66.0, 60.0, 28.0)
+}
+
+trait EggCareLabel {
+    fn label(self) -> &'static str;
+}
+
+impl EggCareLabel for EggCareFocus {
+    fn label(self) -> &'static str {
+        match self {
+            EggCareFocus::None => "-",
+            EggCareFocus::Warm => "Warm",
+            EggCareFocus::Soothe => "Soothe",
+            EggCareFocus::Study => "Study",
+            EggCareFocus::Stabilise => "Stable",
+        }
+    }
 }

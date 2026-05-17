@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
 
 use crate::assets;
-use crate::data::GameData;
+use crate::data::{GameData, MonsterRole};
 use crate::engine::combat_engine::CombatCommand;
 use crate::state::{CombatOutcome, CombatSide, CombatState, Combatant, GameState};
 use crate::ui;
@@ -201,9 +201,10 @@ fn draw_combatant(combatant: &Combatant, is_ally: bool, rect: Rect) {
     let row = if combatant.slot < 3 { "F" } else { "B" };
     draw_text_ex(
         &format!(
-            "{}{} ATK {} DEF {}",
+            "{}{} {} ATK {} DEF {}",
             row,
             combatant.slot + 1,
+            role_label(combatant, is_ally),
             combatant.attack,
             combatant.defense
         ),
@@ -216,7 +217,12 @@ fn draw_combatant(combatant: &Combatant, is_ally: bool, rect: Rect) {
         },
     );
     draw_text_ex(
-        &format!("SPD {} MOR {}", combatant.speed, combatant.morale),
+        &format!(
+            "SPD {} MOR {}{}",
+            combatant.speed,
+            combatant.morale,
+            status_suffix(combatant)
+        ),
         rect.x + 10.0,
         rect.y + rect.h - 8.0,
         TextParams {
@@ -281,7 +287,7 @@ fn draw_actions(combat: &CombatState) {
     for (command, button_rect) in command_buttons() {
         let label = match command {
             CombatCommand::Attack => "Attack",
-            CombatCommand::Skill => "Skill",
+            CombatCommand::Skill => current_skill_label(combat),
             CombatCommand::Defend => "Defend",
             CombatCommand::Item => "Herbs",
             CombatCommand::Flee => "Flee",
@@ -330,6 +336,18 @@ fn draw_rewards(combat: &CombatState, data: &GameData) {
             ..Default::default()
         },
     );
+    if combat.enemies.iter().any(|enemy| enemy.is_marked) {
+        draw_text_ex(
+            "Marked target bonus active",
+            rect.x + 20.0,
+            rect.y + 126.0,
+            TextParams {
+                font_size: 15,
+                color: ui::ACCENT,
+                ..Default::default()
+            },
+        );
+    }
 }
 
 fn draw_log(combat: &CombatState) {
@@ -396,4 +414,48 @@ fn command_buttons() -> [(CombatCommand, Rect); 5] {
 
 fn continue_rect() -> Rect {
     Rect::new(582.0, 538.0, 176.0, 36.0)
+}
+
+fn current_skill_label(combat: &CombatState) -> &'static str {
+    let Some(turn) = combat.current_turn() else {
+        return "Skill";
+    };
+    if turn.side != CombatSide::Ally {
+        return "Skill";
+    }
+    let Some(ally) = combat.allies.get(turn.slot) else {
+        return "Skill";
+    };
+    match ally.role {
+        Some(MonsterRole::Scout) => "Mark",
+        Some(MonsterRole::Tank) => "Guard",
+        Some(MonsterRole::Support) => "Soothe",
+        Some(MonsterRole::Striker) => "Burst",
+        None => "Skill",
+    }
+}
+
+fn role_label(combatant: &Combatant, is_ally: bool) -> &'static str {
+    if !is_ally {
+        return "Enemy";
+    }
+    match combatant.role {
+        Some(MonsterRole::Scout) => "Scout",
+        Some(MonsterRole::Tank) => "Tank",
+        Some(MonsterRole::Support) => "Sup",
+        Some(MonsterRole::Striker) => "Str",
+        None => "Ally",
+    }
+}
+
+fn status_suffix(combatant: &Combatant) -> &'static str {
+    if combatant.is_guarding {
+        " GUARD"
+    } else if combatant.is_defending {
+        " DEF"
+    } else if combatant.is_marked {
+        " MARK"
+    } else {
+        ""
+    }
 }

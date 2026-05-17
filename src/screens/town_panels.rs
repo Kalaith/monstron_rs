@@ -10,6 +10,7 @@ use crate::ui;
 const BODY_FONT: u16 = 20;
 const DETAIL_FONT: u16 = 18;
 const LABEL_FONT: u16 = 22;
+const ROSTER_PREVIEW_LIMIT: usize = 3;
 
 pub(crate) fn draw(state: &GameState, data: &GameData) {
     draw_resources(state, data);
@@ -130,7 +131,15 @@ fn draw_buildings(state: &GameState, data: &GameData) {
 fn draw_roster(state: &GameState, data: &GameData) {
     let rect = Rect::new(800.0, 112.0, ui::VIEW_WIDTH - 824.0, 180.0);
     ui::draw_panel(rect);
-    ui::draw_section_title("Monster Roster", rect.x + 18.0, rect.y + 32.0);
+    ui::draw_section_title(
+        &format!(
+            "Monster Roster ({}/{})",
+            state.monster_roster.monsters.len(),
+            town_engine::monster_capacity(state)
+        ),
+        rect.x + 18.0,
+        rect.y + 32.0,
+    );
 
     if state.monster_roster.monsters.is_empty() {
         draw_text_ex(
@@ -146,19 +155,25 @@ fn draw_roster(state: &GameState, data: &GameData) {
         return;
     }
 
-    for (index, monster) in state.monster_roster.monsters.iter().take(2).enumerate() {
-        let y = rect.y + 60.0 + index as f32 * 50.0;
-        assets::draw_monster_badge(monster.visual_seed, rect.x + 18.0, y - 24.0, 34.0);
+    for (index, monster) in state
+        .monster_roster
+        .monsters
+        .iter()
+        .take(ROSTER_PREVIEW_LIMIT)
+        .enumerate()
+    {
+        let y = rect.y + 58.0 + index as f32 * 38.0;
+        assets::draw_monster_badge(monster.visual_seed, rect.x + 18.0, y - 22.0, 28.0);
         let species_name = data
             .species(&monster.species_id)
             .map(|species| species.name.as_str())
             .unwrap_or(monster.species_id.as_str());
         draw_text_ex(
             &format!("{} the {}", monster.name, species_name),
-            rect.x + 64.0,
+            rect.x + 56.0,
             y,
             TextParams {
-                font_size: LABEL_FONT,
+                font_size: 18,
                 color: ui::TEXT_BRIGHT,
                 ..Default::default()
             },
@@ -168,10 +183,28 @@ fn draw_roster(state: &GameState, data: &GameData) {
                 "Lv {}  HP {}/{}  Bond {}  {}",
                 monster.level, monster.hp, monster.max_hp, monster.bond, monster.role
             ),
-            rect.x + 64.0,
-            y + 23.0,
+            rect.x + 56.0,
+            y + 18.0,
             TextParams {
-                font_size: DETAIL_FONT,
+                font_size: 14,
+                color: ui::TEXT_DIM,
+                ..Default::default()
+            },
+        );
+    }
+
+    let hidden_count = state
+        .monster_roster
+        .monsters
+        .len()
+        .saturating_sub(ROSTER_PREVIEW_LIMIT);
+    if hidden_count > 0 {
+        draw_text_ex(
+            &format!("Open the Stable to manage +{hidden_count} more."),
+            rect.x + 18.0,
+            rect.y + 166.0,
+            TextParams {
+                font_size: 14,
                 color: ui::TEXT_DIM,
                 ..Default::default()
             },
@@ -211,7 +244,7 @@ fn draw_npcs(state: &GameState, data: &GameData) {
 }
 
 fn draw_tower_progress(state: &GameState) {
-    let rect = Rect::new(24.0, 344.0, 220.0, 128.0);
+    let rect = Rect::new(24.0, 344.0, 220.0, 142.0);
     ui::draw_panel(rect);
     ui::draw_section_title("Tower", rect.x + 16.0, rect.y + 32.0);
     draw_text_ex(
@@ -231,6 +264,20 @@ fn draw_tower_progress(state: &GameState) {
         TextParams {
             font_size: BODY_FONT,
             color: ui::TEXT,
+            ..Default::default()
+        },
+    );
+    draw_text_ex(
+        &format!(
+            "Egg slots: {}/{}",
+            state.egg_inventory.eggs.len(),
+            town_engine::egg_capacity(state)
+        ),
+        rect.x + 16.0,
+        rect.y + 130.0,
+        TextParams {
+            font_size: DETAIL_FONT,
+            color: ui::TEXT_DIM,
             ..Default::default()
         },
     );

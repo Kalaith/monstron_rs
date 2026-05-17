@@ -1,8 +1,8 @@
 use macroquad::prelude::*;
 
 use crate::assets;
-use crate::data::GameData;
-use crate::engine::breeding_engine;
+use crate::data::{GameData, PassiveSkill};
+use crate::engine::{breeding_engine, monster_engine, town_engine};
 use crate::state::{GameState, MonsterInstance};
 use crate::ui;
 
@@ -22,7 +22,10 @@ pub fn handle_input(state: &GameState) -> Option<BreedingAction> {
 
     for (index, (first, second)) in visible_pairs(state).iter().enumerate() {
         let enabled = breeding_engine::pair_is_compatible(first, second)
-            && state.resources.amount("herbs") >= 2;
+            && state.resources.amount("herbs") >= 2
+            && town_engine::has_egg_capacity(state)
+            && monster_engine::can_take_daily_action(state, first).is_ok()
+            && monster_engine::can_take_daily_action(state, second).is_ok();
         if ui::button_clicked(pair_button_rect(index), enabled) {
             return Some(BreedingAction::Breed(first.id, second.id));
         }
@@ -75,7 +78,11 @@ fn draw_header(state: &GameState) {
             "Day {}  Herbs {}  Eggs {}",
             state.day,
             state.resources.amount("herbs"),
-            state.egg_inventory.eggs.len()
+            format!(
+                "{}/{}",
+                state.egg_inventory.eggs.len(),
+                town_engine::egg_capacity(state)
+            )
         ),
         740.0,
         70.0,
@@ -115,7 +122,9 @@ fn draw_pairs(state: &GameState, data: &GameData) {
             first,
             second,
             data,
+            state,
             state.resources.amount("herbs") >= 2,
+            town_engine::has_egg_capacity(state),
             state.tower_progress.best_floor.max(1),
         );
     }
@@ -127,7 +136,9 @@ fn draw_pair_row(
     first: &MonsterInstance,
     second: &MonsterInstance,
     data: &GameData,
+    state: &GameState,
     has_cost: bool,
+    has_egg_capacity: bool,
     origin_floor: u32,
 ) {
     let y = rect.y + 76.0 + index as f32 * 62.0;
@@ -169,7 +180,33 @@ fn draw_pair_row(
             ..Default::default()
         },
     );
-    ui::draw_button(pair_button_rect(index), "Breed", compatible && has_cost);
+    let available = monster_engine::can_take_daily_action(state, first).is_ok()
+        && monster_engine::can_take_daily_action(state, second).is_ok();
+    let forecast = breeding_engine::forecast_pair(state, data, first, second)
+        .map(|forecast| forecast_summary(data, &forecast))
+        .unwrap_or_else(|| "No stable egg forecast.".to_owned());
+    let forecast_line = if !has_egg_capacity {
+        "Hatchery egg capacity is full."
+    } else if available {
+        forecast.as_str()
+    } else {
+        "One parent is already committed today."
+    };
+    draw_text_ex(
+        forecast_line,
+        rect.x + 122.0,
+        y + 43.0,
+        TextParams {
+            font_size: 13,
+            color: ui::TEXT_DIM,
+            ..Default::default()
+        },
+    );
+    ui::draw_button(
+        pair_button_rect(index),
+        "Breed",
+        compatible && has_cost && available && has_egg_capacity,
+    );
 }
 
 fn draw_grove_status(state: &GameState, data: &GameData) {
@@ -185,6 +222,11 @@ fn draw_grove_status(state: &GameState, data: &GameData) {
         .join(", ");
     let lines = [
         format!("Grove level: {}", grove_level),
+        format!(
+            "Egg slots: {}/{}",
+            state.egg_inventory.eggs.len(),
+            town_engine::egg_capacity(state)
+        ),
         format!("Pairing cost: {}", cost_text),
         format!("Origin floor: {}", state.tower_progress.best_floor.max(1)),
         format!(
@@ -306,6 +348,71 @@ fn monster_label(monster: &MonsterInstance, data: &GameData) -> String {
         .map(|species| species.name.as_str())
         .unwrap_or(monster.species_id.as_str());
     format!("{} the {}", monster.name, species_name)
+}
+
+fn forecast_summary(data: &GameData, forecast: &breeding_engine::BreedingForecast) -> String {
+    let egg_text = forecast
+        .egg_options
+        .iter()
+        .take(2)
+        .map(|(name, chance)| format!("{chance}% {}", short_egg_name(name)))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let species_text = forecast
+        .species_options
+        .iter()
+        .take(2)
+        .map(|species_id| {
+            data.species(species_id)
+                .map(|species| species.name.clone())
+                .unwrap_or_else(|| species_id.clone())
+        })
+        .collect::<Vec<_>>()
+        .join("/");
+    let element_text = forecast
+        .element_options
+        .iter()
+        .take(2)
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join("/");
+    let temperament_text = forecast
+        .temperament_options
+        .iter()
+        .take(2)
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join("/");
+    let passive_text = forecast
+        .passive_options
+        .first()
+        .map(|passive| passive_short(*passive))
+        .unwrap_or("-");
+    format!(
+        "{} | {} | {} | {} | {} | {} lineage | Mut {}%",
+        egg_text,
+        species_text,
+        element_text,
+        temperament_text,
+        passive_text,
+        breeding_engine::lineage_quality_label(forecast.lineage_quality),
+        forecast.mutation_chance
+    )
+}
+
+fn short_egg_name(name: &str) -> &str {
+    name.strip_suffix(" Egg").unwrap_or(name)
+}
+
+fn passive_short(passive: PassiveSkill) -> &'static str {
+    match passive {
+        PassiveSkill::FindsSmallLoot => "Loot",
+        PassiveSkill::ResistsPoison => "Resist",
+        PassiveSkill::DetectsEggs => "Egg sense",
+        PassiveSkill::FindsStone => "Stone",
+        PassiveSkill::BurnsBrambles => "Brambles",
+        PassiveSkill::SoothesInjuries => "Soothe",
+    }
 }
 
 fn town_button_rect() -> Rect {

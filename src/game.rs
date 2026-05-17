@@ -18,6 +18,7 @@ use crate::screens::{
     workshop, AppScreen,
 };
 use crate::state::GameState;
+use crate::state::TowerRunGoal;
 use crate::ui;
 
 pub struct Game {
@@ -283,8 +284,8 @@ impl Game {
                 self.screen = AppScreen::Town;
                 self.status_message = "Returned to tower camp.".to_owned();
             }
-            PlaceholderAction::ToTower => {
-                self.enter_tower();
+            PlaceholderAction::ToTower(goal) => {
+                self.enter_tower(goal);
             }
         }
     }
@@ -365,14 +366,14 @@ impl Game {
         self.status_message = "Facility opened.".to_owned();
     }
 
-    fn enter_tower(&mut self) {
+    fn enter_tower(&mut self, goal: TowerRunGoal) {
         let Some(state) = &mut self.state else {
             self.screen = AppScreen::MainMenu;
             self.status_message = "No active save. Start a new game.".to_owned();
             return;
         };
 
-        let result = tower_engine::start_run(state, &self.data);
+        let result = tower_engine::start_run(state, &self.data, goal);
         let run_started = state.tower_run.is_some();
         self.status_message = result.summary;
         if run_started {

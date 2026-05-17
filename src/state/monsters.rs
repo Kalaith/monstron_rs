@@ -37,10 +37,21 @@ pub struct MonsterInstance {
     pub art_profile: MonsterArtProfile,
 }
 
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub enum DailyCommitment {
+    #[default]
+    Free,
+    Tower,
+    Breeding,
+    Rest,
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct MonsterCondition {
     pub fatigue: u32,
     pub injury_days: u32,
+    #[serde(default)]
+    pub commitment: DailyCommitment,
 }
 
 impl MonsterInstance {

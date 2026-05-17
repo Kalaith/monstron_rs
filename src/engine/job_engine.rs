@@ -1,4 +1,6 @@
 use crate::data::{GameData, MonsterRole, PassiveSkill, TownSkill};
+use crate::engine::monster_engine;
+use crate::state::DailyCommitment;
 use crate::state::{GameState, MonsterInstance, TownJobKind};
 
 const WORKSHOP_ID: &str = "workshop";
@@ -36,6 +38,24 @@ pub fn assign_job(
         .species(&monster.species_id)
         .map(|species| species.name.as_str())
         .unwrap_or(monster.species_id.as_str());
+
+    if monster.is_injured() {
+        return JobResult {
+            summary: format!(
+                "{} needs {} more day(s) of rest.",
+                monster.name, monster.condition.injury_days
+            ),
+        };
+    }
+    if monster.condition.commitment != DailyCommitment::Free {
+        return JobResult {
+            summary: format!(
+                "{} is already committed to {} today.",
+                monster.name,
+                monster_engine::commitment_label(monster.condition.commitment)
+            ),
+        };
+    }
 
     state.town.set_monster_job(monster_id, job);
     let summary = format!("{monster_name} the {species_name} is assigned to {job_name}.");
@@ -90,6 +110,7 @@ pub fn run_daily_jobs(state: &mut GameState, data: &GameData) -> JobResult {
         warmed_eggs += warm_eggs(state, result.warmed_eggs);
         if let Some(worker) = state.monster_roster.monster_mut(monster.id) {
             worker.bond += 1;
+            monster_engine::add_fatigue(worker, 1);
         }
         workers += 1;
     }
