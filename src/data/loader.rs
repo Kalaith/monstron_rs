@@ -1,3 +1,4 @@
+use macroquad_toolkit::data_loader::load_embedded_json_labeled;
 use serde::Deserialize;
 
 use crate::data::{
@@ -92,5 +93,5 @@ fn parse_json<T>(json: &str, label: &str) -> Result<T, String>
 where
     T: for<'de> Deserialize<'de>,
 {
-    serde_json::from_str(json).map_err(|error| format!("Failed to parse {label}: {error}"))
+    load_embedded_json_labeled(label, json)
 }

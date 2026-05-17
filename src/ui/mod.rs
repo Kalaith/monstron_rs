@@ -35,33 +35,25 @@ pub fn draw_button(rect: Rect, label: &str, enabled: bool) {
     } else {
         BUTTON
     };
-    draw_rectangle(rect.x, rect.y, rect.w, rect.h, color);
-    draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 2.0, PANEL_EDGE);
+    let surface = macroquad_toolkit::ui::SurfaceStyle::new(color).with_border(2.0, PANEL_EDGE);
+    macroquad_toolkit::ui::draw_surface(rect, &surface);
 
     let text_color = if enabled { TEXT_BRIGHT } else { TEXT_DIM };
     let font_size = if rect.h < 30.0 || rect.w < 80.0 {
-        18
+        18.0
     } else if rect.h < 38.0 {
-        20
+        20.0
     } else {
-        24
+        24.0
     };
-    let measured = measure_text(label, None, font_size, 1.0);
-    draw_text_ex(
-        label,
-        rect.x + rect.w * 0.5 - measured.width * 0.5,
-        rect.y + rect.h * 0.5 + measured.height * 0.38,
-        TextParams {
-            font_size,
-            color: text_color,
-            ..Default::default()
-        },
+    macroquad_toolkit::ui::draw_text_centered_in_box(
+        label, rect.x, rect.y, rect.w, rect.h, font_size, text_color,
     );
 }
 
 pub fn draw_panel(rect: Rect) {
-    draw_rectangle(rect.x, rect.y, rect.w, rect.h, PANEL);
-    draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 1.5, PANEL_EDGE);
+    let surface = macroquad_toolkit::ui::SurfaceStyle::new(PANEL).with_border(1.5, PANEL_EDGE);
+    macroquad_toolkit::ui::draw_surface(rect, &surface);
 }
 
 pub fn draw_section_title(title: &str, x: f32, y: f32) {
@@ -78,28 +70,18 @@ pub fn draw_section_title(title: &str, x: f32, y: f32) {
 }
 
 pub fn draw_centered_text(text: &str, center_x: f32, y: f32, font_size: u16, color: Color) {
-    let measured = measure_text(text, None, font_size, 1.0);
-    draw_text_ex(
+    macroquad_toolkit::ui::draw_text_centered(
         text,
-        center_x - measured.width * 0.5,
+        center_x,
         y,
-        TextParams {
-            font_size,
-            color,
-            ..Default::default()
-        },
+        macroquad_toolkit::ui::TextStyle::new(font_size as f32, color),
     );
 }
 
 pub fn draw_status(status_message: &str) {
     let rect = Rect::new(24.0, VIEW_HEIGHT - 48.0, VIEW_WIDTH - 48.0, 28.0);
-    draw_rectangle(
-        rect.x,
-        rect.y,
-        rect.w,
-        rect.h,
-        Color::new(0.063, 0.071, 0.082, 0.86),
-    );
+    let surface = macroquad_toolkit::ui::SurfaceStyle::new(Color::new(0.063, 0.071, 0.082, 0.86));
+    macroquad_toolkit::ui::draw_surface(rect, &surface);
     draw_text_ex(
         status_message,
         rect.x + 12.0,
@@ -118,8 +100,6 @@ fn is_mouse_over(rect: Rect) -> bool {
 }
 
 fn virtual_mouse_position() -> (f32, f32) {
-    let (x, y) = mouse_position();
-    let scale_x = VIEW_WIDTH / screen_width().max(1.0);
-    let scale_y = VIEW_HEIGHT / screen_height().max(1.0);
-    (x * scale_x, y * scale_y)
+    let pos = macroquad_toolkit::ui::virtual_mouse_position(VIEW_WIDTH, VIEW_HEIGHT);
+    (pos.x, pos.y)
 }
