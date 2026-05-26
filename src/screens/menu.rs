@@ -6,6 +6,14 @@ use crate::ui;
 pub enum MenuAction {
     NewGame,
     LoadGame,
+    Settings,
+    ExitGame,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SettingsAction {
+    ToggleFullscreen,
+    Back,
 }
 
 pub fn handle_input(has_save: bool) -> Option<MenuAction> {
@@ -15,6 +23,9 @@ pub fn handle_input(has_save: bool) -> Option<MenuAction> {
 
     if has_save && is_key_pressed(KeyCode::L) {
         return Some(MenuAction::LoadGame);
+    }
+    if is_key_pressed(KeyCode::S) {
+        return Some(MenuAction::Settings);
     }
 
     let new_game = new_game_rect();
@@ -27,67 +38,101 @@ pub fn handle_input(has_save: bool) -> Option<MenuAction> {
         return Some(MenuAction::LoadGame);
     }
 
+    let settings = settings_rect();
+    if ui::button_clicked(settings, true) {
+        return Some(MenuAction::Settings);
+    }
+
+    let exit_game = exit_game_rect();
+    if ui::button_clicked(exit_game, true) {
+        return Some(MenuAction::ExitGame);
+    }
+
     None
 }
 
-pub fn draw(has_save: bool, status_message: &str) {
-    let title = "Hatchspire";
-    let subtitle = "Raise tower-born monsters and rebuild the camp below the spire.";
-    let center_x = ui::VIEW_WIDTH * 0.5;
+pub fn handle_settings_input() -> Option<SettingsAction> {
+    if is_key_pressed(KeyCode::Escape) {
+        return Some(SettingsAction::Back);
+    }
+    if is_key_pressed(KeyCode::Enter)
+        || is_key_pressed(KeyCode::Space)
+        || is_key_pressed(KeyCode::F)
+        || ui::button_clicked(fullscreen_toggle_rect(), true)
+    {
+        return Some(SettingsAction::ToggleFullscreen);
+    }
+    if ui::button_clicked(settings_back_rect(), true) {
+        return Some(SettingsAction::Back);
+    }
 
+    None
+}
+
+pub fn draw(title_texture: &Texture2D, has_save: bool) {
+    draw_title_art(title_texture);
+    ui::draw_title_button(new_game_rect(), "New Game", true);
+    ui::draw_title_button(load_game_rect(), "Load Game", has_save);
+    ui::draw_title_button(settings_rect(), "Settings", true);
+    ui::draw_title_button(exit_game_rect(), "Exit Game", true);
+}
+
+pub fn draw_settings(fullscreen_enabled: bool) {
+    draw_rectangle(0.0, 0.0, ui::VIEW_WIDTH, ui::VIEW_HEIGHT, ui::BACKGROUND);
     draw_text_ex(
-        title,
-        center_x - measure_text(title, None, 64, 1.0).width * 0.5,
-        170.0,
+        "Settings",
+        72.0,
+        96.0,
         TextParams {
-            font_size: 64,
+            font_size: 44,
             color: ui::TEXT_BRIGHT,
             ..Default::default()
         },
     );
-    draw_text_ex(
-        subtitle,
-        center_x - measure_text(subtitle, None, 24, 1.0).width * 0.5,
-        215.0,
-        TextParams {
-            font_size: 24,
-            color: ui::TEXT_DIM,
+    ui::draw_toggle(fullscreen_toggle_rect(), "Fullscreen", fullscreen_enabled);
+    ui::draw_title_button(settings_back_rect(), "Back", true);
+}
+
+fn draw_title_art(title_texture: &Texture2D) {
+    let texture_size = title_texture.size();
+    let scale = (ui::VIEW_WIDTH / texture_size.x).max(ui::VIEW_HEIGHT / texture_size.y);
+    let width = texture_size.x * scale;
+    let height = texture_size.y * scale;
+    let x = (ui::VIEW_WIDTH - width) * 0.5;
+    let y = (ui::VIEW_HEIGHT - height) * 0.5;
+
+    draw_texture_ex(
+        title_texture,
+        x,
+        y,
+        WHITE,
+        DrawTextureParams {
+            dest_size: Some(vec2(width, height)),
             ..Default::default()
         },
     );
-
-    draw_tower_mark(center_x, 350.0);
-    ui::draw_button(new_game_rect(), "New Save", true);
-    ui::draw_button(load_game_rect(), "Load Save", has_save);
-
-    let hint = if has_save {
-        "Enter: new save   L: load save"
-    } else {
-        "Enter: new save"
-    };
-    ui::draw_centered_text(hint, center_x, 590.0, 20, ui::TEXT_DIM);
-    ui::draw_status(status_message);
-}
-
-fn draw_tower_mark(center_x: f32, base_y: f32) {
-    let stone = Color::from_rgba(114, 126, 139, 255);
-    let shadow = Color::from_rgba(43, 50, 60, 255);
-    draw_triangle(
-        vec2(center_x, base_y - 135.0),
-        vec2(center_x - 60.0, base_y + 40.0),
-        vec2(center_x + 60.0, base_y + 40.0),
-        shadow,
-    );
-    draw_rectangle(center_x - 34.0, base_y - 74.0, 68.0, 114.0, stone);
-    draw_rectangle(center_x - 24.0, base_y - 44.0, 18.0, 28.0, ui::BACKGROUND);
-    draw_rectangle(center_x + 6.0, base_y - 44.0, 18.0, 28.0, ui::BACKGROUND);
-    draw_circle(center_x, base_y - 100.0, 10.0, ui::ACCENT);
 }
 
 fn new_game_rect() -> Rect {
-    Rect::new(ui::VIEW_WIDTH * 0.5 - 120.0, 470.0, 240.0, 46.0)
+    Rect::new(ui::VIEW_WIDTH * 0.5 - 120.0, 442.0, 240.0, 44.0)
 }
 
 fn load_game_rect() -> Rect {
-    Rect::new(ui::VIEW_WIDTH * 0.5 - 120.0, 526.0, 240.0, 46.0)
+    Rect::new(ui::VIEW_WIDTH * 0.5 - 120.0, 496.0, 240.0, 44.0)
+}
+
+fn settings_rect() -> Rect {
+    Rect::new(ui::VIEW_WIDTH * 0.5 - 120.0, 550.0, 240.0, 44.0)
+}
+
+fn exit_game_rect() -> Rect {
+    Rect::new(ui::VIEW_WIDTH * 0.5 - 120.0, 604.0, 240.0, 44.0)
+}
+
+fn fullscreen_toggle_rect() -> Rect {
+    Rect::new(410.0, 278.0, 460.0, 64.0)
+}
+
+fn settings_back_rect() -> Rect {
+    Rect::new(520.0, 392.0, 240.0, 44.0)
 }

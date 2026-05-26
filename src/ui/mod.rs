@@ -51,6 +51,112 @@ pub fn draw_button(rect: Rect, label: &str, enabled: bool) {
     );
 }
 
+pub fn draw_title_button(rect: Rect, label: &str, enabled: bool) {
+    let hovered = enabled && is_mouse_over(rect);
+    let fill = if !enabled {
+        Color::from_rgba(18, 24, 29, 210)
+    } else if hovered {
+        Color::from_rgba(30, 59, 55, 235)
+    } else {
+        Color::from_rgba(16, 31, 38, 225)
+    };
+    let outer_edge = if hovered {
+        Color::from_rgba(190, 232, 166, 255)
+    } else if enabled {
+        Color::from_rgba(107, 138, 119, 235)
+    } else {
+        Color::from_rgba(63, 73, 75, 210)
+    };
+    let warm_edge = if hovered {
+        Color::from_rgba(234, 181, 91, 255)
+    } else {
+        Color::from_rgba(143, 103, 61, 225)
+    };
+
+    draw_rectangle(
+        rect.x + 5.0,
+        rect.y + 6.0,
+        rect.w,
+        rect.h,
+        Color::from_rgba(2, 6, 9, 170),
+    );
+    draw_rectangle(rect.x, rect.y, rect.w, rect.h, fill);
+    draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 2.0, outer_edge);
+    draw_line(
+        rect.x + 10.0,
+        rect.y + 4.0,
+        rect.x + rect.w - 10.0,
+        rect.y + 4.0,
+        1.0,
+        Color::from_rgba(214, 244, 191, 70),
+    );
+    draw_line(
+        rect.x + 12.0,
+        rect.y + rect.h - 4.0,
+        rect.x + rect.w - 12.0,
+        rect.y + rect.h - 4.0,
+        1.5,
+        warm_edge,
+    );
+
+    let text_color = if enabled {
+        Color::from_rgba(230, 248, 218, 255)
+    } else {
+        Color::from_rgba(127, 143, 137, 255)
+    };
+    macroquad_toolkit::ui::draw_text_centered_in_box(
+        label, rect.x, rect.y, rect.w, rect.h, 22.0, text_color,
+    );
+}
+
+pub fn draw_toggle(rect: Rect, label: &str, enabled: bool) {
+    let surface = macroquad_toolkit::ui::SurfaceStyle::new(PANEL).with_border(1.5, PANEL_EDGE);
+    macroquad_toolkit::ui::draw_surface(rect, &surface);
+
+    draw_text_ex(
+        label,
+        rect.x + 20.0,
+        rect.y + 36.0,
+        TextParams {
+            font_size: 24,
+            color: TEXT_BRIGHT,
+            ..Default::default()
+        },
+    );
+
+    let track_h = 30.0;
+    let track_w = 76.0;
+    let track_x = rect.x + rect.w - track_w - 20.0;
+    let track_y = rect.y + rect.h * 0.5 - track_h * 0.5;
+    let track_color = if enabled { ACCENT } else { BUTTON_DISABLED };
+    let knob_x = if enabled {
+        track_x + track_w - track_h * 0.5
+    } else {
+        track_x + track_h * 0.5
+    };
+
+    draw_rectangle(
+        track_x + track_h * 0.5,
+        track_y,
+        track_w - track_h,
+        track_h,
+        track_color,
+    );
+    draw_circle(
+        track_x + track_h * 0.5,
+        track_y + track_h * 0.5,
+        track_h * 0.5,
+        track_color,
+    );
+    draw_circle(
+        track_x + track_w - track_h * 0.5,
+        track_y + track_h * 0.5,
+        track_h * 0.5,
+        track_color,
+    );
+    draw_circle(knob_x, track_y + track_h * 0.5, track_h * 0.38, TEXT_BRIGHT);
+}
+
 pub fn draw_panel(rect: Rect) {
     let surface = macroquad_toolkit::ui::SurfaceStyle::new(PANEL).with_border(1.5, PANEL_EDGE);
     macroquad_toolkit::ui::draw_surface(rect, &surface);

@@ -10,7 +10,7 @@ use crate::screens::{
     breeding,
     combat::{self, CombatAction},
     hatchery,
-    menu::{self, MenuAction},
+    menu::{self, MenuAction, SettingsAction},
     placeholder::{self, PlaceholderAction, PlaceholderKind},
     shop, stable,
     tower::{self, TowerAction},
@@ -27,6 +27,8 @@ pub struct Game {
     pub(crate) screen: AppScreen,
     pub(crate) status_message: String,
     pub(crate) town_menu_open: bool,
+    title_texture: Texture2D,
+    fullscreen_enabled: bool,
 }
 
 impl Game {
@@ -42,12 +44,18 @@ impl Game {
             }
         };
 
+        let title_texture =
+            Texture2D::from_file_with_format(include_bytes!("../hatchspire_title.png"), None);
+        title_texture.set_filter(FilterMode::Linear);
+
         Self {
             data,
             state: None,
             screen: AppScreen::MainMenu,
             status_message,
             town_menu_open: false,
+            title_texture,
+            fullscreen_enabled: false,
         }
     }
 
@@ -57,6 +65,11 @@ impl Game {
                 let has_save = SaveRepository::exists();
                 if let Some(action) = menu::handle_input(has_save) {
                     self.apply_menu_action(action);
+                }
+            }
+            AppScreen::Settings => {
+                if let Some(action) = menu::handle_settings_input() {
+                    self.apply_settings_action(action);
                 }
             }
             AppScreen::Town => {
@@ -154,7 +167,10 @@ impl Game {
 
         match self.screen {
             AppScreen::MainMenu => {
-                menu::draw(SaveRepository::exists(), &self.status_message);
+                menu::draw(&self.title_texture, SaveRepository::exists());
+            }
+            AppScreen::Settings => {
+                menu::draw_settings(self.fullscreen_enabled);
             }
             AppScreen::Town => {
                 if let Some(state) = &self.state {
@@ -211,6 +227,24 @@ impl Game {
         match action {
             MenuAction::NewGame => self.start_new_game(),
             MenuAction::LoadGame => self.load_game(),
+            MenuAction::Settings => {
+                self.screen = AppScreen::Settings;
+            }
+            MenuAction::ExitGame => {
+                macroquad::miniquad::window::quit();
+            }
+        }
+    }
+
+    fn apply_settings_action(&mut self, action: SettingsAction) {
+        match action {
+            SettingsAction::ToggleFullscreen => {
+                self.fullscreen_enabled = !self.fullscreen_enabled;
+                set_fullscreen(self.fullscreen_enabled);
+            }
+            SettingsAction::Back => {
+                self.screen = AppScreen::MainMenu;
+            }
         }
     }
 
