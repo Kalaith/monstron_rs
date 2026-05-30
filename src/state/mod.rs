@@ -15,5 +15,8 @@ pub use eggs::{EggCareFocus, EggInheritance, EggInstance, EggInventory};
 pub use game_state::GameState;
 pub use monsters::{DailyCommitment, MonsterInstance, MonsterRoster};
 pub use resources::{ResourceInventory, ResourceStack};
-pub use tower::{TowerFoundEgg, TowerProgress, TowerRunGoal, TowerRunState};
+pub use tower::{
+    TowerFoundEgg, TowerMapObject, TowerMapObjectKind, TowerMapRng, TowerMapState, TowerProgress,
+    TowerRoom, TowerRunGoal, TowerRunState, TowerTileKind, TowerTileVisibility,
+};
 pub use town_state::{TownJobKind, TownState};

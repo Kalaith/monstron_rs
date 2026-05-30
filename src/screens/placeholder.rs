@@ -72,7 +72,7 @@ fn copy(kind: PlaceholderKind) -> (&'static str, &'static str, &'static str) {
         PlaceholderKind::DungeonPrep => (
             "Dungeon Prep",
             "Choose what this run is for before the party enters.",
-            "Each goal changes eggs, materials, pressure, and risk.",
+            "Each goal changes eggs, materials, routes, and risk.",
         ),
         PlaceholderKind::EndOfDay => (
             "End Of Day",

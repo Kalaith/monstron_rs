@@ -19,7 +19,9 @@ Turn a fragile camp into a working monster haven that can support increasingly d
 ## Controls
 
 - Enter: new save or enter tower.
-- Space: sleep or explore a tower room.
+- Space: sleep.
+- WASD / arrows: move through the tower view.
+- Minimap: tracks discovered tower terrain.
 - D: tower preparation.
 - H: hatchery.
 - R: stable or return from tower.

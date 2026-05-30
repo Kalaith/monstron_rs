@@ -326,10 +326,14 @@ impl Game {
 
     fn apply_tower_action(&mut self, action: TowerAction) {
         match action {
-            TowerAction::Explore => {
+            TowerAction::Move(dx, dy) => {
                 if let Some(state) = &mut self.state {
-                    let result = tower_engine::explore_room(state, &self.data);
+                    let result = tower_engine::move_party(state, &self.data, dx, dy);
+                    let returned_to_town = result.returned_to_town;
                     self.status_message = result.summary;
+                    if returned_to_town {
+                        self.screen = AppScreen::Town;
+                    }
                     if let Some(encounter) = result.encounter {
                         let combat_result = combat_engine::start_encounter(
                             state,
@@ -458,6 +462,7 @@ impl Game {
                 let loaded_day = save_data.state.day;
                 let mut loaded_state = save_data.state;
                 loaded_state.monster_roster.ensure_art_profiles(&self.data);
+                tower_engine::ensure_map(&mut loaded_state, &self.data);
                 self.state = Some(loaded_state);
                 self.screen = AppScreen::Town;
                 self.town_menu_open = false;
