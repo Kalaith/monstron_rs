@@ -6,6 +6,7 @@ use crate::engine::{egg_engine, town_engine};
 use crate::state::EggCareFocus;
 use crate::state::GameState;
 use crate::ui;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum HatcheryAction {
@@ -75,7 +76,7 @@ fn draw_backdrop() {
 
 fn draw_header(state: &GameState) {
     ui::draw_panel(Rect::new(32.0, 24.0, ui::VIEW_WIDTH - 64.0, 78.0));
-    draw_text_ex(
+    draw_ui_text_ex(
         "Hatchery",
         58.0,
         72.0,
@@ -85,7 +86,7 @@ fn draw_header(state: &GameState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "Day {}  Eggs {}/{}  Monsters {}/{}",
             state.day,
@@ -124,7 +125,7 @@ fn draw_egg_inventory(state: &GameState, data: &GameData) {
         } else {
             "No eggs are waiting. Bring eggs back from tower runs."
         };
-        draw_text_ex(
+        draw_ui_text_ex(
             empty_label,
             rect.x + 24.0,
             rect.y + 108.0,
@@ -147,7 +148,7 @@ fn draw_egg_inventory(state: &GameState, data: &GameData) {
             .map(|egg_type| egg_type.rarity.as_str())
             .unwrap_or("?");
         assets::draw_egg_badge(egg.palette_seed, rect.x + 24.0, y - 34.0, 42.0);
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("{} #{}", name, egg.id),
             rect.x + 82.0,
             y,
@@ -157,7 +158,7 @@ fn draw_egg_inventory(state: &GameState, data: &GameData) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!(
                 "{}  Floor {}  {} day(s) remaining  {}",
                 rarity, egg.origin_floor, egg.days_remaining, egg.care_focus
@@ -170,7 +171,7 @@ fn draw_egg_inventory(state: &GameState, data: &GameData) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!(
                 "{}  {}",
                 egg_engine::likely_species_text(egg, data),
@@ -214,7 +215,7 @@ fn draw_reference(data: &GameData) {
 
     for (index, egg_type) in data.egg_types.iter().take(8).enumerate() {
         let y = rect.y + 76.0 + index as f32 * 45.0;
-        draw_text_ex(
+        draw_ui_text_ex(
             &egg_type.name,
             rect.x + 20.0,
             y,
@@ -224,7 +225,7 @@ fn draw_reference(data: &GameData) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!(
                 "{}  Floor {}  Hatch {}d",
                 egg_type.rarity, egg_type.discovery_floor, egg_type.hatch_days

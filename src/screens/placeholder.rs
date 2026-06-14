@@ -2,6 +2,7 @@ use macroquad::prelude::*;
 
 use crate::state::TowerRunGoal;
 use crate::ui;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PlaceholderAction {
@@ -116,7 +117,7 @@ fn draw_run_goal_reference(rect: Rect) {
     for (index, goal) in TowerRunGoal::CHOICES.iter().enumerate() {
         let x = rect.x + 42.0;
         let y = rect.y + 210.0 + index as f32 * 30.0;
-        draw_text_ex(
+        draw_ui_text_ex(
             goal.label(),
             x,
             y,
@@ -126,7 +127,7 @@ fn draw_run_goal_reference(rect: Rect) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             goal.detail(),
             x + 124.0,
             y,

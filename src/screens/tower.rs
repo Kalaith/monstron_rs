@@ -8,6 +8,7 @@ use crate::state::{
     TowerTileVisibility,
 };
 use crate::ui;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 const VIEWPORT_TILES_W: u32 = 17;
 const VIEWPORT_TILES_H: u32 = 13;
@@ -122,7 +123,7 @@ fn draw_backdrop() {
 
 fn draw_header(state: &GameState) {
     ui::draw_panel(Rect::new(32.0, 24.0, ui::VIEW_WIDTH - 64.0, 78.0));
-    draw_text_ex(
+    draw_ui_text_ex(
         "Tower Map",
         58.0,
         72.0,
@@ -132,7 +133,7 @@ fn draw_header(state: &GameState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "Best {}  Unlocked {}",
             state.tower_progress.best_floor, state.tower_progress.unlocked_floor
@@ -508,7 +509,7 @@ fn draw_legend(x: f32, y: f32) {
     for (index, (label, color)) in entries.iter().enumerate() {
         let item_x = x + index as f32 * 96.0;
         draw_circle(item_x, y - 6.0, 6.0, *color);
-        draw_text_ex(
+        draw_ui_text_ex(
             label,
             item_x + 12.0,
             y,
@@ -547,7 +548,7 @@ fn draw_run_sidebar(state: &GameState, data: &GameData, run: &TowerRunState) {
         .unwrap_or("The tower records are missing.");
 
     ui::draw_section_title("Current Floor", rect.x + 20.0, rect.y + 34.0);
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("Floor {}: {}", run.current_floor, floor_name),
         rect.x + 20.0,
         rect.y + 72.0,
@@ -559,7 +560,7 @@ fn draw_run_sidebar(state: &GameState, data: &GameData, run: &TowerRunState) {
     );
     draw_wrapped_line(theme, rect.x + 20.0, rect.y + 104.0, 48, ui::TEXT_DIM);
 
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "{}  Steps {}  Party {}  Ready {}",
             run.goal,
@@ -596,7 +597,7 @@ fn draw_cargo_summary(
     y: f32,
     width: f32,
 ) {
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("Run Loot: {} item(s)", run.cargo_amount()),
         x,
         y,
@@ -608,7 +609,7 @@ fn draw_cargo_summary(
     );
 
     if run.cargo.is_empty() {
-        draw_text_ex(
+        draw_ui_text_ex(
             "No materials collected yet.",
             x,
             y + 28.0,
@@ -620,7 +621,7 @@ fn draw_cargo_summary(
         );
     } else {
         for (index, stack) in run.cargo.iter().take(3).enumerate() {
-            draw_text_ex(
+            draw_ui_text_ex(
                 &format!(
                     "{} {}",
                     stack.amount,
@@ -637,7 +638,7 @@ fn draw_cargo_summary(
         }
     }
 
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "Egg slots: {}/{}",
             state.egg_inventory.eggs.len() + run.found_eggs.len(),
@@ -653,7 +654,7 @@ fn draw_cargo_summary(
     );
 
     if run.found_eggs.is_empty() {
-        draw_text_ex(
+        draw_ui_text_ex(
             "No eggs found.",
             x + width * 0.52,
             y + 28.0,
@@ -671,7 +672,7 @@ fn draw_cargo_summary(
                 .egg_type(&egg.egg_type_id)
                 .map(|egg_type| egg_type.name.as_str())
                 .unwrap_or(egg.egg_type_id.as_str());
-            draw_text_ex(
+            draw_ui_text_ex(
                 egg_name,
                 x + width * 0.52 + 32.0,
                 egg_y + 20.0,
@@ -686,7 +687,7 @@ fn draw_cargo_summary(
 }
 
 fn draw_events(run: &TowerRunState, x: f32, y: f32, width: f32) {
-    draw_text_ex(
+    draw_ui_text_ex(
         "Recent Events",
         x,
         y,
@@ -706,7 +707,7 @@ fn draw_empty_run() {
     let rect = Rect::new(32.0, 124.0, 560.0, 476.0);
     ui::draw_panel(rect);
     ui::draw_section_title("No Active Run", rect.x + 20.0, rect.y + 34.0);
-    draw_text_ex(
+    draw_ui_text_ex(
         "Enter the tower from town to begin a run.",
         rect.x + 20.0,
         rect.y + 88.0,
@@ -737,7 +738,7 @@ fn draw_floor_reference(state: &GameState, data: &GameData) {
         } else {
             ui::TEXT_DIM
         };
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("{}  {}", floor.floor, floor.name),
             rect.x + 20.0,
             y,
@@ -747,7 +748,7 @@ fn draw_floor_reference(state: &GameState, data: &GameData) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("{}  {}", floor.theme, floor.enemy_hint),
             rect.x + 300.0,
             y,
@@ -771,7 +772,7 @@ fn draw_wrapped_line(text: &str, x: f32, y: f32, max_chars: usize, color: Color)
             line.len() + 1 + word.len()
         };
         if next_len > max_chars && !line.is_empty() {
-            draw_text_ex(
+            draw_ui_text_ex(
                 &line,
                 x,
                 y + row as f32 * 20.0,
@@ -791,7 +792,7 @@ fn draw_wrapped_line(text: &str, x: f32, y: f32, max_chars: usize, color: Color)
     }
 
     if !line.is_empty() {
-        draw_text_ex(
+        draw_ui_text_ex(
             &line,
             x,
             y + row as f32 * 20.0,

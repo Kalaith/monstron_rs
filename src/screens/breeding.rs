@@ -5,6 +5,7 @@ use crate::data::{GameData, PassiveSkill};
 use crate::engine::{breeding_engine, monster_engine, town_engine};
 use crate::state::{GameState, MonsterInstance};
 use crate::ui;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum BreedingAction {
@@ -63,7 +64,7 @@ fn draw_backdrop() {
 
 fn draw_header(state: &GameState) {
     ui::draw_panel(Rect::new(32.0, 24.0, ui::VIEW_WIDTH - 64.0, 78.0));
-    draw_text_ex(
+    draw_ui_text_ex(
         "Breeding Grove",
         58.0,
         72.0,
@@ -73,7 +74,7 @@ fn draw_header(state: &GameState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "Day {}  Herbs {}  Eggs {}",
             state.day,
@@ -102,7 +103,7 @@ fn draw_pairs(state: &GameState, data: &GameData) {
 
     let pairs = visible_pairs(state);
     if pairs.is_empty() {
-        draw_text_ex(
+        draw_ui_text_ex(
             "Two monsters are needed before the grove can prepare an egg.",
             rect.x + 24.0,
             rect.y + 108.0,
@@ -146,7 +147,7 @@ fn draw_pair_row(
     assets::draw_monster_badge(first.visual_seed, rect.x + 22.0, y - 32.0, 38.0);
     assets::draw_monster_badge(second.visual_seed, rect.x + 68.0, y - 32.0, 38.0);
 
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "{} + {}",
             monster_label(first, data),
@@ -160,7 +161,7 @@ fn draw_pair_row(
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "{}  Bond {}+{}  {} lineage",
             breeding_engine::compatibility_label(first, second),
@@ -192,7 +193,7 @@ fn draw_pair_row(
     } else {
         "One parent is already committed today."
     };
-    draw_text_ex(
+    draw_ui_text_ex(
         forecast_line,
         rect.x + 122.0,
         y + 43.0,
@@ -236,7 +237,7 @@ fn draw_grove_status(state: &GameState, data: &GameData) {
     ];
 
     for (index, line) in lines.iter().enumerate() {
-        draw_text_ex(
+        draw_ui_text_ex(
             line,
             rect.x + 22.0,
             rect.y + 78.0 + index as f32 * 28.0,
@@ -252,7 +253,7 @@ fn draw_grove_status(state: &GameState, data: &GameData) {
 }
 
 fn draw_recent_bred_eggs(state: &GameState, data: &GameData, x: f32, y: f32) {
-    draw_text_ex(
+    draw_ui_text_ex(
         "Recent Grove Eggs",
         x,
         y,
@@ -272,7 +273,7 @@ fn draw_recent_bred_eggs(state: &GameState, data: &GameData, x: f32, y: f32) {
         .take(3)
         .peekable();
     if rows.peek().is_none() {
-        draw_text_ex(
+        draw_ui_text_ex(
             "No bred eggs are waiting yet.",
             x,
             y + 42.0,
@@ -296,7 +297,7 @@ fn draw_recent_bred_eggs(state: &GameState, data: &GameData, x: f32, y: f32) {
             .as_ref()
             .is_some_and(|inheritance| inheritance.mutated);
         assets::draw_egg_badge(egg.palette_seed, x, row_y - 32.0, 36.0);
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("{} #{}", egg_name, egg.id),
             x + 50.0,
             row_y,
@@ -306,7 +307,7 @@ fn draw_recent_bred_eggs(state: &GameState, data: &GameData, x: f32, y: f32) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             if mutation {
                 "mutated lineage"
             } else {

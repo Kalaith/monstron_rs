@@ -5,6 +5,7 @@ use crate::engine::town_engine::{self, ShopTrade};
 use crate::screens::{town_layout, town_panels};
 use crate::state::GameState;
 use crate::ui;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum TownAction {
@@ -189,7 +190,7 @@ fn draw_town_backdrop() {
 
 fn draw_header(state: &GameState) {
     ui::draw_panel(Rect::new(24.0, 20.0, ui::VIEW_WIDTH - 48.0, 72.0));
-    draw_text_ex(
+    draw_ui_text_ex(
         "Tower Camp",
         48.0,
         66.0,
@@ -199,7 +200,7 @@ fn draw_header(state: &GameState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("Town Rank {}", town_engine::town_rank(state)),
         262.0,
         64.0,
@@ -209,7 +210,7 @@ fn draw_header(state: &GameState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("Day {}", state.day),
         ui::VIEW_WIDTH - 170.0,
         66.0,
@@ -240,7 +241,7 @@ fn draw_escape_menu() {
         30,
         ui::TEXT_BRIGHT,
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         "Esc closes this menu.",
         rect.x + 92.0,
         rect.y + 90.0,

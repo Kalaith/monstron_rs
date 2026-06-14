@@ -1,6 +1,7 @@
 use macroquad::prelude::*;
 
 use crate::ui;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MenuAction {
@@ -79,7 +80,7 @@ pub fn draw(title_texture: &Texture2D, has_save: bool) {
 
 pub fn draw_settings(fullscreen_enabled: bool) {
     draw_rectangle(0.0, 0.0, ui::VIEW_WIDTH, ui::VIEW_HEIGHT, ui::BACKGROUND);
-    draw_text_ex(
+    draw_ui_text_ex(
         "Settings",
         72.0,
         96.0,

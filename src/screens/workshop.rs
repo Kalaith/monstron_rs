@@ -5,6 +5,7 @@ use crate::data::GameData;
 use crate::engine::{job_engine, monster_engine};
 use crate::state::{GameState, MonsterInstance, TownJobKind};
 use crate::ui;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 const JOBS: [TownJobKind; 4] = [
     TownJobKind::Forage,
@@ -74,7 +75,7 @@ fn draw_backdrop() {
 
 fn draw_header(state: &GameState) {
     ui::draw_panel(Rect::new(32.0, 24.0, ui::VIEW_WIDTH - 64.0, 78.0));
-    draw_text_ex(
+    draw_ui_text_ex(
         "Workshop",
         58.0,
         72.0,
@@ -84,7 +85,7 @@ fn draw_header(state: &GameState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "Day {}  Workers {}",
             state.day,
@@ -107,7 +108,7 @@ fn draw_assignments(state: &GameState, data: &GameData) {
     ui::draw_section_title("Town Jobs", rect.x + 20.0, rect.y + 34.0);
 
     if state.monster_roster.monsters.is_empty() {
-        draw_text_ex(
+        draw_ui_text_ex(
             "No monsters are available for town work.",
             rect.x + 24.0,
             rect.y + 108.0,
@@ -136,7 +137,7 @@ fn draw_worker_row(
     let job = state.town.monster_job(monster.id);
     assets::draw_monster_badge(monster.visual_seed, rect.x + 22.0, y - 32.0, 38.0);
 
-    draw_text_ex(
+    draw_ui_text_ex(
         &monster_label(monster, data),
         rect.x + 76.0,
         y,
@@ -146,7 +147,7 @@ fn draw_worker_row(
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "{}  Bond {}  {}  Plan: {}",
             monster.town_skill,
@@ -165,7 +166,7 @@ fn draw_worker_row(
     let preview = job
         .map(|job_kind| job_engine::job_preview(monster, data, job_kind))
         .unwrap_or_else(|| "Choose overnight work.".to_owned());
-    draw_text_ex(
+    draw_ui_text_ex(
         &preview,
         rect.x + 76.0,
         y + 43.0,
@@ -193,7 +194,7 @@ fn draw_reference() {
 
     for (index, job) in JOBS.iter().enumerate() {
         let y = rect.y + 78.0 + index as f32 * 82.0;
-        draw_text_ex(
+        draw_ui_text_ex(
             job_engine::job_label(*job),
             rect.x + 20.0,
             y,
@@ -203,7 +204,7 @@ fn draw_reference() {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             job_engine::job_detail(*job),
             rect.x + 20.0,
             y + 25.0,

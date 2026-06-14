@@ -1,4 +1,5 @@
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 pub const VIEW_WIDTH: f32 = 1280.0;
 pub const VIEW_HEIGHT: f32 = 720.0;
@@ -113,7 +114,7 @@ pub fn draw_toggle(rect: Rect, label: &str, enabled: bool) {
     let surface = macroquad_toolkit::ui::SurfaceStyle::new(PANEL).with_border(1.5, PANEL_EDGE);
     macroquad_toolkit::ui::draw_surface(rect, &surface);
 
-    draw_text_ex(
+    draw_ui_text_ex(
         label,
         rect.x + 20.0,
         rect.y + 36.0,
@@ -163,7 +164,7 @@ pub fn draw_panel(rect: Rect) {
 }
 
 pub fn draw_section_title(title: &str, x: f32, y: f32) {
-    draw_text_ex(
+    draw_ui_text_ex(
         title,
         x,
         y,
@@ -188,7 +189,7 @@ pub fn draw_status(status_message: &str) {
     let rect = Rect::new(24.0, VIEW_HEIGHT - 48.0, VIEW_WIDTH - 48.0, 28.0);
     let surface = macroquad_toolkit::ui::SurfaceStyle::new(Color::new(0.063, 0.071, 0.082, 0.86));
     macroquad_toolkit::ui::draw_surface(rect, &surface);
-    draw_text_ex(
+    draw_ui_text_ex(
         status_message,
         rect.x + 12.0,
         rect.y + 20.0,

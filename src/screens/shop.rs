@@ -4,6 +4,7 @@ use crate::data::GameData;
 use crate::engine::town_engine::ShopTrade;
 use crate::state::GameState;
 use crate::ui;
+use macroquad_toolkit::ui::{draw_ui_text_ex, measure_ui_text};
 
 const TRADES: [ShopTrade; 3] = [
     ShopTrade::BuyHerbs,
@@ -62,7 +63,7 @@ fn draw_backdrop() {
 
 fn draw_header(state: &GameState) {
     ui::draw_panel(Rect::new(32.0, 24.0, ui::VIEW_WIDTH - 64.0, 78.0));
-    draw_text_ex(
+    draw_ui_text_ex(
         "Camp Shop",
         58.0,
         72.0,
@@ -72,7 +73,7 @@ fn draw_header(state: &GameState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "Day {}  Shop Lv {}",
             state.day,
@@ -96,7 +97,7 @@ fn draw_trades(data: &GameData) {
 
     for (index, trade) in TRADES.iter().enumerate() {
         let y = rect.y + 84.0 + index as f32 * 108.0;
-        draw_text_ex(
+        draw_ui_text_ex(
             trade_label(*trade),
             rect.x + 28.0,
             y,
@@ -106,7 +107,7 @@ fn draw_trades(data: &GameData) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             trade_detail(*trade),
             rect.x + 28.0,
             y + 28.0,
@@ -116,7 +117,7 @@ fn draw_trades(data: &GameData) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             trade_cost(data, *trade).as_str(),
             rect.x + 28.0,
             y + 55.0,
@@ -137,7 +138,7 @@ fn draw_resources(state: &GameState, data: &GameData) {
 
     for (index, resource) in data.resources.iter().enumerate() {
         let y = rect.y + 78.0 + index as f32 * 42.0;
-        draw_text_ex(
+        draw_ui_text_ex(
             &resource.name,
             rect.x + 24.0,
             y,
@@ -148,9 +149,9 @@ fn draw_resources(state: &GameState, data: &GameData) {
             },
         );
         let amount = state.resources.amount(&resource.id).to_string();
-        draw_text_ex(
+        draw_ui_text_ex(
             &amount,
-            rect.x + rect.w - 28.0 - measure_text(&amount, None, 21, 1.0).width,
+            rect.x + rect.w - 28.0 - measure_ui_text(&amount, None, 21, 1.0).width,
             y,
             TextParams {
                 font_size: 21,

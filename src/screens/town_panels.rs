@@ -6,6 +6,7 @@ use crate::engine::town_engine::{self, ShopTrade};
 use crate::screens::{town::TownAction, town_layout};
 use crate::state::GameState;
 use crate::ui;
+use macroquad_toolkit::ui::{draw_ui_text_ex, measure_ui_text};
 
 const BODY_FONT: u16 = 20;
 const DETAIL_FONT: u16 = 18;
@@ -30,7 +31,7 @@ fn draw_resources(state: &GameState, data: &GameData) {
 
     for (index, resource) in data.resources.iter().enumerate() {
         let y = rect.y + 64.0 + index as f32 * 28.0;
-        draw_text_ex(
+        draw_ui_text_ex(
             &resource.name,
             rect.x + 16.0,
             y,
@@ -42,9 +43,9 @@ fn draw_resources(state: &GameState, data: &GameData) {
         );
         let amount = state.resources.amount(&resource.id);
         let label = amount.to_string();
-        draw_text_ex(
+        draw_ui_text_ex(
             &label,
-            rect.x + rect.w - 20.0 - measure_text(&label, None, BODY_FONT, 1.0).width,
+            rect.x + rect.w - 20.0 - measure_ui_text(&label, None, BODY_FONT, 1.0).width,
             y,
             TextParams {
                 font_size: BODY_FONT,
@@ -75,7 +76,7 @@ fn draw_buildings(state: &GameState, data: &GameData) {
             town_engine::cost_text(data, &cost)
         };
 
-        draw_text_ex(
+        draw_ui_text_ex(
             &building.name,
             rect.x + 18.0,
             y,
@@ -85,7 +86,7 @@ fn draw_buildings(state: &GameState, data: &GameData) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             &status,
             rect.x + 196.0,
             y,
@@ -95,7 +96,7 @@ fn draw_buildings(state: &GameState, data: &GameData) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             &cost_text,
             rect.x + 18.0,
             y + 25.0,
@@ -142,7 +143,7 @@ fn draw_roster(state: &GameState, data: &GameData) {
     );
 
     if state.monster_roster.monsters.is_empty() {
-        draw_text_ex(
+        draw_ui_text_ex(
             "No monsters have joined yet.",
             rect.x + 18.0,
             rect.y + 82.0,
@@ -168,7 +169,7 @@ fn draw_roster(state: &GameState, data: &GameData) {
             .species(&monster.species_id)
             .map(|species| species.name.as_str())
             .unwrap_or(monster.species_id.as_str());
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("{} the {}", monster.name, species_name),
             rect.x + 56.0,
             y,
@@ -178,7 +179,7 @@ fn draw_roster(state: &GameState, data: &GameData) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!(
                 "Lv {}  HP {}/{}  Bond {}  {}",
                 monster.level, monster.hp, monster.max_hp, monster.bond, monster.role
@@ -199,7 +200,7 @@ fn draw_roster(state: &GameState, data: &GameData) {
         .len()
         .saturating_sub(ROSTER_PREVIEW_LIMIT);
     if hidden_count > 0 {
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("Open the Stable to manage +{hidden_count} more."),
             rect.x + 18.0,
             rect.y + 166.0,
@@ -219,7 +220,7 @@ fn draw_npcs(state: &GameState, data: &GameData) {
 
     for (index, npc) in data.npcs.iter().enumerate() {
         let y = rect.y + 62.0 + index as f32 * 32.0;
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("{} - {}", npc.name, npc.service),
             rect.x + 18.0,
             y,
@@ -229,7 +230,7 @@ fn draw_npcs(state: &GameState, data: &GameData) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("F {}", state.npc_friendship(&npc.id)),
             rect.x + 294.0,
             y,
@@ -247,7 +248,7 @@ fn draw_tower_progress(state: &GameState) {
     let rect = Rect::new(24.0, 344.0, 220.0, 142.0);
     ui::draw_panel(rect);
     ui::draw_section_title("Tower", rect.x + 16.0, rect.y + 32.0);
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("Best floor: {}", state.tower_progress.best_floor),
         rect.x + 16.0,
         rect.y + 70.0,
@@ -257,7 +258,7 @@ fn draw_tower_progress(state: &GameState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("Unlocked floor: {}", state.tower_progress.unlocked_floor),
         rect.x + 16.0,
         rect.y + 100.0,
@@ -267,7 +268,7 @@ fn draw_tower_progress(state: &GameState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "Egg slots: {}/{}",
             state.egg_inventory.eggs.len(),
@@ -291,7 +292,7 @@ fn draw_log(state: &GameState) {
     let visible = state.activity_log.entries.iter().rev().take(2);
     for (index, entry) in visible.enumerate() {
         let y = rect.y + 62.0 + index as f32 * 32.0;
-        draw_text_ex(
+        draw_ui_text_ex(
             &short_log_line(entry.day, &entry.message),
             rect.x + 18.0,
             y,
@@ -315,7 +316,7 @@ fn draw_shop(state: &GameState) {
     } else {
         "Build the shop to unlock trades."
     };
-    draw_text_ex(
+    draw_ui_text_ex(
         helper,
         rect.x + 18.0,
         rect.y + 58.0,

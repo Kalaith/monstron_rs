@@ -5,6 +5,7 @@ use crate::data::GameData;
 use crate::engine::{monster_engine, town_engine};
 use crate::state::GameState;
 use crate::ui;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StableAction {
@@ -66,7 +67,7 @@ fn draw_backdrop() {
 
 fn draw_header(state: &GameState) {
     ui::draw_panel(Rect::new(32.0, 24.0, ui::VIEW_WIDTH - 64.0, 78.0));
-    draw_text_ex(
+    draw_ui_text_ex(
         "Stable",
         58.0,
         72.0,
@@ -76,7 +77,7 @@ fn draw_header(state: &GameState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "Roster {}/{}  Party {}",
             state.monster_roster.monsters.len(),
@@ -110,7 +111,7 @@ fn draw_party(state: &GameState, data: &GameData) {
         draw_rectangle(x, y, 176.0, 70.0, Color::from_rgba(28, 36, 40, 230));
         draw_rectangle_lines(x, y, 176.0, 70.0, 1.0, ui::PANEL_EDGE);
         let row = if index < 3 { "Front" } else { "Back" };
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("{} {}", row, index + 1),
             x + 10.0,
             y + 20.0,
@@ -128,7 +129,7 @@ fn draw_party(state: &GameState, data: &GameData) {
                     .species(&monster.species_id)
                     .map(|species| species.name.as_str())
                     .unwrap_or(monster.species_id.as_str());
-                draw_text_ex(
+                draw_ui_text_ex(
                     &monster.name,
                     x + 54.0,
                     y + 45.0,
@@ -138,7 +139,7 @@ fn draw_party(state: &GameState, data: &GameData) {
                         ..Default::default()
                     },
                 );
-                draw_text_ex(
+                draw_ui_text_ex(
                     &format!(
                         "{}  {}",
                         species_name,
@@ -155,7 +156,7 @@ fn draw_party(state: &GameState, data: &GameData) {
                 ui::draw_button(slot_button_rect(index), "Bench", true);
             }
         } else {
-            draw_text_ex(
+            draw_ui_text_ex(
                 "Empty",
                 x + 58.0,
                 y + 52.0,
@@ -192,7 +193,7 @@ fn draw_roster(state: &GameState, data: &GameData) {
             .map(|species| species.name.as_str())
             .unwrap_or(monster.species_id.as_str());
         assets::draw_monster_badge(monster.visual_seed, x, y - 28.0, 42.0);
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("{} the {}", monster.name, species_name),
             x + 58.0,
             y,
@@ -202,7 +203,7 @@ fn draw_roster(state: &GameState, data: &GameData) {
                 ..Default::default()
             },
         );
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!(
                 "{} {}  {}  {}  Plan: {}",
                 monster.element,

@@ -5,6 +5,7 @@ use crate::data::{GameData, MonsterRole};
 use crate::engine::combat_engine::CombatCommand;
 use crate::state::{CombatOutcome, CombatSide, CombatState, Combatant, GameState};
 use crate::ui;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CombatAction {
@@ -88,7 +89,7 @@ fn draw_backdrop() {
 
 fn draw_header(combat: &CombatState) {
     ui::draw_panel(Rect::new(32.0, 24.0, ui::VIEW_WIDTH - 64.0, 78.0));
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("Combat - Floor {}", combat.floor),
         58.0,
         72.0,
@@ -98,7 +99,7 @@ fn draw_header(combat: &CombatState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("Round {}", combat.round),
         520.0,
         70.0,
@@ -122,7 +123,7 @@ fn draw_header(combat: &CombatState) {
     } else {
         "Enemy turn"
     };
-    draw_text_ex(
+    draw_ui_text_ex(
         turn_text,
         ui::VIEW_WIDTH - 230.0,
         70.0,
@@ -138,7 +139,7 @@ fn draw_formation(combat: &CombatState) {
     let rect = Rect::new(32.0, 124.0, 780.0, 330.0);
     ui::draw_panel(rect);
     ui::draw_section_title("Formation", rect.x + 20.0, rect.y + 34.0);
-    draw_text_ex(
+    draw_ui_text_ex(
         "Allies",
         rect.x + 58.0,
         rect.y + 78.0,
@@ -148,7 +149,7 @@ fn draw_formation(combat: &CombatState) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         "Enemies",
         rect.x + 472.0,
         rect.y + 78.0,
@@ -187,7 +188,7 @@ fn draw_combatant(combatant: &Combatant, is_ally: bool, rect: Rect) {
     } else {
         ui::TEXT_DIM
     };
-    draw_text_ex(
+    draw_ui_text_ex(
         &combatant.name,
         rect.x + 54.0,
         rect.y + 28.0,
@@ -199,7 +200,7 @@ fn draw_combatant(combatant: &Combatant, is_ally: bool, rect: Rect) {
     );
     draw_hp_bar(combatant, rect.x + 54.0, rect.y + 42.0, rect.w - 66.0);
     let row = if combatant.slot < 3 { "F" } else { "B" };
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "{}{} {} ATK {} DEF {}",
             row,
@@ -216,7 +217,7 @@ fn draw_combatant(combatant: &Combatant, is_ally: bool, rect: Rect) {
             ..Default::default()
         },
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "SPD {} MOR {}{}",
             combatant.speed,
@@ -261,7 +262,7 @@ fn draw_hp_bar(combatant: &Combatant, x: f32, y: f32, width: f32) {
     };
     draw_rectangle(x, y, width * ratio.clamp(0.0, 1.0), 12.0, color);
     draw_rectangle_lines(x, y, width, 12.0, 1.0, ui::PANEL_EDGE);
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("{}/{}", combatant.hp.max(0), combatant.max_hp),
         x,
         y + 28.0,
@@ -300,7 +301,7 @@ fn draw_rewards(combat: &CombatState, data: &GameData) {
     let rect = Rect::new(836.0, 124.0, 412.0, 150.0);
     ui::draw_panel(rect);
     ui::draw_section_title("Rewards", rect.x + 20.0, rect.y + 32.0);
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("XP: {}", combat.xp_reward),
         rect.x + 20.0,
         rect.y + 68.0,
@@ -322,7 +323,7 @@ fn draw_rewards(combat: &CombatState, data: &GameData) {
         })
         .collect::<Vec<_>>()
         .join(", ");
-    draw_text_ex(
+    draw_ui_text_ex(
         if reward_text.is_empty() {
             "Materials: none"
         } else {
@@ -337,7 +338,7 @@ fn draw_rewards(combat: &CombatState, data: &GameData) {
         },
     );
     if combat.enemies.iter().any(|enemy| enemy.is_marked) {
-        draw_text_ex(
+        draw_ui_text_ex(
             "Marked target bonus active",
             rect.x + 20.0,
             rect.y + 126.0,
@@ -355,7 +356,7 @@ fn draw_log(combat: &CombatState) {
     ui::draw_panel(rect);
     ui::draw_section_title("Battle Log", rect.x + 20.0, rect.y + 32.0);
     for (index, message) in combat.log.iter().rev().take(6).enumerate() {
-        draw_text_ex(
+        draw_ui_text_ex(
             message,
             rect.x + 20.0,
             rect.y + 68.0 + index as f32 * 34.0,
