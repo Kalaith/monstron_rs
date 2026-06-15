@@ -38,3 +38,10 @@ Turn a fragile camp into a working monster haven that can support increasingly d
 ## Current Scope
 
 Playable camp and tower loop with monsters, hatching, breeding, jobs, expeditions, combat, fatigue, injuries, and recovery.
+# Practical Future Improvements
+
+- Add integration tests for hatchery, shop, stable, tower, combat, and town purchase/progression flows.
+- Centralize monster stat curves, cooldowns, shop inventory, and tower rewards into shared config fixtures.
+- Split combat/town screen mutation from rendering so progression state changes flow through explicit commands.
+- Add seeded combat replays to reproduce balance issues and verify tower difficulty ramps.
+
