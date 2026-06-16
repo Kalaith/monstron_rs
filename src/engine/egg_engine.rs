@@ -316,7 +316,7 @@ fn apply_care(egg: &mut EggInstance, care_focus: EggCareFocus, day: u32) {
     }
 }
 
-fn select_species_id<'a>(seed: u64, species_ids: &'a [String]) -> Option<&'a str> {
+fn select_species_id(seed: u64, species_ids: &[String]) -> Option<&str> {
     species_ids
         .get((seed as usize) % species_ids.len().max(1))
         .map(String::as_str)

@@ -205,7 +205,7 @@ pub(crate) fn rebuild_turn_order(combat: &mut CombatState) {
             ));
         }
     }
-    turns.sort_by(|left, right| right.0.cmp(&left.0));
+    turns.sort_by_key(|turn| std::cmp::Reverse(turn.0));
     combat.turn_order = turns.into_iter().map(|(_, turn)| turn).collect();
     combat.turn_index = 0;
 }
@@ -288,7 +288,7 @@ pub(crate) fn add_boss_egg(run: &mut TowerRunState, data: &GameData, floor: u32)
         egg_type_id: egg_type.id.clone(),
         hatch_days: egg_type.hatch_days,
         origin_floor: floor,
-        palette_seed: 0xB055_E66 ^ u64::from(floor),
+        palette_seed: 0x0B05_5E66 ^ u64::from(floor),
     });
 }
 
@@ -448,7 +448,7 @@ fn enemy_action(combat: &mut CombatState, slot: usize) {
 }
 
 fn enemy_target(combat: &CombatState, enemy_slot: usize) -> Option<(usize, Option<usize>)> {
-    let back_targeted = (combat.round + combat.floor + enemy_slot as u32) % 4 == 0;
+    let back_targeted = (combat.round + combat.floor + enemy_slot as u32).is_multiple_of(4);
     if back_targeted {
         if let Some(back_target) = row_target(&combat.allies, 3..6) {
             if let Some(guard) = guarding_front_tank(&combat.allies) {

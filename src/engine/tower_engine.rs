@@ -860,10 +860,7 @@ mod tests {
             .any(|object| object.kind == TowerMapObjectKind::Stairs));
         assert!(map.rooms.len() >= 4);
         assert!(map.is_visible(map.player_x, map.player_y));
-        assert!(map
-            .visibility
-            .iter()
-            .any(|visibility| *visibility == TowerTileVisibility::Hidden));
+        assert!(map.visibility.contains(&TowerTileVisibility::Hidden));
     }
 
     #[test]

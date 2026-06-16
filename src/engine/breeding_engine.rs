@@ -327,7 +327,7 @@ fn lineage_art_profile(
 
 fn breeding_seed(state: &GameState, first: &MonsterInstance, second: &MonsterInstance) -> u64 {
     let parent_mix = first.visual_seed.rotate_left(9) ^ second.visual_seed.rotate_right(7);
-    parent_mix ^ state.day as u64 * 97 ^ state.egg_inventory.next_id * 0x9E37
+    parent_mix ^ (state.day as u64 * 97) ^ (state.egg_inventory.next_id * 0x9E37)
 }
 
 fn raise_parent_bonds(state: &mut GameState, data: &GameData, first_id: u64, second_id: u64) {

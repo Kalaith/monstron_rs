@@ -100,7 +100,7 @@ impl MonsterInstance {
     }
 
     pub fn fatigue_penalty(&self) -> i32 {
-        ((self.condition.fatigue + 1) / 2).min(3) as i32
+        self.condition.fatigue.div_ceil(2).min(3) as i32
     }
 
     pub fn refresh_art_profile(&mut self, species: &MonsterSpeciesDefinition) {

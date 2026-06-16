@@ -76,14 +76,11 @@ fn draw_header(state: &GameState) {
     );
     draw_ui_text_ex(
         &format!(
-            "Day {}  Herbs {}  Eggs {}",
+            "Day {}  Herbs {}  Eggs {}/{}",
             state.day,
             state.resources.amount("herbs"),
-            format!(
-                "{}/{}",
-                state.egg_inventory.eggs.len(),
-                town_engine::egg_capacity(state)
-            )
+            state.egg_inventory.eggs.len(),
+            town_engine::egg_capacity(state)
         ),
         740.0,
         70.0,
