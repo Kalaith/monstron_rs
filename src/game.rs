@@ -223,6 +223,21 @@ impl Game {
         set_default_camera();
     }
 
+    /// Seed a specific scene for the screenshot harness. Bypasses normal
+    /// facility-unlock gating so a fresh save can still reach these screens.
+    pub fn begin_capture_scene(&mut self, scene: &str) {
+        match scene {
+            "town" => self.start_new_game(),
+            "hatchery" => {
+                self.start_new_game();
+                self.screen = AppScreen::Hatchery;
+            }
+            _ => {
+                // Default: boot state is the main menu.
+            }
+        }
+    }
+
     fn apply_menu_action(&mut self, action: MenuAction) {
         match action {
             MenuAction::NewGame => self.start_new_game(),
