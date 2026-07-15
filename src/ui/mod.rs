@@ -202,11 +202,6 @@ pub fn draw_status(status_message: &str) {
 }
 
 fn is_mouse_over(rect: Rect) -> bool {
-    let (x, y) = virtual_mouse_position();
-    x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h
-}
-
-fn virtual_mouse_position() -> (f32, f32) {
-    let pos = macroquad_toolkit::ui::virtual_mouse_position(VIEW_WIDTH, VIEW_HEIGHT);
-    (pos.x, pos.y)
+    let mouse = macroquad_toolkit::ui::virtual_mouse_position(VIEW_WIDTH, VIEW_HEIGHT);
+    macroquad_toolkit::input::rect_contains_point(rect, mouse)
 }
