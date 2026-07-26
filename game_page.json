@@ -1,36 +1,96 @@
 {
   "title": "Hatchspire",
-  "status": { "text": "Playable", "class": "playable" },
+  "status": {
+    "text": "Playable",
+    "class": "playable"
+  },
   "canvas_rendering": "pixelated",
   "canvas": {
     "width": 1280,
     "height": 720
   },
   "about": [
-    "Raise tower-born monsters, rebuild a camp beneath a ruined spire, and prepare for deeper dungeon runs."
+    "Hatch and raise tower-born monsters. Rebuild your camp beneath the ruined spire, breed stronger companions, and push ever deeper into the dungeon above."
   ],
   "controls": [
-    { "key": "Enter", "desc": "New save / enter tower" },
-    { "key": "Space", "desc": "Sleep" },
-    { "key": "WASD / Arrows", "desc": "Move through tower view" },
-    { "key": "Minimap", "desc": "Discovered tower terrain" },
-    { "key": "D", "desc": "Tower prep" },
-    { "key": "H", "desc": "Hatchery" },
-    { "key": "R", "desc": "Stable / return from tower" },
-    { "key": "B", "desc": "Breeding Grove" },
-    { "key": "W", "desc": "Workshop jobs" },
-    { "key": "T", "desc": "Shop trades" },
-    { "key": "C", "desc": "Scavenge supplies" },
-    { "key": "A/S/D", "desc": "Combat attack / skill / defend" },
-    { "key": "I/F", "desc": "Combat herbs / flee" },
-    { "key": "Esc", "desc": "Camp menu" },
-    { "key": "S/L/T", "desc": "Save / load / title inside menu" },
-    { "key": "Mouse", "desc": "Build, open, trade, greet" }
+    {
+      "key": "Enter",
+      "desc": "New save / enter tower"
+    },
+    {
+      "key": "Space",
+      "desc": "Sleep"
+    },
+    {
+      "key": "WASD / Arrows",
+      "desc": "Move through tower view"
+    },
+    {
+      "key": "Minimap",
+      "desc": "Discovered tower terrain"
+    },
+    {
+      "key": "D",
+      "desc": "Tower prep"
+    },
+    {
+      "key": "H",
+      "desc": "Hatchery"
+    },
+    {
+      "key": "R",
+      "desc": "Stable / return from tower"
+    },
+    {
+      "key": "B",
+      "desc": "Breeding Grove"
+    },
+    {
+      "key": "W",
+      "desc": "Workshop jobs"
+    },
+    {
+      "key": "T",
+      "desc": "Shop trades"
+    },
+    {
+      "key": "C",
+      "desc": "Scavenge supplies"
+    },
+    {
+      "key": "A/S/D",
+      "desc": "Combat attack / skill / defend"
+    },
+    {
+      "key": "I/F",
+      "desc": "Combat herbs / flee"
+    },
+    {
+      "key": "Esc",
+      "desc": "Camp menu"
+    },
+    {
+      "key": "S/L/T",
+      "desc": "Save / load / title inside menu"
+    },
+    {
+      "key": "Mouse",
+      "desc": "Build, open, trade, greet"
+    }
   ],
   "details": [
-    { "label": "Genre", "value": "Monster-Raising Town RPG" },
-    { "label": "Engine", "value": "Macroquad" },
-    { "label": "Platform", "value": "Browser, Windows" }
+    {
+      "label": "Genre",
+      "value": "Monster-Raising Town RPG"
+    },
+    {
+      "label": "Engine",
+      "value": "Macroquad"
+    },
+    {
+      "label": "Platform",
+      "value": "Browser, Windows"
+    }
   ],
   "download": {
     "href": "monstron_windows.zip",
