@@ -38,10 +38,33 @@ Turn a fragile camp into a working monster haven that can support increasingly d
 ## Current Scope
 
 Playable camp and tower loop with monsters, hatching, breeding, jobs, expeditions, combat, fatigue, injuries, and recovery.
-# Practical Future Improvements
 
-- Add integration tests for hatchery, shop, stable, tower, combat, and town purchase/progression flows.
-- Centralize monster stat curves, cooldowns, shop inventory, and tower rewards into shared config fixtures.
-- Split combat/town screen mutation from rendering so progression state changes flow through explicit commands.
-- Add seeded combat replays to reproduce balance issues and verify tower difficulty ramps.
+## Design
+
+The design spine is a single circle:
+
+```text
+Town building -> Monster raising -> Tower depth -> Town building
+```
+
+Three pillars carry it:
+
+- **Town growth.** The camp starts broken beside the tower and grows into a monster-focused settlement. Buildings are functional systems (hatchery, stable, workshop, shop, breeding grove), not decorations.
+- **Monster raising.** A monster is an adventurer *and* a citizen, and should matter in combat, exploration, town work, breeding, and flavour. Each carries a species, element, temperament, role, passive, and town skill. The starter slime stays relevant through bond progression and unique utility.
+- **Tower dungeon.** Ten floors across Mossy Ruins (1-3), Crystal Cracks (4-6), and Sunken Garden (7-10), ending at the Verdant Crown boss. The tower is the source of eggs, materials, relics, and encounters.
+
+The emotional goal is that the town exists *because* the monsters are helping build it, rather than buildings being abstract menu upgrades.
+
+Standing design constraints:
+
+- Build for native and WebGL from the start.
+- Keep systems data-driven so species, eggs, buildings, NPCs, and floors expand without engine rewrites.
+- Prefer deterministic, inspectable simulation over hidden randomness.
+- UI returns intent/action objects; state mutation lives in engines and reducers.
+- The old Unity Monstron prototype is inspiration only, never a port target. `Hatchspire` is the player-facing title; the crate stays `monstron`.
+
+## Documentation
+
+- `docs/monster_art_pipeline.md` — art DNA, prompt export, and the local ComfyUI generation workflow.
+- `TODO.md` — open polish, balance, and art-curation work.
 
