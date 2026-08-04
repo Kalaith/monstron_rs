@@ -16,6 +16,10 @@ mod ui;
 use game::Game;
 
 fn window_conf() -> Conf {
+    // Hand-built Conf means no automatic arming: without this the capture run
+    // puts a full game window on the desktop for its whole duration.
+    capture::headless::arm("MONSTRON");
+
     // Built by hand (not capture::capture_window_conf) to keep sample_count: 0
     // and high_dpi: false, which the game already relies on; still honors
     // MONSTRON_WINDOW_WIDTH/HEIGHT overrides for the capture harness.
