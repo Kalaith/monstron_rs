@@ -50,31 +50,38 @@ pub struct GameDataLoader;
 
 impl GameDataLoader {
     pub fn load_embedded() -> Result<GameData, String> {
-        let config: ConfigFile =
-            parse_json(include_str!("../../assets/data/config.json"), "config")?;
+        let config: ConfigFile = parse_json(
+            macroquad_toolkit::include_json_str!("../../assets/data/config.json"),
+            "config",
+        )?;
         let resources: ResourcesFile = parse_json(
-            include_str!("../../assets/data/resources.json"),
+            macroquad_toolkit::include_json_str!("../../assets/data/resources.json"),
             "resources",
         )?;
         let buildings: BuildingsFile = parse_json(
-            include_str!("../../assets/data/buildings.json"),
+            macroquad_toolkit::include_json_str!("../../assets/data/buildings.json"),
             "buildings",
         )?;
         let species: MonsterSpeciesFile = parse_json(
-            include_str!("../../assets/data/monster_species.json"),
+            macroquad_toolkit::include_json_str!("../../assets/data/monster_species.json"),
             "monster species",
         )?;
         let eggs: EggTypesFile = parse_json(
-            include_str!("../../assets/data/egg_types.json"),
+            macroquad_toolkit::include_json_str!("../../assets/data/egg_types.json"),
             "egg types",
         )?;
         let tower_floors: TowerFloorsFile = parse_json(
-            include_str!("../../assets/data/tower_floors.json"),
+            macroquad_toolkit::include_json_str!("../../assets/data/tower_floors.json"),
             "tower floors",
         )?;
-        let enemies: EnemiesFile =
-            parse_json(include_str!("../../assets/data/enemies.json"), "enemies")?;
-        let npcs: NpcsFile = parse_json(include_str!("../../assets/data/npcs.json"), "npcs")?;
+        let enemies: EnemiesFile = parse_json(
+            macroquad_toolkit::include_json_str!("../../assets/data/enemies.json"),
+            "enemies",
+        )?;
+        let npcs: NpcsFile = parse_json(
+            macroquad_toolkit::include_json_str!("../../assets/data/npcs.json"),
+            "npcs",
+        )?;
 
         GameData::from_parts(
             config.config,
