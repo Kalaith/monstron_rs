@@ -30,6 +30,7 @@ They are concept sheets and UI studies, not final runtime atlases.
 | Town wayfinding | [`town_wayfinding_atlas_v1.png`](../assets/generated/town/town_wayfinding_atlas_v1.png) | Six cleaned RGBA navigation landmarks: signpost, bell, milestone, bulletin board, bridge arch, return beacon |
 | Town resources | [`town_resource_bundle_atlas_v1.png`](../assets/generated/town/town_resource_bundle_atlas_v1.png) | Six cleaned RGBA pickup/inventory objects: supplies, coin, food, hatchery shard, maps, medicine |
 | Town celebration | [`town_celebration_atlas_v1.png`](../assets/generated/town/town_celebration_atlas_v1.png) | Six cleaned RGBA milestone decorations: bunting, cake, trophy egg, lanterns, flower wreath, fireworks |
+| Town creature care | [`town_creature_care_atlas_v1.png`](../assets/generated/town/town_creature_care_atlas_v1.png) | Six cleaned RGBA interaction stations: grooming, feeding, recovery, training, toys, bonding shrine |
 | Dungeon | [`dungeon_landmark_reference_v1.png`](../assets/generated/dungeon/dungeon_landmark_reference_v1.png) | Egg nest, cache, stairs, enemy, crystal shrine, spring, machinery, gate, boss silhouette |
 | Dungeon atlas | [`dungeon_sprite_atlas_v1.png`](../assets/generated/dungeon/dungeon_sprite_atlas_v1.png) | Six cleaned RGBA landmark candidates: egg nest, relic chest, stairs, crystal shrine, healing spring, tower machinery |
 | Dungeon dressing | [`dungeon_dressing_atlas_v1.png`](../assets/generated/dungeon/dungeon_dressing_atlas_v1.png) | Six cleaned RGBA environment clusters: rubble arch, puddle floor, statue, root curtain, broken bridge, boss arena |
@@ -37,6 +38,7 @@ They are concept sheets and UI studies, not final runtime atlases.
 | Dungeon room modules | [`dungeon_room_module_atlas_v1.png`](../assets/generated/dungeon/dungeon_room_module_atlas_v1.png) | Six cleaned RGBA room vignettes: safe camp, treasure alcove, enemy room, egg chamber, stair landing, shrine room |
 | Dungeon thresholds | [`dungeon_threshold_atlas_v1.png`](../assets/generated/dungeon/dungeon_threshold_atlas_v1.png) | Six cleaned RGBA transition landmarks: door, rune seal, boss gate, secret passage, elevator, town gate |
 | Dungeon path connectors | [`dungeon_path_connector_atlas_v1.png`](../assets/generated/dungeon/dungeon_path_connector_atlas_v1.png) | Six cleaned RGBA traversal pieces: straight path, bend, water bridge, hanging walkway, fork, elevator pad |
+| Dungeon ambient markers | [`dungeon_ambient_marker_atlas_v1.png`](../assets/generated/dungeon/dungeon_ambient_marker_atlas_v1.png) | Six cleaned RGBA clues: paw trail, motes, claw marks, discovery lantern, hidden key, boss warning shard |
 | Dungeon enemies | [`dungeon_enemy_atlas_v1.png`](../assets/generated/dungeon/dungeon_enemy_atlas_v1.png) | Six cleaned RGBA opposing silhouettes: lantern wisp, stone crab, thorn crawler, mirror bat, ash imp, drowned sentinel |
 | Combat VFX atlas | [`combat_vfx_atlas_v1.png`](../assets/generated/combat/combat_vfx_atlas_v1.png) | Six cleaned RGBA overlays: ember burst, water splash, root snare, crystal shield, healing glow, stun stars |
 | Town night variants | [`town_night_variant_atlas_v1.png`](../assets/generated/town/town_night_variant_atlas_v1.png) | Six cleaned RGBA dusk props: moonlit hatchery, campfire, mushroom garden, stable, market stall, observatory |
@@ -45,6 +47,7 @@ They are concept sheets and UI studies, not final runtime atlases.
 | Battle UI | [`living_tower_battle_mockup_v1.png`](ui_reference/living_tower_battle_mockup_v1.png) | Battle diorama with immediate tactical information and a restrained command layer |
 | Camp UI | [`living_tower_camp_mockup_v1.png`](ui_reference/living_tower_camp_mockup_v1.png) | World-first hatchery/camp screen with an egg drawer, resting party, resources, and touch actions |
 | Journal UI | [`living_tower_journal_mockup_v1.png`](ui_reference/living_tower_journal_mockup_v1.png) | Expandable expedition journal shown as a secondary parchment drawer over the dungeon world |
+| Victory UI | [`living_tower_victory_mockup_v1.png`](ui_reference/living_tower_victory_mockup_v1.png) | Temporary reward celebration that returns directly to expedition actions |
 
 ## Implementation notes
 
