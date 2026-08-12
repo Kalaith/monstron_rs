@@ -31,11 +31,14 @@ They are concept sheets and UI studies, not final runtime atlases.
 | Dungeon dressing | [`dungeon_dressing_atlas_v1.png`](../assets/generated/dungeon/dungeon_dressing_atlas_v1.png) | Six cleaned RGBA environment clusters: rubble arch, puddle floor, statue, root curtain, broken bridge, boss arena |
 | Dungeon hazards | [`dungeon_hazard_atlas_v1.png`](../assets/generated/dungeon/dungeon_hazard_atlas_v1.png) | Six cleaned RGBA danger objects: poison bog, falling stones, flame jet, rune gear, thorn snare, void portal |
 | Dungeon room modules | [`dungeon_room_module_atlas_v1.png`](../assets/generated/dungeon/dungeon_room_module_atlas_v1.png) | Six cleaned RGBA room vignettes: safe camp, treasure alcove, enemy room, egg chamber, stair landing, shrine room |
+| Dungeon enemies | [`dungeon_enemy_atlas_v1.png`](../assets/generated/dungeon/dungeon_enemy_atlas_v1.png) | Six cleaned RGBA opposing silhouettes: lantern wisp, stone crab, thorn crawler, mirror bat, ash imp, drowned sentinel |
 | Combat VFX atlas | [`combat_vfx_atlas_v1.png`](../assets/generated/combat/combat_vfx_atlas_v1.png) | Six cleaned RGBA overlays: ember burst, water splash, root snare, crystal shield, healing glow, stun stars |
+| Town night variants | [`town_night_variant_atlas_v1.png`](../assets/generated/town/town_night_variant_atlas_v1.png) | Six cleaned RGBA dusk props: moonlit hatchery, campfire, mushroom garden, stable, market stall, observatory |
 | Exploration UI | [`living_tower_dungeon_mockup_v1.png`](ui_reference/living_tower_dungeon_mockup_v1.png) | World-first exploration screen and edge-mounted information hierarchy |
 | Fog-map UI | [`living_tower_fog_map_mockup_v1.png`](ui_reference/living_tower_fog_map_mockup_v1.png) | Explored rooms, discovered silhouettes, fog-of-war, party cluster, and contextual stairs drawer |
 | Battle UI | [`living_tower_battle_mockup_v1.png`](ui_reference/living_tower_battle_mockup_v1.png) | Battle diorama with immediate tactical information and a restrained command layer |
 | Camp UI | [`living_tower_camp_mockup_v1.png`](ui_reference/living_tower_camp_mockup_v1.png) | World-first hatchery/camp screen with an egg drawer, resting party, resources, and touch actions |
+| Journal UI | [`living_tower_journal_mockup_v1.png`](ui_reference/living_tower_journal_mockup_v1.png) | Expandable expedition journal shown as a secondary parchment drawer over the dungeon world |
 
 ## Implementation notes
 
