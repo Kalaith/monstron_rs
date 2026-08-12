@@ -93,7 +93,7 @@
     }
   ],
   "download": {
-    "href": "monstron_windows.zip",
+    "href": "hatchspire_windows.zip",
     "label": "Windows Build"
   },
   "wasm_cache_bust": "phase8-hardening-1",

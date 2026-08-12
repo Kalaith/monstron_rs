@@ -61,10 +61,9 @@ Standing design constraints:
 - Keep systems data-driven so species, eggs, buildings, NPCs, and floors expand without engine rewrites.
 - Prefer deterministic, inspectable simulation over hidden randomness.
 - UI returns intent/action objects; state mutation lives in engines and reducers.
-- The old Unity Monstron prototype is inspiration only, never a port target. `Hatchspire` is the player-facing title; the crate stays `monstron`.
+- The old Unity Monstron prototype is inspiration only, never a port target. `Hatchspire` is both the player-facing title and the Rust crate/package identity.
 
 ## Documentation
 
 - `docs/monster_art_pipeline.md` — art DNA, prompt export, and the local ComfyUI generation workflow.
 - `TODO.md` — open polish, balance, and art-curation work.
-

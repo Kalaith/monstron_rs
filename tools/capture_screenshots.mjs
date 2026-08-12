@@ -122,7 +122,7 @@ const shots = [
 async function main() {
   await rm(outDir, { recursive: true, force: true });
   await mkdir(outDir, { recursive: true });
-  const userDataDir = await mkdtemp(join(tmpdir(), "monstron-chrome-"));
+  const userDataDir = await mkdtemp(join(tmpdir(), "hatchspire-chrome-"));
 
   const chrome = spawn(chromePath, [
     "--headless=new",

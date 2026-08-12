@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-    Headless screenshot harness for Monstron (Hatchspire).
+    Headless screenshot harness for Hatchspire.
 
 .DESCRIPTION
     Thin wrapper around the shared macroquad-toolkit capture script. Builds the
     debug exe and drives it through the env-var capture hook
-    (MONSTRON_CAPTURE_*) provided by macroquad_toolkit::capture in
+    (HATCHSPIRE_CAPTURE_*) provided by macroquad_toolkit::capture in
     src/main.rs. Scenes are seeded via Game::begin_capture_scene:
       - "mainmenu" -> boot state (main menu)
       - "town"     -> fresh save, town screen

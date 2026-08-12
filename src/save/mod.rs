@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::state::GameState;
 
-const GAME_NAME: &str = "monstron";
+const GAME_NAME: &str = "hatchspire";
 const SAVE_SLOT: &str = "slot_1";
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
