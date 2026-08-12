@@ -28,6 +28,7 @@ They are concept sheets and UI studies, not final runtime atlases.
 | Monster lifecycle | [`monster_lifecycle_atlas_v1.png`](../assets/generated/monster_art/monster_lifecycle_atlas_v1.png) | Six cleaned RGBA egg-to-hatchling pairings with elemental cues for slime, ember pup, moth, beetle, salamander, and mushroom imp |
 | Monster reactions v2 | [`monster_reaction_v2_atlas_v1.png`](../assets/generated/combat/monster_reaction_v2_atlas_v1.png) | Six cleaned RGBA battle reactions: recoil splash, shrinking flame, crystal surprise, leaf guard, healing cheer, and frightened lantern |
 | Monster trait cues | [`monster_trait_cue_atlas_v1.png`](../assets/generated/monster_art/monster_trait_cue_atlas_v1.png) | Six cleaned RGBA party/context cues pairing monsters with held items and trait emblems: curious, brave, scout, sturdy, playful, and shy |
+| Dungeon enemy variants | [`dungeon_enemy_variant_atlas_v1.png`](../assets/generated/dungeon/dungeon_enemy_variant_atlas_v1.png) | Six cleaned RGBA enemy variants with readable warning accents: wisp, crab, crawler, mirror bat, ash imp, and drowned sentinel |
 | Town | [`town_landmark_reference_v1.png`](../assets/generated/town/town_landmark_reference_v1.png) | Hatchery, stable, workshop, shop, grove, shrine, supplies, gate, notice board |
 | Town atlas | [`town_sprite_atlas_v1.png`](../assets/generated/town/town_sprite_atlas_v1.png) | Six cleaned RGBA facility candidates for in-world interaction points |
 | Town props | [`town_prop_atlas_v1.png`](../assets/generated/town/town_prop_atlas_v1.png) | Six cleaned RGBA interaction props: food trough, incubator, training ring, map table, herb rack, message perch |
@@ -38,6 +39,7 @@ They are concept sheets and UI studies, not final runtime atlases.
 | Town ambient life | [`town_ambient_life_atlas_v1.png`](../assets/generated/town/town_ambient_life_atlas_v1.png) | Six cleaned RGBA ambient sets: messenger moth, bell pigeon, basket slime, lantern pup, root mouse, and fireflies |
 | Town seasonal signage | [`town_seasonal_signage_atlas_v1.png`](../assets/generated/town/town_seasonal_signage_atlas_v1.png) | Six cleaned RGBA seasonal/festival states: spring, summer, harvest, frost, rain, and moon festival signage |
 | Town transport props | [`town_transport_prop_atlas_v1.png`](../assets/generated/town/town_transport_prop_atlas_v1.png) | Six cleaned RGBA movement/return landmarks: beacon, supply cart, ferry, lift, mail perch, and rest wagon |
+| Town utility props | [`town_utility_prop_atlas_v1.png`](../assets/generated/town/town_utility_prop_atlas_v1.png) | Six cleaned RGBA interaction stations: merchant, healer, cartographer, egg trader, training yard, and courier board |
 | Town wayfinding | [`town_wayfinding_atlas_v1.png`](../assets/generated/town/town_wayfinding_atlas_v1.png) | Six cleaned RGBA navigation landmarks: signpost, bell, milestone, bulletin board, bridge arch, return beacon |
 | Town resources | [`town_resource_bundle_atlas_v1.png`](../assets/generated/town/town_resource_bundle_atlas_v1.png) | Six cleaned RGBA pickup/inventory objects: supplies, coin, food, hatchery shard, maps, medicine |
 | Town celebration | [`town_celebration_atlas_v1.png`](../assets/generated/town/town_celebration_atlas_v1.png) | Six cleaned RGBA milestone decorations: bunting, cake, trophy egg, lanterns, flower wreath, fireworks |
@@ -60,6 +62,7 @@ They are concept sheets and UI studies, not final runtime atlases.
 | Dungeon hazard warnings | [`dungeon_hazard_warning_atlas_v1.png`](../assets/generated/dungeon/dungeon_hazard_warning_atlas_v1.png) | Six cleaned RGBA dangers: void fissure, falling rubble, thorn snare, flame vent, spore bog, and gear trap with warning accents |
 | Dungeon fog silhouettes | [`dungeon_fog_silhouette_atlas_v1.png`](../assets/generated/dungeon/dungeon_fog_silhouette_atlas_v1.png) | Six cleaned RGBA fog-of-war layers: unknown roots, discovered ruins, egg reveal, cache reveal, enemy eyes, and oversized boss presence |
 | Dungeon relic pickups | [`dungeon_relic_pickup_atlas_v1.png`](../assets/generated/dungeon/dungeon_relic_pickup_atlas_v1.png) | Six cleaned RGBA reward objects: tower shard, compass, map tube, coin cache, moss herb, and egg fragment |
+| Dungeon boss rewards | [`dungeon_boss_reward_atlas_v1.png`](../assets/generated/dungeon/dungeon_boss_reward_atlas_v1.png) | Six cleaned RGBA progression silhouettes: boss presence, eye gate, fallen crown, tower heart, rune key, and celebration cache |
 | Town night variants | [`town_night_variant_atlas_v1.png`](../assets/generated/town/town_night_variant_atlas_v1.png) | Six cleaned RGBA dusk props: moonlit hatchery, campfire, mushroom garden, stable, market stall, observatory |
 | Exploration UI | [`living_tower_dungeon_mockup_v1.png`](ui_reference/living_tower_dungeon_mockup_v1.png) | World-first exploration screen and edge-mounted information hierarchy |
 | Fog-map UI | [`living_tower_fog_map_mockup_v1.png`](ui_reference/living_tower_fog_map_mockup_v1.png) | Explored rooms, discovered silhouettes, fog-of-war, party cluster, and contextual stairs drawer |
@@ -74,6 +77,7 @@ They are concept sheets and UI studies, not final runtime atlases.
 | Expedition flow UI | [`living_tower_expedition_flow_mockup_v1.png`](ui_reference/living_tower_expedition_flow_mockup_v1.png) | Exploration state with party cluster, illustrated landmarks, fogged boss gate, contextual reveal drawer, and Explore/Camp/Retreat actions |
 | Journal drawer UI | [`living_tower_journal_drawer_mockup_v1.png`](ui_reference/living_tower_journal_drawer_mockup_v1.png) | Edge-mounted parchment journal with illustrated entries, visible fog-of-war map, Close Journal, and Continue touch actions |
 | Camp management UI | [`living_tower_camp_management_mockup_v1.png`](ui_reference/living_tower_camp_management_mockup_v1.png) | World-first camp recovery screen with resting monsters, brazier, egg nest, Camp Actions drawer, and touch return/continue controls |
+| Tutorial overlay UI | [`living_tower_tutorial_overlay_mockup_v1.png`](ui_reference/living_tower_tutorial_overlay_mockup_v1.png) | Touch-first first-expedition prompt naming the exact egg nest gesture, with a pointer highlight and visible Continue control |
 
 ## Implementation notes
 
