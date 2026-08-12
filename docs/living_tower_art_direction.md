@@ -27,6 +27,7 @@ They are concept sheets and UI studies, not final runtime atlases.
 | Town atlas | [`town_sprite_atlas_v1.png`](../assets/generated/town/town_sprite_atlas_v1.png) | Six cleaned RGBA facility candidates for in-world interaction points |
 | Town props | [`town_prop_atlas_v1.png`](../assets/generated/town/town_prop_atlas_v1.png) | Six cleaned RGBA interaction props: food trough, incubator, training ring, map table, herb rack, message perch |
 | Town inhabitants | [`town_inhabitant_atlas_v1.png`](../assets/generated/town/town_inhabitant_atlas_v1.png) | Six cleaned RGBA inhabitants and helpers for a lived-in hub: caretaker, mapmaker, slime, courier, pup, root sage |
+| Town NPC accessories | [`town_npc_accessory_atlas_v1.png`](../assets/generated/town/town_npc_accessory_atlas_v1.png) | Six cleaned RGBA role cues: caretaker, mapmaker, stable keeper, root sage, courier, shopkeeper accessories |
 | Town wayfinding | [`town_wayfinding_atlas_v1.png`](../assets/generated/town/town_wayfinding_atlas_v1.png) | Six cleaned RGBA navigation landmarks: signpost, bell, milestone, bulletin board, bridge arch, return beacon |
 | Town resources | [`town_resource_bundle_atlas_v1.png`](../assets/generated/town/town_resource_bundle_atlas_v1.png) | Six cleaned RGBA pickup/inventory objects: supplies, coin, food, hatchery shard, maps, medicine |
 | Town celebration | [`town_celebration_atlas_v1.png`](../assets/generated/town/town_celebration_atlas_v1.png) | Six cleaned RGBA milestone decorations: bunting, cake, trophy egg, lanterns, flower wreath, fireworks |
@@ -43,6 +44,7 @@ They are concept sheets and UI studies, not final runtime atlases.
 | Dungeon biome rooms | [`dungeon_biome_room_atlas_v1.png`](../assets/generated/dungeon/dungeon_biome_room_atlas_v1.png) | Six cleaned RGBA floor moods: sunken gallery, ember foundry, root cathedral, frost vault, observatory, void scar |
 | Dungeon enemies | [`dungeon_enemy_atlas_v1.png`](../assets/generated/dungeon/dungeon_enemy_atlas_v1.png) | Six cleaned RGBA opposing silhouettes: lantern wisp, stone crab, thorn crawler, mirror bat, ash imp, drowned sentinel |
 | Combat VFX atlas | [`combat_vfx_atlas_v1.png`](../assets/generated/combat/combat_vfx_atlas_v1.png) | Six cleaned RGBA overlays: ember burst, water splash, root snare, crystal shield, healing glow, stun stars |
+| Dungeon atmosphere VFX | [`dungeon_atmosphere_vfx_v1.png`](../assets/generated/dungeon/dungeon_atmosphere_vfx_v1.png) | Six cleaned RGBA overlays: blue fog, ember drift, rain, green spores, violet void wisps, discovery burst |
 | Town night variants | [`town_night_variant_atlas_v1.png`](../assets/generated/town/town_night_variant_atlas_v1.png) | Six cleaned RGBA dusk props: moonlit hatchery, campfire, mushroom garden, stable, market stall, observatory |
 | Exploration UI | [`living_tower_dungeon_mockup_v1.png`](ui_reference/living_tower_dungeon_mockup_v1.png) | World-first exploration screen and edge-mounted information hierarchy |
 | Fog-map UI | [`living_tower_fog_map_mockup_v1.png`](ui_reference/living_tower_fog_map_mockup_v1.png) | Explored rooms, discovered silhouettes, fog-of-war, party cluster, and contextual stairs drawer |
@@ -51,6 +53,7 @@ They are concept sheets and UI studies, not final runtime atlases.
 | Journal UI | [`living_tower_journal_mockup_v1.png`](ui_reference/living_tower_journal_mockup_v1.png) | Expandable expedition journal shown as a secondary parchment drawer over the dungeon world |
 | Victory UI | [`living_tower_victory_mockup_v1.png`](ui_reference/living_tower_victory_mockup_v1.png) | Temporary reward celebration that returns directly to expedition actions |
 | First expedition UI | [`living_tower_first_expedition_mockup_v1.png`](ui_reference/living_tower_first_expedition_mockup_v1.png) | Touch-first tutorial: the prompt names and highlights the exact world object to tap |
+| Party drawer UI | [`living_tower_party_drawer_mockup_v1.png`](ui_reference/living_tower_party_drawer_mockup_v1.png) | Selected-monster drawer with party rail, inspect/feed/rest actions, and world-first dungeon composition |
 
 ## Implementation notes
 
