@@ -9,30 +9,28 @@ use crate::state::{
 use crate::ui;
 use macroquad_toolkit::ui::draw_ui_text_ex;
 
-const VIEWPORT_TILES_W: u32 = 15;
-const VIEWPORT_TILES_H: u32 = 9;
+const VIEWPORT_TILES_W: u32 = 18;
+const VIEWPORT_TILES_H: u32 = 10;
 
-pub(super) fn draw_map_panel(run: &TowerRunState) {
-    let rect = Rect::new(32.0, 124.0, 776.0, 494.0);
-    ui::draw_panel(rect);
-
+pub(super) fn draw_map_world(run: &TowerRunState) {
     let map = &run.map;
     if map.is_empty() {
+        draw_rectangle(0.0, 0.0, ui::VIEW_WIDTH, ui::VIEW_HEIGHT, rgba(8, 10, 12));
         ui::draw_centered_text(
             "Map data is being rebuilt.",
-            rect.x + rect.w * 0.5,
-            rect.y + rect.h * 0.5,
+            ui::VIEW_WIDTH * 0.5,
+            ui::VIEW_HEIGHT * 0.5,
             26,
             ui::TEXT_DIM,
         );
         return;
     }
 
-    let map_area = Rect::new(rect.x + 22.0, rect.y + 18.0, 732.0, 396.0);
-    let minimap_rect = Rect::new(rect.x + 600.0, rect.y + 30.0, 140.0, 104.0);
+    let map_area = Rect::new(0.0, 0.0, ui::VIEW_WIDTH, ui::VIEW_HEIGHT);
+    let minimap_rect = Rect::new(ui::VIEW_WIDTH - 206.0, 72.0, 188.0, 138.0);
     draw_map_viewport(map, map_area);
     draw_minimap(map, minimap_rect);
-    draw_legend(rect.x + 24.0, rect.y + 444.0);
+    draw_legend(488.0, 42.0);
     draw_movement_controls();
 }
 
@@ -51,13 +49,7 @@ fn draw_map_viewport(map: &TowerMapState, area: Rect) {
     let origin_x = area.x + (area.w - map_w) * 0.5;
     let origin_y = area.y + (area.h - map_h) * 0.5;
 
-    draw_rectangle(
-        origin_x - 6.0,
-        origin_y - 6.0,
-        map_w + 12.0,
-        map_h + 12.0,
-        Color::from_rgba(8, 10, 12, 225),
-    );
+    draw_rectangle(0.0, 0.0, ui::VIEW_WIDTH, ui::VIEW_HEIGHT, rgba(7, 9, 10));
 
     for view_y in 0..visible_h {
         for view_x in 0..visible_w {
@@ -96,14 +88,6 @@ fn draw_map_viewport(map: &TowerMapState, area: Rect) {
         origin_x - start_x as f32 * tile_size,
         origin_y - start_y as f32 * tile_size,
         tile_size,
-    );
-    draw_rectangle_lines(
-        origin_x - 6.0,
-        origin_y - 6.0,
-        map_w + 12.0,
-        map_h + 12.0,
-        2.0,
-        Color::from_rgba(92, 112, 104, 255),
     );
 }
 
@@ -525,8 +509,16 @@ fn draw_legend(x: f32, y: f32) {
         ("Exit", Color::from_rgba(95, 162, 95, 255)),
     ];
 
+    draw_rectangle(
+        x - 10.0,
+        y - 28.0,
+        650.0,
+        38.0,
+        Color::from_rgba(8, 12, 13, 218),
+    );
+    draw_rectangle_lines(x - 10.0, y - 28.0, 650.0, 38.0, 1.0, ui::PANEL_EDGE);
     for (index, (label, color)) in entries.iter().enumerate() {
-        let item_x = x + index as f32 * 96.0;
+        let item_x = x + index as f32 * 91.0;
         draw_circle(item_x, y - 6.0, 6.0, *color);
         draw_ui_text_ex(
             label,

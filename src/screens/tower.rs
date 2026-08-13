@@ -2,7 +2,6 @@ use macroquad::prelude::*;
 
 mod map_view;
 
-use crate::assets;
 use crate::data::GameData;
 use crate::engine::{tower_engine, town_engine};
 use crate::state::{GameState, TowerRunState};
@@ -66,13 +65,12 @@ pub fn handle_input(state: &GameState) -> Option<TowerAction> {
 }
 
 pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
-    draw_backdrop();
-    draw_header(state);
-
     if let Some(run) = &state.tower_run {
-        map_view::draw_map_panel(run);
-        draw_run_sidebar(state, data, run);
+        map_view::draw_map_world(run);
+        draw_run_overlay(state, data, run);
     } else {
+        draw_backdrop();
+        draw_header(state);
         draw_empty_run();
         draw_floor_reference(state, data);
     }
@@ -150,179 +148,84 @@ fn draw_header(state: &GameState) {
     ui::draw_button(town_button_rect(), label, true);
 }
 
-fn draw_run_sidebar(state: &GameState, data: &GameData, run: &TowerRunState) {
-    let rect = Rect::new(832.0, 124.0, 416.0, 494.0);
-    ui::draw_panel(rect);
-
+fn draw_run_overlay(state: &GameState, data: &GameData, run: &TowerRunState) {
     let floor = data.tower_floor(run.current_floor);
     let floor_name = floor
         .map(|floor| floor.name.as_str())
         .unwrap_or("Unknown Floor");
-    let theme = floor
-        .map(|floor| floor.theme.as_str())
-        .unwrap_or("The tower records are missing.");
-
-    ui::draw_section_title("Current Floor", rect.x + 20.0, rect.y + 34.0);
+    let panel = Rect::new(18.0, 18.0, 444.0, 116.0);
+    draw_overlay_panel(panel);
     draw_ui_text_ex(
-        &format!("Floor {}: {}", run.current_floor, floor_name),
-        rect.x + 20.0,
-        rect.y + 72.0,
+        &format!("Floor {}  {}", run.current_floor, floor_name),
+        panel.x + 18.0,
+        panel.y + 34.0,
         TextParams {
-            font_size: 21,
+            font_size: 25,
             color: ui::TEXT_BRIGHT,
             ..Default::default()
         },
     );
-    assets::draw_room_vignette(
-        run.current_floor,
-        rect.x + 248.0,
-        rect.y + 46.0,
-        148.0,
-        108.0,
-    );
-    draw_wrapped_line(theme, rect.x + 20.0, rect.y + 104.0, 30, ui::TEXT_DIM);
-
     draw_ui_text_ex(
         &format!(
-            "{}  Steps {}  Party {}  Ready {}",
+            "{}  •  Steps {}  •  Party {}  •  Ready {}",
             run.goal,
             run.rooms_explored,
             tower_engine::party_count(state),
             tower_engine::battle_ready_party_count(state)
         ),
-        rect.x + 20.0,
-        rect.y + 176.0,
+        panel.x + 18.0,
+        panel.y + 64.0,
         TextParams {
             font_size: 18,
+            color: ui::ACCENT,
+            ..Default::default()
+        },
+    );
+    draw_ui_text_ex(
+        &format!(
+            "Loot {}   Eggs {}/{}   Pressure {}/{}",
+            run.cargo_amount(),
+            state.egg_inventory.eggs.len() + run.found_eggs.len(),
+            town_engine::egg_capacity(state),
+            run.pressure,
+            run.pressure_limit
+        ),
+        panel.x + 18.0,
+        panel.y + 92.0,
+        TextParams {
+            font_size: 17,
             color: ui::TEXT,
             ..Default::default()
         },
     );
 
-    draw_cargo_summary(
-        state,
-        data,
-        run,
-        rect.x + 20.0,
-        rect.y + 214.0,
-        rect.w - 40.0,
-    );
-    draw_events(run, rect.x + 20.0, rect.y + 366.0, rect.w - 40.0);
-    ui::draw_button(return_button_rect(), "Return", true);
-}
-
-fn draw_cargo_summary(
-    state: &GameState,
-    data: &GameData,
-    run: &TowerRunState,
-    x: f32,
-    y: f32,
-    width: f32,
-) {
-    draw_ui_text_ex(
-        &format!("Run Loot: {} item(s)", run.cargo_amount()),
-        x,
-        y,
-        TextParams {
-            font_size: 18,
-            color: ui::TEXT_BRIGHT,
-            ..Default::default()
-        },
-    );
-
-    if run.cargo.is_empty() {
+    if let Some(message) = run.event_log.last() {
+        let event_panel = Rect::new(18.0, 144.0, 444.0, 44.0);
+        draw_overlay_panel(event_panel);
         draw_ui_text_ex(
-            "No materials collected yet.",
-            x,
-            y + 28.0,
+            message,
+            event_panel.x + 16.0,
+            event_panel.y + 30.0,
             TextParams {
                 font_size: 16,
-                color: ui::TEXT_DIM,
+                color: ui::TEXT,
                 ..Default::default()
             },
         );
-    } else {
-        for (index, stack) in run.cargo.iter().take(3).enumerate() {
-            draw_ui_text_ex(
-                &format!(
-                    "{} {}",
-                    stack.amount,
-                    data.resource_name(&stack.resource_id)
-                ),
-                x,
-                y + 28.0 + index as f32 * 22.0,
-                TextParams {
-                    font_size: 16,
-                    color: ui::TEXT,
-                    ..Default::default()
-                },
-            );
-        }
     }
 
-    draw_ui_text_ex(
-        &format!(
-            "Egg slots: {}/{}",
-            state.egg_inventory.eggs.len() + run.found_eggs.len(),
-            town_engine::egg_capacity(state)
-        ),
-        x + width * 0.52,
-        y,
-        TextParams {
-            font_size: 16,
-            color: ui::TEXT_DIM,
-            ..Default::default()
-        },
-    );
-
-    if run.found_eggs.is_empty() {
-        draw_ui_text_ex(
-            "No eggs found.",
-            x + width * 0.52,
-            y + 28.0,
-            TextParams {
-                font_size: 16,
-                color: ui::TEXT_DIM,
-                ..Default::default()
-            },
-        );
-    } else {
-        for (index, egg) in run.found_eggs.iter().take(3).enumerate() {
-            let egg_y = y + 20.0 + index as f32 * 32.0;
-            assets::draw_egg_badge(&egg.egg_type_id, x + width * 0.52, egg_y, 24.0);
-            let egg_name = data
-                .egg_type(&egg.egg_type_id)
-                .map(|egg_type| egg_type.name.as_str())
-                .unwrap_or(egg.egg_type_id.as_str());
-            draw_ui_text_ex(
-                egg_name,
-                x + width * 0.52 + 32.0,
-                egg_y + 20.0,
-                TextParams {
-                    font_size: 15,
-                    color: ui::TEXT,
-                    ..Default::default()
-                },
-            );
-        }
-    }
+    ui::draw_button(town_button_rect(), "Return", true);
 }
 
-fn draw_events(run: &TowerRunState, x: f32, y: f32, width: f32) {
-    draw_ui_text_ex(
-        "Recent Events",
-        x,
-        y,
-        TextParams {
-            font_size: 18,
-            color: ui::TEXT_BRIGHT,
-            ..Default::default()
-        },
+fn draw_overlay_panel(rect: Rect) {
+    draw_rectangle(
+        rect.x,
+        rect.y,
+        rect.w,
+        rect.h,
+        Color::from_rgba(12, 17, 18, 226),
     );
-    for (index, message) in run.event_log.iter().rev().take(4).enumerate() {
-        draw_wrapped_line(message, x, y + 30.0 + index as f32 * 44.0, 48, ui::TEXT);
-    }
-    draw_rectangle_lines(x - 2.0, y + 14.0, width + 4.0, 122.0, 1.0, ui::PANEL_EDGE);
+    draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 1.5, ui::PANEL_EDGE);
 }
 
 fn draw_empty_run() {
@@ -431,21 +334,27 @@ fn movement_buttons() -> [(TowerAction, Rect); 4] {
     [
         (
             TowerAction::Move(0, -1),
-            Rect::new(688.0, 532.0, 42.0, 34.0),
+            Rect::new(1178.0, 568.0, 44.0, 42.0),
         ),
         (
             TowerAction::Move(-1, 0),
-            Rect::new(640.0, 568.0, 42.0, 34.0),
+            Rect::new(1128.0, 616.0, 44.0, 42.0),
         ),
-        (TowerAction::Move(1, 0), Rect::new(736.0, 568.0, 42.0, 34.0)),
-        (TowerAction::Move(0, 1), Rect::new(688.0, 568.0, 42.0, 34.0)),
+        (
+            TowerAction::Move(1, 0),
+            Rect::new(1228.0, 616.0, 44.0, 42.0),
+        ),
+        (
+            TowerAction::Move(0, 1),
+            Rect::new(1178.0, 616.0, 44.0, 42.0),
+        ),
     ]
 }
 
 fn town_button_rect() -> Rect {
-    Rect::new(ui::VIEW_WIDTH - 148.0, 44.0, 86.0, 34.0)
+    Rect::new(ui::VIEW_WIDTH - 116.0, 18.0, 98.0, 40.0)
 }
 
 fn return_button_rect() -> Rect {
-    Rect::new(1100.0, 566.0, 118.0, 34.0)
+    town_button_rect()
 }
