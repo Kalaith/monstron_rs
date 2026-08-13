@@ -12,14 +12,8 @@ const ROOMS: &str = "rooms";
 const VFX: &str = "vfx";
 const DUNGEON_FEATURES: &str = "dungeon_features";
 const DUNGEON_ENEMIES: &str = "dungeon_enemies";
-const PARTY_MARKERS: &str = "party_markers";
 const ROOM_MODULES: &str = "room_modules";
-const FOG_LAYERS: &str = "fog_layers";
 const PARTY_PORTRAITS: &str = "party_portraits";
-const LANDMARK_SCENES: &str = "landmark_scenes";
-const HAZARDS: &str = "hazards";
-const RECOVERY_SCENES: &str = "recovery_scenes";
-const BOSS_REWARDS: &str = "boss_rewards";
 const PURPOSE_ROOMS: &str = "purpose_rooms";
 const MOSS_GATE_WORLD: &str = "moss_gate_world";
 
@@ -180,10 +174,6 @@ pub fn draw_dungeon_enemy(index: usize, x: f32, y: f32, width: f32, height: f32)
     draw_atlas(DUNGEON_ENEMIES, 3, 2, index % 6, x, y, width, height);
 }
 
-pub fn draw_party_marker(index: usize, x: f32, y: f32, width: f32, height: f32) {
-    draw_atlas(PARTY_MARKERS, 3, 2, index % 6, x, y, width, height);
-}
-
 /// Draws a large illustrated room module. The atlas is arranged as a 3x2
 /// family: moss, flooded, ember, frost, root, and void.
 pub fn draw_dungeon_room(
@@ -237,26 +227,6 @@ pub fn draw_moss_gate_world(x: f32, y: f32, width: f32, height: f32) {
             ..Default::default()
         },
     );
-}
-
-pub fn draw_dungeon_fog(index: usize, x: f32, y: f32, width: f32, height: f32) {
-    draw_atlas(FOG_LAYERS, 3, 2, index % 6, x, y, width, height);
-}
-
-pub fn draw_landmark_scene(index: usize, x: f32, y: f32, width: f32, height: f32) {
-    draw_atlas(LANDMARK_SCENES, 3, 2, index % 6, x, y, width, height);
-}
-
-pub fn draw_dungeon_hazard(index: usize, x: f32, y: f32, width: f32, height: f32) {
-    draw_atlas(HAZARDS, 3, 2, index % 6, x, y, width, height);
-}
-
-pub fn draw_recovery_scene(index: usize, x: f32, y: f32, width: f32, height: f32) {
-    draw_atlas(RECOVERY_SCENES, 3, 2, index % 6, x, y, width, height);
-}
-
-pub fn draw_boss_reward(index: usize, x: f32, y: f32, width: f32, height: f32) {
-    draw_atlas(BOSS_REWARDS, 3, 2, index % 6, x, y, width, height);
 }
 
 pub fn draw_party_portrait(species_id: &str, x: f32, y: f32, size: f32) {
@@ -353,30 +323,12 @@ fn asset_bytes(asset: &str) -> &'static [u8] {
         DUNGEON_ENEMIES => {
             include_bytes!("../../assets/generated/dungeon/dungeon_enemy_atlas_v1.png")
         }
-        PARTY_MARKERS => include_bytes!(
-            "../../assets/generated/monster_art/monster_party_marker_travel_v5_atlas.png"
-        ),
         ROOM_MODULES => include_bytes!(
             "../../assets/generated/dungeon/dungeon_biome_room_module_v2_atlas_v1.png"
-        ),
-        FOG_LAYERS => include_bytes!(
-            "../../assets/generated/dungeon/dungeon_fog_boss_silhouette_atlas_v1.png"
         ),
         PARTY_PORTRAITS => include_bytes!(
             "../../assets/generated/monster_art/monster_party_context_portrait_v3_atlas_v1.png"
         ),
-        LANDMARK_SCENES => include_bytes!(
-            "../../assets/generated/dungeon/dungeon_encounter_landmarks_v4_atlas.png"
-        ),
-        HAZARDS => {
-            include_bytes!("../../assets/generated/dungeon/dungeon_hazard_warning_atlas_v1.png")
-        }
-        RECOVERY_SCENES => include_bytes!(
-            "../../assets/generated/dungeon/dungeon_recovery_return_landmarks_v5_atlas.png"
-        ),
-        BOSS_REWARDS => {
-            include_bytes!("../../assets/generated/dungeon/dungeon_boss_reward_atlas_v1.png")
-        }
         PURPOSE_ROOMS => {
             include_bytes!("../../assets/generated/dungeon/dungeon_room_module_atlas_v1.png")
         }
