@@ -17,6 +17,9 @@ const ROOM_MODULES: &str = "room_modules";
 const FOG_LAYERS: &str = "fog_layers";
 const PARTY_PORTRAITS: &str = "party_portraits";
 const LANDMARK_SCENES: &str = "landmark_scenes";
+const HAZARDS: &str = "hazards";
+const RECOVERY_SCENES: &str = "recovery_scenes";
+const BOSS_REWARDS: &str = "boss_rewards";
 
 thread_local! {
     static TEXTURES: RefCell<HashMap<&'static str, Texture2D>> = RefCell::new(HashMap::new());
@@ -139,6 +142,18 @@ pub fn draw_landmark_scene(index: usize, x: f32, y: f32, width: f32, height: f32
     draw_atlas(LANDMARK_SCENES, 3, 2, index % 6, x, y, width, height);
 }
 
+pub fn draw_dungeon_hazard(index: usize, x: f32, y: f32, width: f32, height: f32) {
+    draw_atlas(HAZARDS, 3, 2, index % 6, x, y, width, height);
+}
+
+pub fn draw_recovery_scene(index: usize, x: f32, y: f32, width: f32, height: f32) {
+    draw_atlas(RECOVERY_SCENES, 3, 2, index % 6, x, y, width, height);
+}
+
+pub fn draw_boss_reward(index: usize, x: f32, y: f32, width: f32, height: f32) {
+    draw_atlas(BOSS_REWARDS, 3, 2, index % 6, x, y, width, height);
+}
+
 pub fn draw_party_portrait(species_id: &str, x: f32, y: f32, size: f32) {
     let index = match species_id {
         "slime" => 0,
@@ -233,6 +248,15 @@ fn asset_bytes(asset: &str) -> &'static [u8] {
         LANDMARK_SCENES => include_bytes!(
             "../../assets/generated/dungeon/dungeon_encounter_landmarks_v4_atlas.png"
         ),
+        HAZARDS => {
+            include_bytes!("../../assets/generated/dungeon/dungeon_hazard_warning_atlas_v1.png")
+        }
+        RECOVERY_SCENES => include_bytes!(
+            "../../assets/generated/dungeon/dungeon_recovery_return_landmarks_v5_atlas.png"
+        ),
+        BOSS_REWARDS => {
+            include_bytes!("../../assets/generated/dungeon/dungeon_boss_reward_atlas_v1.png")
+        }
         _ => unreachable!("unknown visual asset"),
     }
 }

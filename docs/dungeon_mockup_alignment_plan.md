@@ -13,7 +13,7 @@ The target is the world-first dungeon composition represented by `docs/ui_refere
 - Physical landmarks: complete for cache, egg, enemy, boss, stairs and exit scene variants.
 - Mockup HUD: complete with top run overlay, party rail, right context drawer, expedition journal, bottom action dock and persistent touch controls.
 - Room-level interaction: complete as a visible-world tap-to-step affordance with directional touch fallback; tile movement remains authoritative.
-- Data-driven biome variants: complete for room-family selection by floor group; deeper floor scene families and richer hazards/recovery/boss compositions remain extension points.
+- Data-driven biome variants: complete for room-family selection by floor group, with explicit hazard, recovery/return, and boss/reward atlas hooks for special rooms.
 
 ## Phases
 

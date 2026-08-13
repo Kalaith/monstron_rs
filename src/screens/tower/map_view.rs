@@ -177,6 +177,7 @@ fn draw_room_modules(
             room_w,
             room_h,
         );
+        draw_room_special_scene(map, room, room_x, room_y, room_w, room_h);
         if visibility == TowerTileVisibility::Explored {
             draw_rectangle(
                 room_x,
@@ -186,6 +187,37 @@ fn draw_room_modules(
                 Color::from_rgba(15, 23, 28, 108),
             );
         }
+    }
+}
+
+fn draw_room_special_scene(
+    map: &TowerMapState,
+    room: crate::state::TowerRoom,
+    room_x: f32,
+    room_y: f32,
+    room_w: f32,
+    room_h: f32,
+) {
+    let object = map.objects.iter().find(|object| {
+        object.x >= room.start_x
+            && object.x < room.start_x + room.width
+            && object.y >= room.start_y
+            && object.y < room.start_y + room.height
+    });
+    let Some(object) = object else { return };
+    let inset_x = room_x + room_w * 0.28;
+    let inset_y = room_y + room_h * 0.22;
+    let inset_w = room_w * 0.44;
+    let inset_h = room_h * 0.44;
+    match object.kind {
+        TowerMapObjectKind::Boss => assets::draw_boss_reward(0, inset_x, inset_y, inset_w, inset_h),
+        TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => {
+            assets::draw_recovery_scene(4, inset_x, inset_y, inset_w, inset_h)
+        }
+        TowerMapObjectKind::Enemy => {
+            assets::draw_dungeon_hazard(0, inset_x, inset_y, inset_w, inset_h)
+        }
+        _ => {}
     }
 }
 
