@@ -1,5 +1,6 @@
 use macroquad::prelude::*;
 
+use crate::assets;
 use crate::data::GameData;
 use crate::engine::town_engine::{self, ShopTrade};
 use crate::screens::{town_layout, town_panels};
@@ -161,31 +162,11 @@ fn draw_town_backdrop() {
         Color::from_rgba(37, 55, 45, 255),
     );
 
-    for index in 0..9 {
-        let x = 72.0 + index as f32 * 145.0;
-        let h = 50.0 + (index % 3) as f32 * 24.0;
-        draw_rectangle(x, 430.0 - h, 90.0, h, Color::from_rgba(56, 62, 70, 255));
-        draw_triangle(
-            vec2(x - 8.0, 430.0 - h),
-            vec2(x + 45.0, 390.0 - h),
-            vec2(x + 98.0, 430.0 - h),
-            Color::from_rgba(74, 76, 82, 255),
-        );
+    for index in 0..6 {
+        let x = 28.0 + index as f32 * 206.0;
+        let y = if index % 2 == 0 { 182.0 } else { 252.0 };
+        assets::draw_landmark(index, x, y, 190.0, 190.0);
     }
-
-    draw_rectangle(
-        580.0,
-        150.0,
-        120.0,
-        280.0,
-        Color::from_rgba(88, 99, 112, 255),
-    );
-    draw_triangle(
-        vec2(640.0, 50.0),
-        vec2(562.0, 150.0),
-        vec2(718.0, 150.0),
-        Color::from_rgba(66, 75, 88, 255),
-    );
 }
 
 fn draw_header(state: &GameState) {

@@ -124,7 +124,7 @@ fn draw_party(state: &GameState, data: &GameData) {
 
         if let Some(monster_id) = slot {
             if let Some(monster) = state.monster_roster.monster(*monster_id) {
-                assets::draw_monster_badge(monster.visual_seed, x + 10.0, y + 28.0, 34.0);
+                assets::draw_monster_badge(&monster.species_id, x + 10.0, y + 28.0, 34.0);
                 let species_name = data
                     .species(&monster.species_id)
                     .map(|species| species.name.as_str())
@@ -192,7 +192,7 @@ fn draw_roster(state: &GameState, data: &GameData) {
             .species(&monster.species_id)
             .map(|species| species.name.as_str())
             .unwrap_or(monster.species_id.as_str());
-        assets::draw_monster_badge(monster.visual_seed, x, y - 28.0, 42.0);
+        assets::draw_monster_badge(&monster.species_id, x, y - 28.0, 42.0);
         draw_ui_text_ex(
             &format!("{} the {}", monster.name, species_name),
             x + 58.0,

@@ -10,13 +10,14 @@
       - "mainmenu" -> boot state (main menu)
       - "town"     -> fresh save, town screen
       - "hatchery" -> fresh save, hatchery screen
+      - "tower"     -> fresh save, active first-floor dungeon run
 
 .EXAMPLE
     ./scripts/capture_ui.ps1
     ./scripts/capture_ui.ps1 -Frames 60 -SkipBuild
 #>
 param(
-    [string[]]$Scenes = @("mainmenu", "town", "hatchery"),
+    [string[]]$Scenes = @("mainmenu", "town", "hatchery", "tower"),
     [int]$Frames = 150,
     [string]$OutputDir = "docs\verification",
     [switch]$SkipBuild

@@ -147,7 +147,7 @@ fn draw_egg_inventory(state: &GameState, data: &GameData) {
         let rarity = egg_type
             .map(|egg_type| egg_type.rarity.as_str())
             .unwrap_or("?");
-        assets::draw_egg_badge(egg.palette_seed, rect.x + 24.0, y - 34.0, 42.0);
+        assets::draw_egg_badge(&egg.egg_type_id, rect.x + 24.0, y - 34.0, 42.0);
         draw_ui_text_ex(
             &format!("{} #{}", name, egg.id),
             rect.x + 82.0,
@@ -213,12 +213,15 @@ fn draw_reference(data: &GameData) {
     ui::draw_panel(rect);
     ui::draw_section_title("Known Egg Types", rect.x + 20.0, rect.y + 34.0);
 
-    for (index, egg_type) in data.egg_types.iter().take(8).enumerate() {
-        let y = rect.y + 76.0 + index as f32 * 45.0;
+    for (index, egg_type) in data.egg_types.iter().enumerate() {
+        let column = index / 8;
+        let x = rect.x + 20.0 + column as f32 * 186.0;
+        let row_y = rect.y + 76.0 + (index % 8) as f32 * 45.0;
+        assets::draw_egg_badge(&egg_type.id, x, row_y - 28.0, 34.0);
         draw_ui_text_ex(
             &egg_type.name,
-            rect.x + 20.0,
-            y,
+            x + 40.0,
+            row_y,
             TextParams {
                 font_size: 19,
                 color: ui::TEXT_BRIGHT,
@@ -230,8 +233,8 @@ fn draw_reference(data: &GameData) {
                 "{}  Floor {}  Hatch {}d",
                 egg_type.rarity, egg_type.discovery_floor, egg_type.hatch_days
             ),
-            rect.x + 20.0,
-            y + 20.0,
+            x + 40.0,
+            row_y + 20.0,
             TextParams {
                 font_size: 15,
                 color: ui::TEXT_DIM,

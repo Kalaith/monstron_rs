@@ -164,7 +164,7 @@ fn draw_roster(state: &GameState, data: &GameData) {
         .enumerate()
     {
         let y = rect.y + 58.0 + index as f32 * 38.0;
-        assets::draw_monster_badge(monster.visual_seed, rect.x + 18.0, y - 22.0, 28.0);
+        assets::draw_monster_badge(&monster.species_id, rect.x + 18.0, y - 22.0, 28.0);
         let species_name = data
             .species(&monster.species_id)
             .map(|species| species.name.as_str())
@@ -220,9 +220,10 @@ fn draw_npcs(state: &GameState, data: &GameData) {
 
     for (index, npc) in data.npcs.iter().enumerate() {
         let y = rect.y + 62.0 + index as f32 * 32.0;
+        assets::draw_npc(&npc.id, rect.x + 18.0, y - 28.0, 28.0);
         draw_ui_text_ex(
             &format!("{} - {}", npc.name, npc.service),
-            rect.x + 18.0,
+            rect.x + 52.0,
             y,
             TextParams {
                 font_size: BODY_FONT,

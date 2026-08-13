@@ -85,6 +85,8 @@ fn draw_backdrop() {
         Color::from_rgba(35, 39, 42, 255),
     );
     draw_circle(980.0, 160.0, 130.0, Color::from_rgba(155, 92, 72, 26));
+    assets::draw_room_vignette(1, 270.0, 112.0, 710.0, 390.0);
+    draw_rectangle(270.0, 112.0, 710.0, 390.0, Color::from_rgba(10, 15, 17, 84));
 }
 
 fn draw_header(combat: &CombatState) {
@@ -166,6 +168,14 @@ fn draw_formation(combat: &CombatState) {
     for combatant in &combat.enemies {
         draw_combatant(combatant, false, enemy_slot_rect(combatant.slot));
     }
+    if combat.outcome.is_none() {
+        assets::draw_combat_vfx(
+            combat.round as usize,
+            rect.x + rect.w * 0.47,
+            rect.y + 150.0,
+            72.0,
+        );
+    }
 }
 
 fn draw_combatant(combatant: &Combatant, is_ally: bool, rect: Rect) {
@@ -178,9 +188,9 @@ fn draw_combatant(combatant: &Combatant, is_ally: bool, rect: Rect) {
     draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 1.5, ui::PANEL_EDGE);
 
     if is_ally {
-        assets::draw_monster_badge(combatant.visual_seed, rect.x + 10.0, rect.y + 16.0, 34.0);
+        assets::draw_monster_badge(&combatant.source_id, rect.x + 10.0, rect.y + 16.0, 34.0);
     } else {
-        draw_enemy_badge(combatant.visual_seed, rect.x + 10.0, rect.y + 18.0);
+        assets::draw_enemy_badge(&combatant.source_id, rect.x + 10.0, rect.y + 18.0, 34.0);
     }
 
     let name_color = if combatant.is_alive() {
@@ -231,24 +241,6 @@ fn draw_combatant(combatant: &Combatant, is_ally: bool, rect: Rect) {
             color: ui::TEXT_DIM,
             ..Default::default()
         },
-    );
-}
-
-fn draw_enemy_badge(seed: u64, x: f32, y: f32) {
-    let r = 34.0 + (seed % 20) as f32;
-    let color = Color::from_rgba(
-        120 + (seed % 80) as u8,
-        70 + ((seed >> 8) % 70) as u8,
-        70 + ((seed >> 16) % 80) as u8,
-        255,
-    );
-    draw_rectangle(x, y, 34.0, 34.0, color);
-    draw_rectangle_lines(x, y, 34.0, 34.0, 2.0, ui::PANEL_EDGE);
-    draw_circle(
-        x + 17.0,
-        y + 17.0,
-        r.min(17.0),
-        Color::from_rgba(10, 12, 14, 80),
     );
 }
 

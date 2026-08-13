@@ -135,7 +135,7 @@ fn draw_worker_row(
 ) {
     let y = rect.y + 76.0 + index as f32 * 62.0;
     let job = state.town.monster_job(monster.id);
-    assets::draw_monster_badge(monster.visual_seed, rect.x + 22.0, y - 32.0, 38.0);
+    assets::draw_monster_badge(&monster.species_id, rect.x + 22.0, y - 32.0, 38.0);
 
     draw_ui_text_ex(
         &monster_label(monster, data),

@@ -141,8 +141,8 @@ fn draw_pair_row(
 ) {
     let y = rect.y + 76.0 + index as f32 * 62.0;
     let compatible = breeding_engine::pair_is_compatible(first, second);
-    assets::draw_monster_badge(first.visual_seed, rect.x + 22.0, y - 32.0, 38.0);
-    assets::draw_monster_badge(second.visual_seed, rect.x + 68.0, y - 32.0, 38.0);
+    assets::draw_monster_badge(&first.species_id, rect.x + 22.0, y - 32.0, 38.0);
+    assets::draw_monster_badge(&second.species_id, rect.x + 68.0, y - 32.0, 38.0);
 
     draw_ui_text_ex(
         &format!(
@@ -293,7 +293,7 @@ fn draw_recent_bred_eggs(state: &GameState, data: &GameData, x: f32, y: f32) {
             .inheritance
             .as_ref()
             .is_some_and(|inheritance| inheritance.mutated);
-        assets::draw_egg_badge(egg.palette_seed, x, row_y - 32.0, 36.0);
+        assets::draw_egg_badge(&egg.egg_type_id, x, row_y - 32.0, 36.0);
         draw_ui_text_ex(
             &format!("{} #{}", egg_name, egg.id),
             x + 50.0,

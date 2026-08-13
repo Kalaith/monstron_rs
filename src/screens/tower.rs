@@ -173,7 +173,14 @@ fn draw_run_sidebar(state: &GameState, data: &GameData, run: &TowerRunState) {
             ..Default::default()
         },
     );
-    draw_wrapped_line(theme, rect.x + 20.0, rect.y + 104.0, 48, ui::TEXT_DIM);
+    assets::draw_room_vignette(
+        run.current_floor,
+        rect.x + 248.0,
+        rect.y + 46.0,
+        148.0,
+        108.0,
+    );
+    draw_wrapped_line(theme, rect.x + 20.0, rect.y + 104.0, 30, ui::TEXT_DIM);
 
     draw_ui_text_ex(
         &format!(
@@ -282,7 +289,7 @@ fn draw_cargo_summary(
     } else {
         for (index, egg) in run.found_eggs.iter().take(3).enumerate() {
             let egg_y = y + 20.0 + index as f32 * 32.0;
-            assets::draw_egg_badge(egg.palette_seed, x + width * 0.52, egg_y, 24.0);
+            assets::draw_egg_badge(&egg.egg_type_id, x + width * 0.52, egg_y, 24.0);
             let egg_name = data
                 .egg_type(&egg.egg_type_id)
                 .map(|egg_type| egg_type.name.as_str())

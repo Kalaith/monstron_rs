@@ -232,6 +232,10 @@ impl Game {
                 self.start_new_game();
                 self.screen = AppScreen::Hatchery;
             }
+            "tower" => {
+                self.start_new_game();
+                self.enter_tower(TowerRunGoal::Balanced);
+            }
             _ => {
                 // Default: boot state is the main menu.
             }
