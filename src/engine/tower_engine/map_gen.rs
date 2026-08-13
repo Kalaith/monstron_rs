@@ -13,8 +13,13 @@ pub(super) fn generate_map(
     seed: u64,
 ) -> TowerMapState {
     let mut rng = TowerMapRng::new(seed);
-    let width = 30 + (floor_number / 4).min(2) * 2;
-    let height = 22;
+    let (width, height) = if floor_number == 1 {
+        // The Moss Gate plate is a full 1006x602 world stage. Keep its
+        // navigation grid at the same scale as the visible stone paths.
+        (56, 34)
+    } else {
+        (30 + (floor_number / 4).min(2) * 2, 22)
+    };
     let mut map = TowerMapState::new(width, height, floor_number, seed);
     let room_target = room_target(floor_number, goal);
 
@@ -76,8 +81,15 @@ fn room_target(floor: u32, goal: TowerRunGoal) -> u32 {
 }
 
 fn carve_room(map: &mut TowerMapState, room: TowerRoom) {
-    for x in room.start_x + 1..room.start_x + room.width - 1 {
-        for y in room.start_y + 1..room.start_y + room.height - 1 {
+    // Room art is intentionally larger than the old one-tile inset. Make
+    // the gameplay footprint cover that art instead of leaving an invisible
+    // wall around the room's walkable floor.
+    let min_x = room.start_x.saturating_sub(1);
+    let min_y = room.start_y.saturating_sub(1);
+    let max_x = (room.start_x + room.width).min(map.width);
+    let max_y = (room.start_y + room.height).min(map.height);
+    for x in min_x..max_x {
+        for y in min_y..max_y {
             map.set_tile(x, y, TowerTileKind::Floor);
         }
     }
@@ -171,8 +183,12 @@ fn carve_vertical(map: &mut TowerMapState, from_y: u32, to_y: u32, x: u32) {
 }
 
 fn carve_corridor_tile(map: &mut TowerMapState, x: u32, y: u32) {
-    if map.tile_at(x, y) == TowerTileKind::Wall {
-        map.set_tile(x, y, TowerTileKind::Corridor);
+    for corridor_x in x.saturating_sub(1)..=(x + 1).min(map.width.saturating_sub(1)) {
+        for corridor_y in y.saturating_sub(1)..=(y + 1).min(map.height.saturating_sub(1)) {
+            if map.tile_at(corridor_x, corridor_y) == TowerTileKind::Wall {
+                map.set_tile(corridor_x, corridor_y, TowerTileKind::Corridor);
+            }
+        }
     }
 }
 

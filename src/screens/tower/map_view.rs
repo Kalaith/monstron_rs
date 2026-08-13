@@ -403,11 +403,9 @@ fn draw_party(state: &GameState, map: &TowerMapState, transform: WorldTransform)
 
 fn map_point(map: &TowerMapState, transform: WorldTransform, x: u32, y: u32) -> Vec2 {
     if map.floor == 1 {
-        let offset_x = x as i32 - map.start_x as i32;
-        let offset_y = y as i32 - map.start_y as i32;
         vec2(
-            620.0 + offset_x as f32 * 18.0,
-            395.0 + offset_y as f32 * 18.0,
+            WORLD.x + (x as f32 + 0.5) * WORLD.w / map.width.max(1) as f32,
+            WORLD.y + (y as f32 + 0.5) * WORLD.h / map.height.max(1) as f32,
         )
     } else {
         vec2(
