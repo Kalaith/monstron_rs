@@ -1,536 +1,367 @@
 use macroquad::prelude::*;
 
-use super::{movement_buttons, TowerAction};
-use crate::assets;
+use super::TowerAction;
+use crate::assets::{self, DungeonBiome, DungeonRoomPurpose};
 use crate::state::{
-    TowerMapObject, TowerMapObjectKind, TowerMapState, TowerRunState, TowerTileKind,
+    TowerMapObject, TowerMapObjectKind, TowerMapState, TowerRoom, TowerRunState,
     TowerTileVisibility,
 };
 use crate::ui;
-use macroquad_toolkit::ui::draw_ui_text_ex;
 
-const VIEWPORT_TILES_W: u32 = 18;
-const VIEWPORT_TILES_H: u32 = 10;
+const WORLD: Rect = Rect::new(138.0, 52.0, 1006.0, 602.0);
+
+#[derive(Clone, Copy)]
+struct WorldTransform {
+    origin: Vec2,
+    scale: Vec2,
+}
 
 pub(super) fn draw_map_world(run: &TowerRunState) {
     let map = &run.map;
+    draw_world_backdrop(map.floor);
     if map.is_empty() {
-        draw_rectangle(0.0, 0.0, ui::VIEW_WIDTH, ui::VIEW_HEIGHT, rgba(8, 10, 12));
         ui::draw_centered_text(
-            "Map data is being rebuilt.",
+            "The tower is rebuilding this floor...",
             ui::VIEW_WIDTH * 0.5,
             ui::VIEW_HEIGHT * 0.5,
-            26,
+            24,
             ui::TEXT_DIM,
         );
         return;
     }
 
-    let map_area = Rect::new(0.0, 0.0, ui::VIEW_WIDTH, ui::VIEW_HEIGHT);
-    let minimap_rect = Rect::new(ui::VIEW_WIDTH - 206.0, 72.0, 188.0, 138.0);
-    draw_map_viewport(map, map_area);
-    draw_minimap(map, minimap_rect);
-    draw_legend(488.0, 42.0);
-    draw_movement_controls();
+    let transform = world_transform(map);
+    draw_connectors(map, transform);
+    draw_rooms(map, transform);
+    draw_objects(map, transform);
+    draw_party(map, transform);
+    draw_world_fog(map);
 }
 
-pub(super) fn world_tap_action(run: &TowerRunState) -> Option<super::TowerAction> {
+pub(super) fn world_tap_action(run: &TowerRunState) -> Option<TowerAction> {
     if !is_mouse_button_pressed(MouseButton::Left) || run.map.is_empty() {
         return None;
     }
-    let (mouse_x, mouse_y) = mouse_position();
-    if mouse_x < 212.0 || mouse_x > 1020.0 || mouse_y < 184.0 || mouse_y > 610.0 {
+    let mouse = macroquad_toolkit::ui::virtual_mouse_position(ui::VIEW_WIDTH, ui::VIEW_HEIGHT);
+    if !WORLD.contains(mouse) {
         return None;
     }
-    let dx = if mouse_x > 616.0 {
-        1
-    } else if mouse_x < 500.0 {
-        -1
-    } else {
-        0
-    };
-    let dy = if mouse_y > 430.0 {
-        1
-    } else if mouse_y < 315.0 {
-        -1
-    } else {
-        0
-    };
+
+    let map = &run.map;
+    let transform = world_transform(map);
+    let selected = map
+        .rooms
+        .iter()
+        .copied()
+        .filter(|room| room_rect(*room, transform).contains(mouse))
+        .min_by_key(|room| {
+            let center = room.center();
+            map.player_x.abs_diff(center.0) + map.player_y.abs_diff(center.1)
+        })?;
+    let target = selected.center();
+    let dx = axis_step(target.0 as i32 - map.player_x as i32);
+    let dy = axis_step(target.1 as i32 - map.player_y as i32);
     if dx == 0 && dy == 0 {
         None
+    } else if (target.0 as i32 - map.player_x as i32).abs()
+        >= (target.1 as i32 - map.player_y as i32).abs()
+    {
+        Some(TowerAction::TapMove(dx, 0))
     } else {
-        Some(super::TowerAction::TapMove(dx, dy))
+        Some(TowerAction::TapMove(0, dy))
     }
 }
 
-fn draw_map_viewport(map: &TowerMapState, area: Rect) {
-    let visible_w = map.width.min(VIEWPORT_TILES_W);
-    let visible_h = map.height.min(VIEWPORT_TILES_H);
-    let start_x = viewport_start(map.player_x, map.width, visible_w);
-    let start_y = viewport_start(map.player_y, map.height, visible_h);
+fn axis_step(value: i32) -> i32 {
+    value.signum()
+}
 
-    let tile_size = (area.w / visible_w as f32)
-        .min(area.h / visible_h as f32)
-        .floor()
-        .max(18.0);
-    let map_w = tile_size * visible_w as f32;
-    let map_h = tile_size * visible_h as f32;
-    let origin_x = area.x + (area.w - map_w) * 0.5;
-    let origin_y = area.y + (area.h - map_h) * 0.5;
-
-    draw_rectangle(0.0, 0.0, ui::VIEW_WIDTH, ui::VIEW_HEIGHT, rgba(7, 9, 10));
-
-    // The authoritative tile grid remains active for movement and fog logic,
-    // but the presentation is now room-scale: connected stone paths replace
-    // the old debug-grid dominance beneath the illustrated modules.
-    draw_room_connectors(map, origin_x, origin_y, start_x, start_y, tile_size);
-    draw_room_modules(map, origin_x, origin_y, start_x, start_y, tile_size);
-
-    for object in &map.objects {
-        if object.x >= start_x
-            && object.x < start_x + visible_w
-            && object.y >= start_y
-            && object.y < start_y + visible_h
-            && map.is_visible(object.x, object.y)
-        {
-            draw_map_object(
-                map,
-                object,
-                origin_x - start_x as f32 * tile_size,
-                origin_y - start_y as f32 * tile_size,
-                tile_size,
-            );
-        }
-    }
-
-    draw_player(
-        map,
-        origin_x - start_x as f32 * tile_size,
-        origin_y - start_y as f32 * tile_size,
-        tile_size,
+fn draw_world_backdrop(floor: u32) {
+    draw_rectangle(
+        0.0,
+        0.0,
+        ui::VIEW_WIDTH,
+        ui::VIEW_HEIGHT,
+        color(4, 9, 11, 255),
     );
+    for band in 0..9 {
+        let inset = band as f32 * 22.0;
+        let alpha = 18_u8.saturating_sub(band as u8);
+        draw_ellipse(
+            640.0,
+            365.0,
+            610.0 - inset,
+            350.0 - inset * 0.45,
+            0.0,
+            color(21, 47, 47, alpha),
+        );
+    }
+    draw_background_haze(floor);
 }
 
-fn draw_room_connectors(
-    map: &TowerMapState,
-    origin_x: f32,
-    origin_y: f32,
-    start_x: u32,
-    start_y: u32,
-    tile_size: f32,
-) {
-    for pair in map.rooms.windows(2) {
-        let a = pair[0].center();
-        let b = pair[1].center();
-        if map.visibility_at(a.0, a.1) == TowerTileVisibility::Hidden
-            && map.visibility_at(b.0, b.1) == TowerTileVisibility::Hidden
-        {
+fn draw_background_haze(floor: u32) {
+    let drift = floor as f32 * 1.7;
+    for cloud in 0..18 {
+        let phase = cloud as f32 * 2.13 + drift;
+        let x = 80.0 + ((phase * 0.71).sin() + 1.0) * 560.0;
+        let y = 80.0 + ((phase * 0.43).cos() + 1.0) * 280.0;
+        draw_ellipse(x, y, 150.0, 58.0, phase * 0.04, color(43, 66, 65, 10));
+    }
+}
+
+fn world_transform(map: &TowerMapState) -> WorldTransform {
+    let scale_x = WORLD.w / map.width.max(1) as f32;
+    let scale_y = WORLD.h / map.height.max(1) as f32;
+    WorldTransform {
+        origin: vec2(WORLD.x, WORLD.y),
+        scale: vec2(scale_x, scale_y),
+    }
+}
+
+fn room_rect(room: TowerRoom, transform: WorldTransform) -> Rect {
+    let center = room.center();
+    let width = (room.width as f32 * transform.scale.x * 1.32).clamp(210.0, 300.0);
+    let height = (room.height as f32 * transform.scale.y * 1.34).clamp(172.0, 234.0);
+    Rect::new(
+        transform.origin.x + center.0 as f32 * transform.scale.x - width * 0.5,
+        transform.origin.y + center.1 as f32 * transform.scale.y - height * 0.5,
+        width,
+        height,
+    )
+}
+
+fn room_center(room: TowerRoom, transform: WorldTransform) -> Vec2 {
+    let rect = room_rect(room, transform);
+    vec2(rect.x + rect.w * 0.5, rect.y + rect.h * 0.58)
+}
+
+fn draw_connectors(map: &TowerMapState, transform: WorldTransform) {
+    for (index, pair) in map.rooms.windows(2).enumerate() {
+        let a = room_center(pair[0], transform);
+        let b = room_center(pair[1], transform);
+        let visibility = pair_visibility(map, pair[0], pair[1]);
+        if visibility == TowerTileVisibility::Hidden && index > 5 {
             continue;
         }
-        let ax = origin_x + a.0.saturating_sub(start_x) as f32 * tile_size + tile_size * 0.5;
-        let ay = origin_y + a.1.saturating_sub(start_y) as f32 * tile_size + tile_size * 0.5;
-        let bx = origin_x + b.0.saturating_sub(start_x) as f32 * tile_size + tile_size * 0.5;
-        let by = origin_y + b.1.saturating_sub(start_y) as f32 * tile_size + tile_size * 0.5;
-        draw_line(ax, ay, bx, ay, tile_size * 0.42, rgba(34, 47, 45));
-        draw_line(bx, ay, bx, by, tile_size * 0.42, rgba(34, 47, 45));
-        draw_line(ax, ay, bx, ay, tile_size * 0.12, rgba(77, 112, 92));
-        draw_line(bx, ay, bx, by, tile_size * 0.12, rgba(77, 112, 92));
+        let alpha = if visibility == TowerTileVisibility::Visible {
+            235
+        } else {
+            105
+        };
+        draw_line(
+            a.x,
+            a.y + 7.0,
+            b.x,
+            a.y + 7.0,
+            34.0,
+            color(10, 15, 14, alpha),
+        );
+        draw_line(b.x, a.y + 7.0, b.x, b.y, 34.0, color(10, 15, 14, alpha));
+        draw_line(a.x, a.y, b.x, a.y, 22.0, color(47, 55, 41, alpha));
+        draw_line(b.x, a.y, b.x, b.y, 22.0, color(47, 55, 41, alpha));
+        draw_line(a.x, a.y, b.x, a.y, 3.0, color(111, 96, 55, alpha / 2));
+        draw_line(b.x, a.y, b.x, b.y, 3.0, color(111, 96, 55, alpha / 2));
     }
 }
 
-fn draw_room_modules(
-    map: &TowerMapState,
-    origin_x: f32,
-    origin_y: f32,
-    start_x: u32,
-    start_y: u32,
-    tile_size: f32,
-) {
-    for room in map.rooms.iter().copied() {
-        let room_x = origin_x + (room.start_x.saturating_sub(start_x)) as f32 * tile_size;
-        let room_y = origin_y + (room.start_y.saturating_sub(start_y)) as f32 * tile_size;
-        let room_w = room.width as f32 * tile_size;
-        let room_h = room.height as f32 * tile_size;
-        if room_x + room_w < 0.0
-            || room_y + room_h < 0.0
-            || room_x > ui::VIEW_WIDTH
-            || room_y > ui::VIEW_HEIGHT
-        {
+fn pair_visibility(map: &TowerMapState, a: TowerRoom, b: TowerRoom) -> TowerTileVisibility {
+    let va = map.visibility_at(a.center().0, a.center().1);
+    let vb = map.visibility_at(b.center().0, b.center().1);
+    if va == TowerTileVisibility::Visible || vb == TowerTileVisibility::Visible {
+        TowerTileVisibility::Visible
+    } else if va == TowerTileVisibility::Explored || vb == TowerTileVisibility::Explored {
+        TowerTileVisibility::Explored
+    } else {
+        TowerTileVisibility::Hidden
+    }
+}
+
+fn draw_rooms(map: &TowerMapState, transform: WorldTransform) {
+    let biome = DungeonBiome::for_floor(map.floor);
+    for (index, room) in map.rooms.iter().copied().enumerate() {
+        let rect = room_rect(room, transform);
+        if rect.x + rect.w < WORLD.x || rect.x > WORLD.x + WORLD.w {
             continue;
         }
         let visibility = map.visibility_at(room.center().0, room.center().1);
-        if visibility == TowerTileVisibility::Hidden {
-            assets::draw_dungeon_fog(
-                0,
-                room_x - tile_size * 0.3,
-                room_y - tile_size * 0.3,
-                room_w + tile_size * 0.6,
-                room_h + tile_size * 0.6,
-            );
-            continue;
-        }
-        assets::draw_dungeon_room(
-            map.floor,
-            room_purpose(map, room),
-            room_x,
-            room_y,
-            room_w,
-            room_h,
-        );
-        draw_room_special_scene(map, room, room_x, room_y, room_w, room_h);
-        if visibility == TowerTileVisibility::Explored {
-            draw_rectangle(
-                room_x,
-                room_y,
-                room_w,
-                room_h,
-                Color::from_rgba(15, 23, 28, 108),
-            );
-        }
-    }
-}
-
-fn draw_room_special_scene(
-    map: &TowerMapState,
-    room: crate::state::TowerRoom,
-    room_x: f32,
-    room_y: f32,
-    room_w: f32,
-    room_h: f32,
-) {
-    let object = map.objects.iter().find(|object| {
-        object.x >= room.start_x
-            && object.x < room.start_x + room.width
-            && object.y >= room.start_y
-            && object.y < room.start_y + room.height
-    });
-    let Some(object) = object else { return };
-    let inset_x = room_x + room_w * 0.28;
-    let inset_y = room_y + room_h * 0.22;
-    let inset_w = room_w * 0.44;
-    let inset_h = room_h * 0.44;
-    match object.kind {
-        TowerMapObjectKind::Boss => assets::draw_boss_reward(0, inset_x, inset_y, inset_w, inset_h),
-        TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => {
-            assets::draw_recovery_scene(4, inset_x, inset_y, inset_w, inset_h)
-        }
-        TowerMapObjectKind::Enemy => {
-            assets::draw_dungeon_hazard(0, inset_x, inset_y, inset_w, inset_h)
-        }
-        _ => {}
-    }
-}
-
-fn room_purpose(map: &TowerMapState, room: crate::state::TowerRoom) -> usize {
-    let object = map.objects.iter().find(|object| {
-        object.x >= room.start_x
-            && object.x < room.start_x + room.width
-            && object.y >= room.start_y
-            && object.y < room.start_y + room.height
-    });
-    match object.map(|object| object.kind) {
-        Some(TowerMapObjectKind::Egg) => 3,
-        Some(TowerMapObjectKind::Loot) => 1,
-        Some(TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss) => 2,
-        Some(TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit) => 4,
-        None => 0,
-    }
-}
-
-fn viewport_start(center: u32, total: u32, viewport: u32) -> u32 {
-    if total <= viewport {
-        0
-    } else {
-        center.saturating_sub(viewport / 2).min(total - viewport)
-    }
-}
-
-fn rgba(r: u8, g: u8, b: u8) -> Color {
-    Color::from_rgba(r, g, b, 255)
-}
-
-fn draw_minimap(map: &TowerMapState, rect: Rect) {
-    draw_rectangle(
-        rect.x,
-        rect.y,
-        rect.w,
-        rect.h,
-        Color::from_rgba(8, 10, 12, 225),
-    );
-    draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 1.5, ui::PANEL_EDGE);
-
-    let tile_size = (rect.w / map.width as f32).min(rect.h / map.height as f32);
-    let map_w = tile_size * map.width as f32;
-    let map_h = tile_size * map.height as f32;
-    let origin_x = rect.x + (rect.w - map_w) * 0.5;
-    let origin_y = rect.y + (rect.h - map_h) * 0.5;
-
-    for y in 0..map.height {
-        for x in 0..map.width {
-            let visibility = map.visibility_at(x, y);
-            if visibility == TowerTileVisibility::Hidden {
-                continue;
-            }
-            draw_rectangle(
-                origin_x + x as f32 * tile_size,
-                origin_y + y as f32 * tile_size,
-                tile_size.max(1.0),
-                tile_size.max(1.0),
-                minimap_tile_color(map.tile_at(x, y), visibility),
-            );
-        }
-    }
-
-    for object in &map.objects {
-        if !should_show_on_minimap(map, object) {
-            continue;
-        }
-        let center_x = origin_x + object.x as f32 * tile_size + tile_size * 0.5;
-        let center_y = origin_y + object.y as f32 * tile_size + tile_size * 0.5;
-        draw_circle(
-            center_x,
-            center_y,
-            tile_size.max(2.0) * 0.72,
-            object_color(object.kind),
-        );
-    }
-
-    let player_x = origin_x + map.player_x as f32 * tile_size + tile_size * 0.5;
-    let player_y = origin_y + map.player_y as f32 * tile_size + tile_size * 0.5;
-    draw_circle(
-        player_x,
-        player_y,
-        tile_size.max(2.0),
-        Color::from_rgba(238, 241, 213, 255),
-    );
-}
-
-fn minimap_tile_color(tile: TowerTileKind, visibility: TowerTileVisibility) -> Color {
-    match visibility {
-        TowerTileVisibility::Hidden => Color::from_rgba(7, 9, 11, 255),
-        TowerTileVisibility::Explored => match tile {
-            TowerTileKind::Wall => Color::from_rgba(18, 22, 25, 255),
-            TowerTileKind::Floor => Color::from_rgba(41, 54, 50, 255),
-            TowerTileKind::Corridor => Color::from_rgba(34, 46, 43, 255),
-        },
-        TowerTileVisibility::Visible => match tile {
-            TowerTileKind::Wall => Color::from_rgba(28, 34, 38, 255),
-            TowerTileKind::Floor => Color::from_rgba(88, 115, 98, 255),
-            TowerTileKind::Corridor => Color::from_rgba(67, 92, 82, 255),
-        },
-    }
-}
-
-fn should_show_on_minimap(map: &TowerMapState, object: &TowerMapObject) -> bool {
-    match object.kind {
-        TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => {
-            map.is_discovered(object.x, object.y)
-        }
-        TowerMapObjectKind::Loot
-        | TowerMapObjectKind::Egg
-        | TowerMapObjectKind::Enemy
-        | TowerMapObjectKind::Boss => map.is_visible(object.x, object.y),
-    }
-}
-
-fn object_color(kind: TowerMapObjectKind) -> Color {
-    match kind {
-        TowerMapObjectKind::Loot => Color::from_rgba(213, 169, 80, 255),
-        TowerMapObjectKind::Egg => Color::from_rgba(104, 162, 179, 255),
-        TowerMapObjectKind::Enemy => Color::from_rgba(166, 65, 72, 255),
-        TowerMapObjectKind::Boss => Color::from_rgba(116, 42, 74, 255),
-        TowerMapObjectKind::Stairs => Color::from_rgba(118, 198, 178, 255),
-        TowerMapObjectKind::Exit => Color::from_rgba(95, 162, 95, 255),
-    }
-}
-
-fn draw_map_object(
-    map: &TowerMapState,
-    object: &TowerMapObject,
-    origin_x: f32,
-    origin_y: f32,
-    tile_size: f32,
-) {
-    let center_x = origin_x + object.x as f32 * tile_size + tile_size * 0.5;
-    let center_y = origin_y + object.y as f32 * tile_size + tile_size * 0.5;
-    let pulse = (get_time() as f32 * 2.4 + object.x as f32 * 0.7).sin() * 0.04 + 1.0;
-    let shadow = Color::from_rgba(3, 6, 6, 145);
-    draw_ellipse(
-        center_x,
-        center_y + tile_size * 0.3,
-        tile_size * 0.38,
-        tile_size * 0.14,
-        0.0,
-        shadow,
-    );
-
-    match object.kind {
-        TowerMapObjectKind::Loot => {
-            draw_object_glow(center_x, center_y, tile_size * 0.42, rgba(218, 163, 69));
-            assets::draw_landmark_scene(
-                0,
-                center_x - tile_size * 0.58,
-                center_y - tile_size * 0.58,
-                tile_size * 1.16,
-                tile_size * 1.16,
-            );
-            assets::draw_dungeon_feature(
-                1,
-                center_x - tile_size * 0.54,
-                center_y - tile_size * 0.56,
-                tile_size * 1.08,
-                tile_size * 1.08,
-            );
-        }
-        TowerMapObjectKind::Egg => {
-            draw_object_glow(center_x, center_y, tile_size * 0.42, rgba(99, 194, 188));
-            assets::draw_egg_badge(
-                &object.egg_type_id,
-                center_x - tile_size * 0.38,
-                center_y - tile_size * 0.42,
-                tile_size * 0.76 * pulse,
-            );
-        }
-        TowerMapObjectKind::Enemy => {
-            draw_object_glow(center_x, center_y, tile_size * 0.44, rgba(170, 62, 68));
-            assets::draw_landmark_scene(
-                2,
-                center_x - tile_size * 0.58,
-                center_y - tile_size * 0.58,
-                tile_size * 1.16,
-                tile_size * 1.16,
-            );
-            let index = (map.floor.saturating_sub(1) as usize).min(4);
-            assets::draw_dungeon_enemy(
-                index,
-                center_x - tile_size * 0.55,
-                center_y - tile_size * 0.62,
-                tile_size * 1.1,
-                tile_size * 1.1,
-            );
-        }
-        TowerMapObjectKind::Boss => {
-            draw_object_glow(center_x, center_y, tile_size * 0.6, rgba(189, 63, 89));
-            assets::draw_landmark_scene(
-                5,
-                center_x - tile_size * 0.8,
-                center_y - tile_size * 0.8,
-                tile_size * 1.6,
-                tile_size * 1.6,
-            );
-            assets::draw_dungeon_enemy(
-                5,
-                center_x - tile_size * 0.72,
-                center_y - tile_size * 0.86,
-                tile_size * 1.44,
-                tile_size * 1.44,
-            );
-        }
-        TowerMapObjectKind::Stairs => {
-            draw_object_glow(center_x, center_y, tile_size * 0.52, rgba(85, 189, 177));
-            assets::draw_landmark_scene(
-                4,
-                center_x - tile_size * 0.62,
-                center_y - tile_size * 0.62,
-                tile_size * 1.24,
-                tile_size * 1.24,
-            );
-            assets::draw_dungeon_feature(
-                2,
-                center_x - tile_size * 0.65,
-                center_y - tile_size * 0.68,
-                tile_size * 1.3,
-                tile_size * 1.3,
-            );
-        }
-        TowerMapObjectKind::Exit => {
-            draw_object_glow(center_x, center_y, tile_size * 0.58, rgba(104, 196, 211));
-            assets::draw_dungeon_feature(
-                3,
-                center_x - tile_size * 0.67,
-                center_y - tile_size * 0.75,
-                tile_size * 1.34,
-                tile_size * 1.34,
-            );
-        }
-    }
-}
-
-fn draw_object_glow(x: f32, y: f32, radius: f32, color: Color) {
-    let pulse = (get_time() as f32 * 2.0).sin() * 0.08 + 0.18;
-    draw_circle(x, y, radius, Color::new(color.r, color.g, color.b, pulse));
-}
-
-fn draw_player(map: &TowerMapState, origin_x: f32, origin_y: f32, tile_size: f32) {
-    let center_x = origin_x + map.player_x as f32 * tile_size + tile_size * 0.5;
-    let center_y = origin_y + map.player_y as f32 * tile_size + tile_size * 0.5;
-    let pulse = (get_time() as f32 * 3.0).sin() * 1.5;
-    draw_circle(
-        center_x,
-        center_y,
-        tile_size * 0.55 + pulse,
-        Color::from_rgba(72, 206, 197, 70),
-    );
-    draw_circle_lines(
-        center_x,
-        center_y,
-        tile_size * 0.48 + pulse,
-        2.0,
-        Color::from_rgba(223, 217, 152, 230),
-    );
-    assets::draw_party_marker(
-        0,
-        center_x - tile_size * 0.78,
-        center_y - tile_size * 0.58,
-        tile_size * 1.56,
-        tile_size * 1.0,
-    );
-}
-
-fn draw_legend(x: f32, y: f32) {
-    let entries = [
-        ("You", Color::from_rgba(238, 241, 213, 255)),
-        ("Enemy", Color::from_rgba(166, 65, 72, 255)),
-        ("Boss", Color::from_rgba(116, 42, 74, 255)),
-        ("Egg", Color::from_rgba(104, 162, 179, 255)),
-        ("Cache", Color::from_rgba(213, 169, 80, 255)),
-        ("Stairs", Color::from_rgba(118, 198, 178, 255)),
-        ("Exit", Color::from_rgba(95, 162, 95, 255)),
-    ];
-
-    draw_rectangle(
-        x - 10.0,
-        y - 28.0,
-        650.0,
-        38.0,
-        Color::from_rgba(8, 12, 13, 218),
-    );
-    draw_rectangle_lines(x - 10.0, y - 28.0, 650.0, 38.0, 1.0, ui::PANEL_EDGE);
-    for (index, (label, color)) in entries.iter().enumerate() {
-        let item_x = x + index as f32 * 91.0;
-        draw_circle(item_x, y - 6.0, 6.0, *color);
-        draw_ui_text_ex(
-            label,
-            item_x + 12.0,
-            y,
-            TextParams {
-                font_size: 15,
-                color: ui::TEXT_DIM,
-                ..Default::default()
-            },
-        );
-    }
-}
-
-fn draw_movement_controls() {
-    for (action, rect) in movement_buttons() {
-        let label = match action {
-            TowerAction::Move(0, -1) => "N",
-            TowerAction::Move(0, 1) => "S",
-            TowerAction::Move(-1, 0) => "W",
-            TowerAction::Move(1, 0) => "E",
-            _ => "",
+        let purpose = room_purpose(map, room, index);
+        let tint = match visibility {
+            TowerTileVisibility::Visible => WHITE,
+            TowerTileVisibility::Explored => color(120, 133, 119, 220),
+            TowerTileVisibility::Hidden => color(132, 143, 118, 225),
         };
-        ui::draw_button(rect, label, true);
+        draw_room_shadow(rect, visibility);
+        assets::draw_dungeon_room(biome, purpose, rect.x, rect.y, rect.w, rect.h, tint);
+        if visibility == TowerTileVisibility::Hidden {
+            draw_rectangle(rect.x, rect.y, rect.w, rect.h, color(3, 12, 14, 30));
+            draw_room_mist(rect, index);
+        } else if visibility == TowerTileVisibility::Visible {
+            draw_light_pool(
+                rect.x + rect.w * 0.5,
+                rect.y + rect.h * 0.56,
+                rect.w * 0.38,
+                purpose,
+            );
+        }
     }
+}
+
+fn draw_room_mist(rect: Rect, seed: usize) {
+    for cloud in 0..4 {
+        let phase = (seed * 7 + cloud * 11) as f32;
+        let x = rect.x + rect.w * (0.12 + ((phase * 0.37).sin() + 1.0) * 0.38);
+        let y = rect.y + rect.h * (0.16 + ((phase * 0.23).cos() + 1.0) * 0.32);
+        draw_ellipse(
+            x,
+            y,
+            rect.w * (0.24 + cloud as f32 * 0.025),
+            rect.h * 0.16,
+            0.0,
+            color(31, 49, 51, 15),
+        );
+    }
+}
+
+fn draw_room_shadow(rect: Rect, visibility: TowerTileVisibility) {
+    let alpha = if visibility == TowerTileVisibility::Hidden {
+        105
+    } else {
+        205
+    };
+    draw_ellipse(
+        rect.x + rect.w * 0.5,
+        rect.y + rect.h * 0.74,
+        rect.w * 0.55,
+        rect.h * 0.35,
+        0.0,
+        color(0, 0, 0, alpha),
+    );
+}
+
+fn draw_light_pool(x: f32, y: f32, radius: f32, purpose: DungeonRoomPurpose) {
+    let glow = match purpose {
+        DungeonRoomPurpose::Nest => (174, 124, 205),
+        DungeonRoomPurpose::Encounter => (207, 93, 60),
+        DungeonRoomPurpose::Shrine | DungeonRoomPurpose::Traversal => (80, 190, 208),
+        _ => (232, 173, 82),
+    };
+    for ring in (1..=5).rev() {
+        let fraction = ring as f32 / 5.0;
+        draw_circle(x, y, radius * fraction, color(glow.0, glow.1, glow.2, 9));
+    }
+}
+
+fn room_purpose(map: &TowerMapState, room: TowerRoom, index: usize) -> DungeonRoomPurpose {
+    match object_in_room(map, room).map(|object| object.kind) {
+        Some(TowerMapObjectKind::Egg) => DungeonRoomPurpose::Nest,
+        Some(TowerMapObjectKind::Loot) => DungeonRoomPurpose::Cache,
+        Some(TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss) => DungeonRoomPurpose::Encounter,
+        Some(TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit) => {
+            DungeonRoomPurpose::Traversal
+        }
+        None if index == 0 => DungeonRoomPurpose::Camp,
+        None if index % 4 == 0 => DungeonRoomPurpose::Shrine,
+        None => DungeonRoomPurpose::Traversal,
+    }
+}
+
+fn object_in_room(map: &TowerMapState, room: TowerRoom) -> Option<&TowerMapObject> {
+    map.objects.iter().find(|object| {
+        object.x >= room.start_x
+            && object.x < room.start_x + room.width
+            && object.y >= room.start_y
+            && object.y < room.start_y + room.height
+    })
+}
+
+fn draw_objects(map: &TowerMapState, transform: WorldTransform) {
+    for object in &map.objects {
+        if !map.is_visible(object.x, object.y) {
+            continue;
+        }
+        let x = transform.origin.x + object.x as f32 * transform.scale.x;
+        let y = transform.origin.y + object.y as f32 * transform.scale.y;
+        let size = match object.kind {
+            TowerMapObjectKind::Boss => 82.0,
+            TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => 70.0,
+            _ => 58.0,
+        };
+        draw_object_glow(x, y, size, object.kind);
+        match object.kind {
+            TowerMapObjectKind::Loot => {
+                assets::draw_dungeon_feature(1, x - size * 0.5, y - size * 0.55, size, size)
+            }
+            TowerMapObjectKind::Egg => assets::draw_egg_badge(
+                &object.egg_type_id,
+                x - size * 0.42,
+                y - size * 0.5,
+                size * 0.84,
+            ),
+            TowerMapObjectKind::Enemy => assets::draw_dungeon_enemy(
+                (map.floor - 1) as usize,
+                x - size * 0.5,
+                y - size * 0.6,
+                size,
+                size,
+            ),
+            TowerMapObjectKind::Boss => {
+                assets::draw_dungeon_enemy(5, x - size * 0.5, y - size * 0.64, size, size)
+            }
+            TowerMapObjectKind::Stairs => {
+                assets::draw_dungeon_feature(2, x - size * 0.5, y - size * 0.58, size, size)
+            }
+            TowerMapObjectKind::Exit => {
+                assets::draw_dungeon_feature(3, x - size * 0.5, y - size * 0.58, size, size)
+            }
+        }
+    }
+}
+
+fn draw_object_glow(x: f32, y: f32, size: f32, kind: TowerMapObjectKind) {
+    let rgb = match kind {
+        TowerMapObjectKind::Loot => (230, 171, 63),
+        TowerMapObjectKind::Egg => (181, 120, 214),
+        TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => (211, 73, 67),
+        TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => (88, 196, 206),
+    };
+    draw_circle(x, y, size * 0.62, color(rgb.0, rgb.1, rgb.2, 31));
+}
+
+fn draw_party(map: &TowerMapState, transform: WorldTransform) {
+    let x = transform.origin.x + map.player_x as f32 * transform.scale.x;
+    let y = transform.origin.y + map.player_y as f32 * transform.scale.y;
+    draw_circle(x, y + 6.0, 52.0, color(245, 194, 83, 28));
+    draw_circle_lines(x, y + 6.0, 45.0, 2.0, color(226, 188, 92, 210));
+    assets::draw_party_marker(0, x - 68.0, y - 47.0, 136.0, 91.0);
+}
+
+fn draw_world_fog(map: &TowerMapState) {
+    let explored = map
+        .visibility
+        .iter()
+        .filter(|v| **v != TowerTileVisibility::Hidden)
+        .count();
+    let ratio = explored as f32 / map.visibility.len().max(1) as f32;
+    let edge_alpha = (175.0 - ratio * 80.0) as u8;
+    for ring in 0..8 {
+        let inset = ring as f32 * 18.0;
+        draw_rectangle(
+            WORLD.x,
+            WORLD.y + inset,
+            70.0 - inset * 0.25,
+            WORLD.h - inset * 2.0,
+            color(3, 9, 12, edge_alpha / 8),
+        );
+        draw_rectangle(
+            WORLD.x + WORLD.w - 70.0 + inset * 0.25,
+            WORLD.y + inset,
+            70.0,
+            WORLD.h - inset * 2.0,
+            color(3, 9, 12, edge_alpha / 8),
+        );
+    }
+}
+
+fn color(r: u8, g: u8, b: u8, a: u8) -> Color {
+    Color::from_rgba(r, g, b, a)
 }

@@ -1,6 +1,6 @@
 # Dungeon Mockup Alignment Implementation Plan
 
-Status: implemented through the full-screen Moss Gate acceptance pass; continue extending the same data-driven renderer to deeper floors.
+Status: implemented and re-aligned through the full-screen Moss Gate acceptance pass on 2026-08-13. The earlier isolated-room/debug-overlay presentation was replaced with the reference composition for real; deeper floors use the same renderer and biome mapping.
 
 The target is the world-first dungeon composition represented by `docs/ui_reference/living_tower_dungeon_mockup_v1.png`: a connected illustrated dungeon occupies the canvas, while a compact top bar, party rail, context drawer, expedition journal, and bottom action dock float over the world.
 
@@ -14,6 +14,16 @@ The target is the world-first dungeon composition represented by `docs/ui_refere
 - Mockup HUD: complete with top run overlay, party rail, right context drawer, expedition journal, bottom action dock and persistent touch controls.
 - Room-level interaction: complete as a visible-world tap-to-step affordance with directional touch fallback; tile movement remains authoritative.
 - Data-driven biome variants: complete for room-family selection by floor group, with explicit hazard, recovery/return, and boss/reward atlas hooks for special rooms.
+
+## 2026-08-13 acceptance correction
+
+- The complete map is composed into one world stage, with seven or more overlapping illustrated chambers visible at the starting state instead of one oversized room surrounded by black void.
+- Moss Gate rooms use purpose-specific camp, cache, encounter, nest, traversal, and shrine art; deeper floors retain these purposes with moss, flooded, ember, frost, root, and void biome families.
+- Hidden rooms remain readable dark silhouettes under procedural mist, explored rooms retain muted detail, and the current room receives the strongest local light.
+- The debug legend, minimap, exposed grid, and keyboard-labelled movement cluster were removed from the player-facing view.
+- The top resource bar, compact party rail, right landmark drawer, expedition journal, and three-button touch dock now follow the mockup's placement, scale, black-gold framing, and visual hierarchy.
+- Tapping a visible room converts its world-space target into an authoritative one-tile movement step; keyboard movement remains a secondary input path without appearing in player-facing text.
+- The verified acceptance capture is `docs/verification/ui_tower.png`.
 
 ## Phases
 

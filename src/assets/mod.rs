@@ -20,6 +20,64 @@ const LANDMARK_SCENES: &str = "landmark_scenes";
 const HAZARDS: &str = "hazards";
 const RECOVERY_SCENES: &str = "recovery_scenes";
 const BOSS_REWARDS: &str = "boss_rewards";
+const PURPOSE_ROOMS: &str = "purpose_rooms";
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DungeonBiome {
+    Moss,
+    Flooded,
+    Ember,
+    Frost,
+    Root,
+    Void,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DungeonRoomPurpose {
+    Camp,
+    Cache,
+    Encounter,
+    Nest,
+    Traversal,
+    Shrine,
+}
+
+impl DungeonBiome {
+    pub fn for_floor(floor: u32) -> Self {
+        match floor {
+            4 | 7 => Self::Ember,
+            5 | 8 => Self::Flooded,
+            6 | 9 => Self::Frost,
+            10 => Self::Void,
+            3 => Self::Root,
+            _ => Self::Moss,
+        }
+    }
+
+    fn atlas_index(self) -> usize {
+        match self {
+            Self::Moss => 0,
+            Self::Flooded => 1,
+            Self::Ember => 2,
+            Self::Frost => 3,
+            Self::Root => 4,
+            Self::Void => 5,
+        }
+    }
+}
+
+impl DungeonRoomPurpose {
+    fn atlas_index(self) -> usize {
+        match self {
+            Self::Camp => 0,
+            Self::Cache => 1,
+            Self::Encounter => 2,
+            Self::Nest => 3,
+            Self::Traversal => 4,
+            Self::Shrine => 5,
+        }
+    }
+}
 
 thread_local! {
     static TEXTURES: RefCell<HashMap<&'static str, Texture2D>> = RefCell::new(HashMap::new());
@@ -123,15 +181,43 @@ pub fn draw_party_marker(index: usize, x: f32, y: f32, width: f32, height: f32) 
 
 /// Draws a large illustrated room module. The atlas is arranged as a 3x2
 /// family: moss, flooded, ember, frost, root, and void.
-pub fn draw_dungeon_room(floor: u32, _purpose: usize, x: f32, y: f32, width: f32, height: f32) {
-    let biome = match floor {
-        4 | 7 => 2,
-        5 | 8 => 1,
-        6 | 9 => 3,
-        10 => 4,
-        _ => 0,
-    };
-    draw_atlas(ROOM_MODULES, 3, 2, biome, x, y, width, height);
+pub fn draw_dungeon_room(
+    biome: DungeonBiome,
+    purpose: DungeonRoomPurpose,
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+    tint: Color,
+) {
+    // Moss Gate uses the purpose atlas because its rooms closely mirror the
+    // nest, cache, encounter, stair and shrine compositions in the mockup.
+    // Deeper floors retain those silhouettes beneath their biome colourway.
+    if biome == DungeonBiome::Moss {
+        draw_atlas_tinted(
+            PURPOSE_ROOMS,
+            3,
+            2,
+            purpose.atlas_index(),
+            x,
+            y,
+            width,
+            height,
+            tint,
+        );
+    } else {
+        draw_atlas_tinted(
+            ROOM_MODULES,
+            3,
+            2,
+            biome.atlas_index(),
+            x,
+            y,
+            width,
+            height,
+            tint,
+        );
+    }
 }
 
 pub fn draw_dungeon_fog(index: usize, x: f32, y: f32, width: f32, height: f32) {
@@ -177,6 +263,21 @@ fn draw_atlas(
     width: f32,
     height: f32,
 ) {
+    draw_atlas_tinted(asset, columns, rows, index, x, y, width, height, WHITE);
+}
+
+#[allow(clippy::too_many_arguments)]
+fn draw_atlas_tinted(
+    asset: &'static str,
+    columns: usize,
+    rows: usize,
+    index: usize,
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+    tint: Color,
+) {
     let texture = texture(asset);
     let cell_w = texture.width() / columns as f32;
     let cell_h = texture.height() / rows as f32;
@@ -186,7 +287,7 @@ fn draw_atlas(
         &texture,
         x,
         y,
-        WHITE,
+        tint,
         DrawTextureParams {
             dest_size: Some(vec2(width, height)),
             source: Some(Rect::new(
@@ -256,6 +357,9 @@ fn asset_bytes(asset: &str) -> &'static [u8] {
         ),
         BOSS_REWARDS => {
             include_bytes!("../../assets/generated/dungeon/dungeon_boss_reward_atlas_v1.png")
+        }
+        PURPOSE_ROOMS => {
+            include_bytes!("../../assets/generated/dungeon/dungeon_room_module_atlas_v1.png")
         }
         _ => unreachable!("unknown visual asset"),
     }
