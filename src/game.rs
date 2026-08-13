@@ -367,6 +367,12 @@ impl Game {
                     }
                 }
             }
+            TowerAction::TapMove(dx, dy) => {
+                if let Some(state) = &mut self.state {
+                    let result = tower_engine::move_party(state, &self.data, dx, dy);
+                    self.status_message = result.summary;
+                }
+            }
             TowerAction::ReturnToTown => {
                 if let Some(state) = &mut self.state {
                     self.status_message = tower_engine::return_to_town(state, &self.data).summary;

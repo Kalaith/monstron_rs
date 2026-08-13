@@ -13,6 +13,10 @@ const VFX: &str = "vfx";
 const DUNGEON_FEATURES: &str = "dungeon_features";
 const DUNGEON_ENEMIES: &str = "dungeon_enemies";
 const PARTY_MARKERS: &str = "party_markers";
+const ROOM_MODULES: &str = "room_modules";
+const FOG_LAYERS: &str = "fog_layers";
+const PARTY_PORTRAITS: &str = "party_portraits";
+const LANDMARK_SCENES: &str = "landmark_scenes";
 
 thread_local! {
     static TEXTURES: RefCell<HashMap<&'static str, Texture2D>> = RefCell::new(HashMap::new());
@@ -114,6 +118,40 @@ pub fn draw_party_marker(index: usize, x: f32, y: f32, width: f32, height: f32) 
     draw_atlas(PARTY_MARKERS, 3, 2, index % 6, x, y, width, height);
 }
 
+/// Draws a large illustrated room module. The atlas is arranged as a 3x2
+/// family: moss, flooded, ember, frost, root, and void.
+pub fn draw_dungeon_room(floor: u32, _purpose: usize, x: f32, y: f32, width: f32, height: f32) {
+    let biome = match floor {
+        4 | 7 => 2,
+        5 | 8 => 1,
+        6 | 9 => 3,
+        10 => 4,
+        _ => 0,
+    };
+    draw_atlas(ROOM_MODULES, 3, 2, biome, x, y, width, height);
+}
+
+pub fn draw_dungeon_fog(index: usize, x: f32, y: f32, width: f32, height: f32) {
+    draw_atlas(FOG_LAYERS, 3, 2, index % 6, x, y, width, height);
+}
+
+pub fn draw_landmark_scene(index: usize, x: f32, y: f32, width: f32, height: f32) {
+    draw_atlas(LANDMARK_SCENES, 3, 2, index % 6, x, y, width, height);
+}
+
+pub fn draw_party_portrait(species_id: &str, x: f32, y: f32, size: f32) {
+    let index = match species_id {
+        "slime" => 0,
+        "rillfin" => 1,
+        "emberkit" => 2,
+        "rootling" => 3,
+        "glowmoth" => 4,
+        "pebblepup" => 5,
+        _ => 0,
+    };
+    draw_atlas(PARTY_PORTRAITS, 3, 2, index, x, y, size, size);
+}
+
 fn draw_atlas(
     asset: &'static str,
     columns: usize,
@@ -182,6 +220,18 @@ fn asset_bytes(asset: &str) -> &'static [u8] {
         }
         PARTY_MARKERS => include_bytes!(
             "../../assets/generated/monster_art/monster_party_marker_travel_v5_atlas.png"
+        ),
+        ROOM_MODULES => include_bytes!(
+            "../../assets/generated/dungeon/dungeon_biome_room_module_v2_atlas_v1.png"
+        ),
+        FOG_LAYERS => include_bytes!(
+            "../../assets/generated/dungeon/dungeon_fog_boss_silhouette_atlas_v1.png"
+        ),
+        PARTY_PORTRAITS => include_bytes!(
+            "../../assets/generated/monster_art/monster_party_context_portrait_v3_atlas_v1.png"
+        ),
+        LANDMARK_SCENES => include_bytes!(
+            "../../assets/generated/dungeon/dungeon_encounter_landmarks_v4_atlas.png"
         ),
         _ => unreachable!("unknown visual asset"),
     }

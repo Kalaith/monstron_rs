@@ -2,6 +2,7 @@ use macroquad::prelude::*;
 
 mod map_view;
 
+use crate::assets;
 use crate::data::GameData;
 use crate::engine::{tower_engine, town_engine};
 use crate::state::{GameState, TowerRunState};
@@ -11,6 +12,7 @@ use macroquad_toolkit::ui::draw_ui_text_ex;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum TowerAction {
     Move(i32, i32),
+    TapMove(i32, i32),
     ReturnToTown,
     ToTown,
 }
@@ -51,6 +53,15 @@ pub fn handle_input(state: &GameState) -> Option<TowerAction> {
     }
 
     if state.tower_run.is_some() {
+        if let Some(action) = map_view::world_tap_action(state.tower_run.as_ref().unwrap()) {
+            return Some(action);
+        }
+        if ui::button_clicked(Rect::new(794.0, 642.0, 150.0, 58.0), true) {
+            return Some(TowerAction::ReturnToTown);
+        }
+        if ui::button_clicked(Rect::new(944.0, 642.0, 150.0, 58.0), true) {
+            return Some(TowerAction::ReturnToTown);
+        }
         for (action, rect) in movement_buttons() {
             if ui::button_clicked(rect, true) {
                 return Some(action);
@@ -68,6 +79,10 @@ pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
     if let Some(run) = &state.tower_run {
         map_view::draw_map_world(run);
         draw_run_overlay(state, data, run);
+        draw_party_rail(state);
+        draw_action_dock();
+        draw_context_drawer(data, run);
+        draw_journal(run);
     } else {
         draw_backdrop();
         draw_header(state);
@@ -215,6 +230,206 @@ fn draw_run_overlay(state: &GameState, data: &GameData, run: &TowerRunState) {
     }
 
     ui::draw_button(town_button_rect(), "Return", true);
+}
+
+fn draw_party_rail(state: &GameState) {
+    let panel = Rect::new(14.0, 210.0, 188.0, 350.0);
+    draw_overlay_panel(panel);
+    draw_ui_text_ex(
+        "PARTY  3",
+        panel.x + 16.0,
+        panel.y + 28.0,
+        TextParams {
+            font_size: 17,
+            color: ui::TEXT_BRIGHT,
+            ..Default::default()
+        },
+    );
+    for (index, slot) in state
+        .monster_roster
+        .party_slots
+        .iter()
+        .flatten()
+        .take(3)
+        .enumerate()
+    {
+        let Some(monster) = state.monster_roster.monster(*slot) else {
+            continue;
+        };
+        let y = panel.y + 42.0 + index as f32 * 96.0;
+        draw_rectangle(
+            panel.x + 12.0,
+            y,
+            panel.w - 24.0,
+            82.0,
+            Color::from_rgba(8, 12, 14, 205),
+        );
+        assets::draw_party_portrait(&monster.species_id, panel.x + 18.0, y + 8.0, 58.0);
+        draw_ui_text_ex(
+            &monster.name,
+            panel.x + 84.0,
+            y + 27.0,
+            TextParams {
+                font_size: 17,
+                color: ui::TEXT_BRIGHT,
+                ..Default::default()
+            },
+        );
+        draw_rectangle(
+            panel.x + 84.0,
+            y + 39.0,
+            84.0,
+            8.0,
+            Color::from_rgba(31, 47, 42, 255),
+        );
+        draw_rectangle(
+            panel.x + 84.0,
+            y + 39.0,
+            84.0 * (monster.hp.max(0) as f32 / monster.max_hp.max(1) as f32),
+            8.0,
+            Color::from_rgba(112, 184, 108, 255),
+        );
+        draw_ui_text_ex(
+            &format!(
+                "{}/{}  {}% fatigue",
+                monster.hp, monster.max_hp, monster.condition.fatigue
+            ),
+            panel.x + 84.0,
+            y + 66.0,
+            TextParams {
+                font_size: 13,
+                color: ui::TEXT_DIM,
+                ..Default::default()
+            },
+        );
+    }
+}
+
+fn draw_context_drawer(data: &GameData, run: &TowerRunState) {
+    let panel = Rect::new(1030.0, 258.0, 234.0, 290.0);
+    draw_overlay_panel(panel);
+    let name = data
+        .tower_floor(run.current_floor)
+        .map(|floor| floor.name.as_str())
+        .unwrap_or("Dungeon");
+    draw_ui_text_ex(
+        name,
+        panel.x + 16.0,
+        panel.y + 34.0,
+        TextParams {
+            font_size: 24,
+            color: ui::TEXT_BRIGHT,
+            ..Default::default()
+        },
+    );
+    draw_ui_text_ex(
+        &format!("Explored: {} rooms", run.rooms_explored),
+        panel.x + 16.0,
+        panel.y + 62.0,
+        TextParams {
+            font_size: 15,
+            color: ui::ACCENT,
+            ..Default::default()
+        },
+    );
+    let entries = [
+        ("●", "Your Party", ui::TEXT_BRIGHT),
+        ("⚔", "Enemy Encounter", Color::from_rgba(214, 116, 109, 255)),
+        ("◆", "Nest / Egg", Color::from_rgba(196, 146, 230, 255)),
+        ("▣", "Cache / Treasure", Color::from_rgba(227, 178, 71, 255)),
+        ("?", "Event", Color::from_rgba(106, 202, 230, 255)),
+        ("♜", "Stairs / Exit", Color::from_rgba(133, 218, 149, 255)),
+    ];
+    for (index, (icon, label, color)) in entries.iter().enumerate() {
+        let y = panel.y + 98.0 + index as f32 * 28.0;
+        draw_ui_text_ex(
+            icon,
+            panel.x + 18.0,
+            y,
+            TextParams {
+                font_size: 18,
+                color: *color,
+                ..Default::default()
+            },
+        );
+        draw_ui_text_ex(
+            label,
+            panel.x + 48.0,
+            y,
+            TextParams {
+                font_size: 15,
+                color: ui::TEXT,
+                ..Default::default()
+            },
+        );
+    }
+}
+
+fn draw_action_dock() {
+    let panel = Rect::new(344.0, 642.0, 620.0, 58.0);
+    draw_overlay_panel(panel);
+    for (index, (title, detail)) in [
+        ("EXPLORE", "Move to a room"),
+        ("CAMP", "Rest and recover"),
+        ("RETREAT", "Leave the floor"),
+        ("END TURN", "Next: enemies"),
+    ]
+    .iter()
+    .enumerate()
+    {
+        let x = panel.x + 18.0 + index as f32 * 150.0;
+        draw_ui_text_ex(
+            title,
+            x,
+            panel.y + 25.0,
+            TextParams {
+                font_size: 15,
+                color: if index == 0 {
+                    ui::TEXT_BRIGHT
+                } else {
+                    ui::TEXT_DIM
+                },
+                ..Default::default()
+            },
+        );
+        draw_ui_text_ex(
+            detail,
+            x,
+            panel.y + 44.0,
+            TextParams {
+                font_size: 12,
+                color: ui::TEXT_DIM,
+                ..Default::default()
+            },
+        );
+    }
+}
+
+fn draw_journal(run: &TowerRunState) {
+    let panel = Rect::new(14.0, 584.0, 292.0, 112.0);
+    draw_overlay_panel(panel);
+    draw_ui_text_ex(
+        "EXPEDITION JOURNAL",
+        panel.x + 16.0,
+        panel.y + 24.0,
+        TextParams {
+            font_size: 15,
+            color: ui::TEXT_BRIGHT,
+            ..Default::default()
+        },
+    );
+    for (index, message) in run.event_log.iter().rev().take(3).enumerate() {
+        draw_ui_text_ex(
+            &format!("• {}", message),
+            panel.x + 16.0,
+            panel.y + 48.0 + index as f32 * 20.0,
+            TextParams {
+                font_size: 12,
+                color: ui::TEXT_DIM,
+                ..Default::default()
+            },
+        );
+    }
 }
 
 fn draw_overlay_panel(rect: Rect) {
