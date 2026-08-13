@@ -21,6 +21,7 @@ const HAZARDS: &str = "hazards";
 const RECOVERY_SCENES: &str = "recovery_scenes";
 const BOSS_REWARDS: &str = "boss_rewards";
 const PURPOSE_ROOMS: &str = "purpose_rooms";
+const MOSS_GATE_WORLD: &str = "moss_gate_world";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DungeonBiome {
@@ -96,6 +97,10 @@ pub fn draw_monster_badge(species_id: &str, x: f32, y: f32, size: f32) {
         _ => 0,
     };
     draw_atlas(MONSTERS, 2, 3, index, x, y, size, size);
+}
+
+pub fn draw_monster_sprite(species_id: &str, x: f32, y: f32, size: f32) {
+    draw_monster_badge(species_id, x, y, size);
 }
 
 /// Draws one of the twelve named egg designs, rather than a seed-coloured blob.
@@ -218,6 +223,20 @@ pub fn draw_dungeon_room(
             tint,
         );
     }
+}
+
+pub fn draw_moss_gate_world(x: f32, y: f32, width: f32, height: f32) {
+    let texture = texture(MOSS_GATE_WORLD);
+    draw_texture_ex(
+        &texture,
+        x,
+        y,
+        WHITE,
+        DrawTextureParams {
+            dest_size: Some(vec2(width, height)),
+            ..Default::default()
+        },
+    );
 }
 
 pub fn draw_dungeon_fog(index: usize, x: f32, y: f32, width: f32, height: f32) {
@@ -360,6 +379,9 @@ fn asset_bytes(asset: &str) -> &'static [u8] {
         }
         PURPOSE_ROOMS => {
             include_bytes!("../../assets/generated/dungeon/dungeon_room_module_atlas_v1.png")
+        }
+        MOSS_GATE_WORLD => {
+            include_bytes!("../../assets/generated/dungeon/moss_gate_world_plate_v1.png")
         }
         _ => unreachable!("unknown visual asset"),
     }

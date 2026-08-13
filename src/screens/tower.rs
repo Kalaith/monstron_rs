@@ -69,7 +69,7 @@ pub fn handle_input(state: &GameState) -> Option<TowerAction> {
 
 pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
     if let Some(run) = &state.tower_run {
-        map_view::draw_map_world(run);
+        map_view::draw_map_world(state, run);
         draw_run_overlay(state, data, run);
         draw_party_rail(state);
         draw_action_dock();

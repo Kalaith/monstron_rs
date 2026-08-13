@@ -3,7 +3,7 @@ use macroquad::prelude::*;
 use super::TowerAction;
 use crate::assets::{self, DungeonBiome, DungeonRoomPurpose};
 use crate::state::{
-    TowerMapObject, TowerMapObjectKind, TowerMapState, TowerRoom, TowerRunState,
+    GameState, TowerMapObject, TowerMapObjectKind, TowerMapState, TowerRoom, TowerRunState,
     TowerTileVisibility,
 };
 use crate::ui;
@@ -16,7 +16,7 @@ struct WorldTransform {
     scale: Vec2,
 }
 
-pub(super) fn draw_map_world(run: &TowerRunState) {
+pub(super) fn draw_map_world(state: &GameState, run: &TowerRunState) {
     let map = &run.map;
     draw_world_backdrop(map.floor);
     if map.is_empty() {
@@ -31,10 +31,14 @@ pub(super) fn draw_map_world(run: &TowerRunState) {
     }
 
     let transform = world_transform(map);
-    draw_connectors(map, transform);
-    draw_rooms(map, transform);
+    if map.floor == 1 {
+        assets::draw_moss_gate_world(WORLD.x, WORLD.y, WORLD.w, WORLD.h);
+    } else {
+        draw_authoritative_ruin(map, transform);
+        draw_rooms(map, transform);
+    }
     draw_objects(map, transform);
-    draw_party(map, transform);
+    draw_party(state, map, transform);
     draw_world_fog(map);
 }
 
@@ -130,49 +134,116 @@ fn room_rect(room: TowerRoom, transform: WorldTransform) -> Rect {
     )
 }
 
-fn room_center(room: TowerRoom, transform: WorldTransform) -> Vec2 {
-    let rect = room_rect(room, transform);
-    vec2(rect.x + rect.w * 0.5, rect.y + rect.h * 0.58)
-}
-
-fn draw_connectors(map: &TowerMapState, transform: WorldTransform) {
+fn draw_authoritative_ruin(map: &TowerMapState, transform: WorldTransform) {
+    draw_water_channels(map);
     for (index, pair) in map.rooms.windows(2).enumerate() {
         let a = room_center(pair[0], transform);
         let b = room_center(pair[1], transform);
-        let visibility = pair_visibility(map, pair[0], pair[1]);
-        if visibility == TowerTileVisibility::Hidden && index > 5 {
-            continue;
-        }
-        let alpha = if visibility == TowerTileVisibility::Visible {
-            235
+        let corner = if (map.seed as usize + index).is_multiple_of(2) {
+            vec2(b.x, a.y)
         } else {
-            105
+            vec2(a.x, b.y)
         };
-        draw_line(
-            a.x,
-            a.y + 7.0,
-            b.x,
-            a.y + 7.0,
-            34.0,
-            color(10, 15, 14, alpha),
-        );
-        draw_line(b.x, a.y + 7.0, b.x, b.y, 34.0, color(10, 15, 14, alpha));
-        draw_line(a.x, a.y, b.x, a.y, 22.0, color(47, 55, 41, alpha));
-        draw_line(b.x, a.y, b.x, b.y, 22.0, color(47, 55, 41, alpha));
-        draw_line(a.x, a.y, b.x, a.y, 3.0, color(111, 96, 55, alpha / 2));
-        draw_line(b.x, a.y, b.x, b.y, 3.0, color(111, 96, 55, alpha / 2));
+        draw_cobbled_segment(map, a, corner, index * 2);
+        draw_cobbled_segment(map, corner, b, index * 2 + 1);
+        draw_courtyard(corner, 46.0, map.seed as usize + index);
+    }
+    for room in &map.rooms {
+        draw_courtyard(room_center(*room, transform), 70.0, room.start_x as usize);
     }
 }
 
-fn pair_visibility(map: &TowerMapState, a: TowerRoom, b: TowerRoom) -> TowerTileVisibility {
-    let va = map.visibility_at(a.center().0, a.center().1);
-    let vb = map.visibility_at(b.center().0, b.center().1);
-    if va == TowerTileVisibility::Visible || vb == TowerTileVisibility::Visible {
-        TowerTileVisibility::Visible
-    } else if va == TowerTileVisibility::Explored || vb == TowerTileVisibility::Explored {
-        TowerTileVisibility::Explored
-    } else {
-        TowerTileVisibility::Hidden
+fn room_center(room: TowerRoom, transform: WorldTransform) -> Vec2 {
+    let rect = room_rect(room, transform);
+    vec2(rect.x + rect.w * 0.5, rect.y + rect.h * 0.62)
+}
+
+fn draw_water_channels(map: &TowerMapState) {
+    draw_rectangle(WORLD.x, WORLD.y, WORLD.w, WORLD.h, color(4, 23, 29, 168));
+    for pool in 0..18 {
+        let seed = pool as u32 * 37 + map.floor * 19 + map.seed as u32;
+        let x = WORLD.x + (seed % 997) as f32 / 997.0 * WORLD.w;
+        let y = WORLD.y + (seed.wrapping_mul(17) % 991) as f32 / 991.0 * WORLD.h;
+        draw_circle(x, y, 3.0 + (seed % 5) as f32, color(58, 91, 67, 75));
+    }
+}
+
+fn draw_cobbled_segment(map: &TowerMapState, start: Vec2, end: Vec2, seed: usize) {
+    let delta = end - start;
+    let length = delta.length();
+    if length < 3.0 {
+        return;
+    }
+    let direction = delta / length;
+    let normal = vec2(-direction.y, direction.x);
+    draw_line(
+        start.x,
+        start.y + 6.0,
+        end.x,
+        end.y + 6.0,
+        112.0,
+        color(2, 7, 8, 205),
+    );
+    draw_line(
+        start.x,
+        start.y,
+        end.x,
+        end.y,
+        100.0,
+        color(27, 37, 32, 255),
+    );
+    draw_line(start.x, start.y, end.x, end.y, 88.0, color(57, 64, 51, 255));
+    draw_line(start.x, start.y, end.x, end.y, 3.0, color(111, 108, 75, 80));
+    let steps = (length / 24.0).ceil() as usize;
+    for step in 0..=steps {
+        let t = step as f32 / steps.max(1) as f32;
+        let hash = seed * 97 + step * 41 + map.seed as usize;
+        for lane in -2_i32..=2 {
+            let jitter = ((hash + lane.unsigned_abs() as usize * 13) % 11) as f32 - 5.0;
+            let center = start + delta * t + normal * (lane as f32 * 16.0 + jitter);
+            let stone_w = 12.0 + (hash % 8) as f32;
+            let stone_h = 8.0 + ((hash / 3) % 7) as f32;
+            draw_rectangle(
+                center.x - stone_w * 0.5,
+                center.y - stone_h * 0.5,
+                stone_w,
+                stone_h,
+                color(76, 79, 61, 190),
+            );
+            draw_rectangle_lines(
+                center.x - stone_w * 0.5,
+                center.y - stone_h * 0.5,
+                stone_w,
+                stone_h,
+                1.0,
+                color(24, 31, 27, 180),
+            );
+        }
+    }
+}
+
+fn draw_courtyard(center: Vec2, radius: f32, seed: usize) {
+    draw_circle(center.x, center.y + 6.0, radius + 10.0, color(2, 7, 8, 205));
+    draw_circle(center.x, center.y, radius, color(55, 62, 49, 255));
+    for ring in 1..=3 {
+        draw_circle_lines(
+            center.x,
+            center.y,
+            radius * ring as f32 / 3.0,
+            2.0,
+            color(90, 87, 61, 100),
+        );
+    }
+    for spoke in 0..8 {
+        let angle = spoke as f32 * std::f32::consts::TAU / 8.0 + seed as f32 * 0.03;
+        draw_line(
+            center.x,
+            center.y,
+            center.x + angle.cos() * radius,
+            center.y + angle.sin() * radius,
+            1.0,
+            color(23, 31, 26, 150),
+        );
     }
 }
 
@@ -190,7 +261,6 @@ fn draw_rooms(map: &TowerMapState, transform: WorldTransform) {
             TowerTileVisibility::Explored => color(120, 133, 119, 220),
             TowerTileVisibility::Hidden => color(132, 143, 118, 225),
         };
-        draw_room_shadow(rect, visibility);
         assets::draw_dungeon_room(biome, purpose, rect.x, rect.y, rect.w, rect.h, tint);
         if visibility == TowerTileVisibility::Hidden {
             draw_rectangle(rect.x, rect.y, rect.w, rect.h, color(3, 12, 14, 30));
@@ -220,22 +290,6 @@ fn draw_room_mist(rect: Rect, seed: usize) {
             color(31, 49, 51, 15),
         );
     }
-}
-
-fn draw_room_shadow(rect: Rect, visibility: TowerTileVisibility) {
-    let alpha = if visibility == TowerTileVisibility::Hidden {
-        105
-    } else {
-        205
-    };
-    draw_ellipse(
-        rect.x + rect.w * 0.5,
-        rect.y + rect.h * 0.74,
-        rect.w * 0.55,
-        rect.h * 0.35,
-        0.0,
-        color(0, 0, 0, alpha),
-    );
 }
 
 fn draw_light_pool(x: f32, y: f32, radius: f32, purpose: DungeonRoomPurpose) {
@@ -279,8 +333,9 @@ fn draw_objects(map: &TowerMapState, transform: WorldTransform) {
         if !map.is_visible(object.x, object.y) {
             continue;
         }
-        let x = transform.origin.x + object.x as f32 * transform.scale.x;
-        let y = transform.origin.y + object.y as f32 * transform.scale.y;
+        let position = map_point(map, transform, object.x, object.y);
+        let x = position.x;
+        let y = position.y;
         let size = match object.kind {
             TowerMapObjectKind::Boss => 82.0,
             TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => 70.0,
@@ -327,12 +382,39 @@ fn draw_object_glow(x: f32, y: f32, size: f32, kind: TowerMapObjectKind) {
     draw_circle(x, y, size * 0.62, color(rgb.0, rgb.1, rgb.2, 31));
 }
 
-fn draw_party(map: &TowerMapState, transform: WorldTransform) {
-    let x = transform.origin.x + map.player_x as f32 * transform.scale.x;
-    let y = transform.origin.y + map.player_y as f32 * transform.scale.y;
-    draw_circle(x, y + 6.0, 52.0, color(245, 194, 83, 28));
-    draw_circle_lines(x, y + 6.0, 45.0, 2.0, color(226, 188, 92, 210));
-    assets::draw_party_marker(0, x - 68.0, y - 47.0, 136.0, 91.0);
+fn draw_party(state: &GameState, map: &TowerMapState, transform: WorldTransform) {
+    let position = map_point(map, transform, map.player_x, map.player_y);
+    let x = position.x;
+    let y = position.y;
+    draw_circle(x, y + 4.0, 40.0, color(245, 194, 83, 25));
+    let members: Vec<_> = state
+        .monster_roster
+        .party_slots
+        .iter()
+        .flatten()
+        .filter_map(|id| state.monster_roster.monster(*id))
+        .take(3)
+        .collect();
+    for (index, monster) in members.iter().enumerate() {
+        let offset = (index as f32 - (members.len().saturating_sub(1)) as f32 * 0.5) * 32.0;
+        assets::draw_monster_sprite(&monster.species_id, x + offset - 25.0, y - 30.0, 50.0);
+    }
+}
+
+fn map_point(map: &TowerMapState, transform: WorldTransform, x: u32, y: u32) -> Vec2 {
+    if map.floor == 1 {
+        let offset_x = x as i32 - map.start_x as i32;
+        let offset_y = y as i32 - map.start_y as i32;
+        vec2(
+            620.0 + offset_x as f32 * 18.0,
+            395.0 + offset_y as f32 * 18.0,
+        )
+    } else {
+        vec2(
+            transform.origin.x + x as f32 * transform.scale.x,
+            transform.origin.y + y as f32 * transform.scale.y,
+        )
+    }
 }
 
 fn draw_world_fog(map: &TowerMapState) {
