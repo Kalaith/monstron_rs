@@ -24,6 +24,7 @@ const ESCALATION_LANDMARKS: &str = "escalation_landmarks";
 const WANDERING_ENEMIES: &str = "wandering_enemies";
 const ESCAPE_CUES: &str = "escape_cues";
 const ANOMALIES: &str = "anomalies";
+const SECRETS: &str = "secrets";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DungeonBiome {
@@ -254,6 +255,10 @@ pub fn draw_tower_anomaly(index: usize, x: f32, y: f32, width: f32, height: f32)
     draw_atlas(ANOMALIES, 2, 3, index % 6, x, y, width, height);
 }
 
+pub fn draw_secret_discovery(index: usize, x: f32, y: f32, width: f32, height: f32) {
+    draw_atlas(SECRETS, 3, 2, index % 6, x, y, width, height);
+}
+
 /// Draws a large illustrated room module. The atlas is arranged as a 3x2
 /// family: moss, flooded, ember, frost, root, and void.
 pub fn draw_dungeon_room(
@@ -443,6 +448,9 @@ fn asset_bytes(asset: &str) -> &'static [u8] {
         ),
         ANOMALIES => include_bytes!(
             "../../assets/generated/dungeon/dungeon_weather_discovery_v3_overlay.png"
+        ),
+        SECRETS => include_bytes!(
+            "../../assets/generated/dungeon/dungeon_secret_discovery_v2_atlas_v1.png"
         ),
         _ => unreachable!("unknown visual asset"),
     }

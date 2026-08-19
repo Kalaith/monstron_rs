@@ -124,6 +124,7 @@ fn tower_preparation_movement_return_and_rewards_form_one_flow() {
             event_id: String::new(),
             hazard_id: String::new(),
             wandering: false,
+            revealed: false,
         });
     let moved = tower_engine::move_party(&mut state, &data, dx, dy);
     assert!(moved.summary.contains("Found 3"));

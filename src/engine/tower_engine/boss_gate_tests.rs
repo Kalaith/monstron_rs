@@ -24,6 +24,7 @@ fn crown_exit_reseals_until_the_guardian_falls() {
         event_id: String::new(),
         hazard_id: String::new(),
         wandering: false,
+        revealed: false,
     };
 
     let result = resolve_map_object(&mut state, &data, exit);

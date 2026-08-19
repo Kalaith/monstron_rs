@@ -13,6 +13,8 @@ mod map_gen;
 mod map_objects;
 mod navigation;
 mod pressure;
+#[cfg(test)]
+mod secret_tests;
 mod survey;
 pub use event_choices::{choose_special_event, event_choice_available, leave_special_event};
 pub use survey::survey_floor;
@@ -436,8 +438,15 @@ fn resolve_map_object(
     data: &GameData,
     object: TowerMapObject,
 ) -> TowerResult {
+    if object.kind == TowerMapObjectKind::SecretCache && !object.revealed {
+        if let Some(run) = &mut state.tower_run {
+            run.map.objects.push(object);
+        }
+        return result("The room facade holds, but something sounds hollow. Tap SURVEY to inspect hidden chambers.");
+    }
     match object.kind {
-        TowerMapObjectKind::Loot => {
+        TowerMapObjectKind::Loot | TowerMapObjectKind::SecretCache => {
+            let secret = object.kind == TowerMapObjectKind::SecretCache;
             let resource_name = data.resource_name(&object.resource_id).to_owned();
             if let Some(run) = &mut state.tower_run {
                 let blessing_bonus = if run.has_blessing(TowerBlessing::CacheSense) {
@@ -454,7 +463,14 @@ fn resolve_map_object(
                 };
                 let amount = object.amount + blessing_bonus + anomaly_bonus;
                 run.add_cargo(&object.resource_id, amount);
-                let summary = format!("Found {} {} in a tower cache.", amount, resource_name);
+                let summary = if secret {
+                    format!(
+                        "Opened a surveyed secret: found {} {} behind the room facade.",
+                        amount, resource_name
+                    )
+                } else {
+                    format!("Found {} {} in a tower cache.", amount, resource_name)
+                };
                 run.add_event(summary.clone());
                 result(summary)
             } else {

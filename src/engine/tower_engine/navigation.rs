@@ -96,6 +96,9 @@ fn best_target(
             let (x, y) = coordinates(map, index);
             let bias = if map.is_discovered(x, y) {
                 map.object_at(x, y)
+                    .filter(|object| {
+                        object.kind != TowerMapObjectKind::SecretCache || object.revealed
+                    })
                     .map(|object| object_bias(goal, object.kind))
             } else if map.visibility_at(x, y) == TowerTileVisibility::Hidden {
                 Some(frontier_bias(goal))
@@ -111,14 +114,17 @@ fn best_target(
 fn object_bias(goal: TowerRunGoal, kind: TowerMapObjectKind) -> i32 {
     match (goal, kind) {
         (TowerRunGoal::EggHunt, TowerMapObjectKind::Egg) => -90,
-        (TowerRunGoal::Salvage, TowerMapObjectKind::Loot) => -80,
+        (TowerRunGoal::Salvage, TowerMapObjectKind::Loot | TowerMapObjectKind::SecretCache) => -80,
         (TowerRunGoal::Scout, TowerMapObjectKind::SpecialLocation) => -80,
         (TowerRunGoal::PushDeeper, TowerMapObjectKind::Stairs) => -100,
         (TowerRunGoal::SafeRun, TowerMapObjectKind::Exit) => -50,
         (TowerRunGoal::SafeRun, TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss) => 140,
         (TowerRunGoal::SafeRun, TowerMapObjectKind::Hazard) => 170,
         (_, TowerMapObjectKind::SpecialLocation) => -20,
-        (_, TowerMapObjectKind::Egg | TowerMapObjectKind::Loot) => -10,
+        (
+            _,
+            TowerMapObjectKind::Egg | TowerMapObjectKind::Loot | TowerMapObjectKind::SecretCache,
+        ) => -10,
         (_, TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit) => 0,
         (_, TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss) => 30,
         (_, TowerMapObjectKind::Hazard) => 50,

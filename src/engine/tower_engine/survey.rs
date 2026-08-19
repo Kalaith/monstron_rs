@@ -81,6 +81,16 @@ pub(super) fn reveal_hidden_room_for_goal(
             }
         }
     }
+    for object in &mut map.objects {
+        if object.kind == crate::state::TowerMapObjectKind::SecretCache
+            && object.x >= room.start_x
+            && object.x < max_x
+            && object.y >= room.start_y
+            && object.y < max_y
+        {
+            object.revealed = true;
+        }
+    }
     let signatures = map
         .objects
         .iter()

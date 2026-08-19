@@ -70,6 +70,7 @@ fn candidate(object: &TowerMapObject) -> Option<(DiscoveryKind, String)> {
         }
         TowerMapObjectKind::Hazard => Some((DiscoveryKind::Hazard, object.hazard_id.clone())),
         TowerMapObjectKind::Loot
+        | TowerMapObjectKind::SecretCache
         | TowerMapObjectKind::Egg
         | TowerMapObjectKind::Stairs
         | TowerMapObjectKind::Exit => None,

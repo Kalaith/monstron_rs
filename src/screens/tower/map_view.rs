@@ -349,7 +349,9 @@ fn room_purpose(
     }
     match object_in_room(map, room).map(|object| object.kind) {
         Some(TowerMapObjectKind::Egg) => DungeonRoomPurpose::Nest,
-        Some(TowerMapObjectKind::Loot) => DungeonRoomPurpose::Cache,
+        Some(TowerMapObjectKind::Loot | TowerMapObjectKind::SecretCache) => {
+            DungeonRoomPurpose::Cache
+        }
         Some(TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss) => DungeonRoomPurpose::Encounter,
         Some(TowerMapObjectKind::Hazard) => DungeonRoomPurpose::Traversal,
         Some(TowerMapObjectKind::SpecialLocation) => DungeonRoomPurpose::Shrine,
@@ -394,7 +396,9 @@ fn draw_objects(
     boss_defeated: bool,
 ) {
     for object in &map.objects {
-        if !map.is_visible(object.x, object.y) {
+        if !map.is_visible(object.x, object.y)
+            || (object.kind == TowerMapObjectKind::SecretCache && !object.revealed)
+        {
             continue;
         }
         let position = map_point(map, transform, object.x, object.y);
@@ -412,6 +416,13 @@ fn draw_objects(
             TowerMapObjectKind::Loot => {
                 assets::draw_dungeon_feature(1, x - size * 0.5, y - size * 0.55, size, size)
             }
+            TowerMapObjectKind::SecretCache => assets::draw_secret_discovery(
+                (map.seed as usize + object.x as usize + object.y as usize) % 6,
+                x - size * 0.5,
+                y - size * 0.55,
+                size,
+                size,
+            ),
             TowerMapObjectKind::Egg => assets::draw_egg_badge(
                 &object.egg_type_id,
                 x - size * 0.42,
@@ -471,10 +482,10 @@ fn draw_objects(
                 size,
             ),
             TowerMapObjectKind::Exit => {
-                let boss_floor = data
-                    .tower_floor(map.floor)
-                    .is_some_and(|floor| floor.is_boss_floor);
-                if boss_floor && !boss_defeated {
+                let sealed_floor = data.tower_floor(map.floor).is_some_and(|floor| {
+                    floor.is_boss_floor || !floor.guardian_enemy_id.is_empty()
+                });
+                if sealed_floor && !boss_defeated {
                     assets::draw_escalation_landmark(
                         DungeonBiome::for_floor(map.floor),
                         x - size * 0.5,
@@ -498,7 +509,7 @@ fn draw_objects(
 
 fn draw_object_glow(x: f32, y: f32, size: f32, kind: TowerMapObjectKind) {
     let rgb = match kind {
-        TowerMapObjectKind::Loot => (230, 171, 63),
+        TowerMapObjectKind::Loot | TowerMapObjectKind::SecretCache => (230, 171, 63),
         TowerMapObjectKind::Egg => (181, 120, 214),
         TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => (211, 73, 67),
         TowerMapObjectKind::SpecialLocation => (99, 211, 168),

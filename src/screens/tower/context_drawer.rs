@@ -84,6 +84,7 @@ fn nearest_visible_object(run: &TowerRunState) -> Option<&TowerMapObject> {
         .objects
         .iter()
         .filter(|object| run.map.is_visible(object.x, object.y))
+        .filter(|object| object.kind != TowerMapObjectKind::SecretCache || object.revealed)
         .min_by_key(|object| {
             run.map.player_x.abs_diff(object.x) + run.map.player_y.abs_diff(object.y)
         })
@@ -92,6 +93,7 @@ fn nearest_visible_object(run: &TowerRunState) -> Option<&TowerMapObject> {
 fn object_name<'a>(data: &'a GameData, object: &'a TowerMapObject) -> Option<&'a str> {
     match object.kind {
         TowerMapObjectKind::Loot => Some(data.resource_name(&object.resource_id)),
+        TowerMapObjectKind::SecretCache => Some("Surveyed Secret"),
         TowerMapObjectKind::Egg => data
             .egg_type(&object.egg_type_id)
             .map(|egg| egg.name.as_str()),
@@ -131,6 +133,9 @@ fn object_detail(data: &GameData, run: &TowerRunState, object: &TowerMapObject) 
         }),
         TowerMapObjectKind::Egg => Some("A living egg waits in a tower nest.".to_owned()),
         TowerMapObjectKind::Loot => Some("Supplies can be carried safely back to town.".to_owned()),
+        TowerMapObjectKind::SecretCache => {
+            Some("A survey flare exposed a concealed cache behind the room facade.".to_owned())
+        }
         TowerMapObjectKind::Stairs if boss_gate_is_sealed(data, run) => {
             Some("The floor guardian seals the deeper stair. Defeat it or tap RETREAT.".to_owned())
         }
@@ -147,6 +152,7 @@ fn object_detail(data: &GameData, run: &TowerRunState, object: &TowerMapObject) 
 fn object_kind_label(object: &TowerMapObject) -> &'static str {
     match object.kind {
         TowerMapObjectKind::Loot => "CACHE  ·  SUPPLIES",
+        TowerMapObjectKind::SecretCache => "SECRET  ·  SURVEYED",
         TowerMapObjectKind::Egg => "NEST  ·  EGG",
         TowerMapObjectKind::Enemy if object.wandering => "ENCOUNTER  ·  HUNTER",
         TowerMapObjectKind::Enemy => "ENCOUNTER  ·  DENIZEN",
@@ -169,6 +175,13 @@ fn draw_context_art(
 ) {
     match object.kind {
         TowerMapObjectKind::Loot => assets::draw_dungeon_feature(1, x, y, w, h),
+        TowerMapObjectKind::SecretCache => assets::draw_secret_discovery(
+            (run.map.seed as usize + object.x as usize + object.y as usize) % 6,
+            x,
+            y,
+            w,
+            h,
+        ),
         TowerMapObjectKind::Egg => assets::draw_egg_badge(&object.egg_type_id, x + 18.0, y, h),
         TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => {
             if let Some(enemy) = data.enemy(&object.enemy_id) {

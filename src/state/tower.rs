@@ -65,6 +65,7 @@ pub enum TowerTileKind {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum TowerMapObjectKind {
     Loot,
+    SecretCache,
     Egg,
     Enemy,
     Boss,
@@ -120,6 +121,8 @@ pub struct TowerMapObject {
     pub hazard_id: String,
     #[serde(default)]
     pub wandering: bool,
+    #[serde(default)]
+    pub revealed: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

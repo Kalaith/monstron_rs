@@ -142,5 +142,6 @@ fn map_object(
         event_id: String::new(),
         hazard_id: String::new(),
         wandering: false,
+        revealed: false,
     }
 }

@@ -28,6 +28,9 @@ pub(super) fn add_map_objects(
     for object in special_location_objects(data, floor_number, goal, rng) {
         place_room_landmark(map, object, rng);
     }
+    if let Some(object) = secret_cache_object(floor, rng) {
+        place_object(map, object, rng);
+    }
     for object in loot_objects(floor, goal, rng) {
         place_object(map, object, rng);
     }
@@ -167,9 +170,35 @@ fn loot_objects(
                 event_id: String::new(),
                 hazard_id: String::new(),
                 wandering: false,
+                revealed: false,
             })
         })
         .collect()
+}
+
+fn secret_cache_object(
+    floor: &TowerFloorDefinition,
+    rng: &mut TowerMapRng,
+) -> Option<TowerMapObject> {
+    let loot = floor
+        .loot
+        .get(rng.range(0, floor.loot.len() as u32) as usize)?;
+    Some(TowerMapObject {
+        kind: TowerMapObjectKind::SecretCache,
+        x: 0,
+        y: 0,
+        resource_id: loot.resource_id.clone(),
+        amount: loot.amount + 3 + (floor.floor / 3) as i32,
+        egg_type_id: String::new(),
+        hatch_days: 0,
+        palette_seed: 0,
+        enemy_id: String::new(),
+        special_location_id: String::new(),
+        event_id: String::new(),
+        hazard_id: String::new(),
+        wandering: false,
+        revealed: false,
+    })
 }
 
 fn egg_objects(
@@ -209,6 +238,7 @@ fn egg_objects(
                 event_id: String::new(),
                 hazard_id: String::new(),
                 wandering: false,
+                revealed: false,
             })
         })
         .collect()
@@ -423,7 +453,7 @@ fn place_room_landmark(map: &mut TowerMapState, mut object: TowerMapObject, rng:
 
 fn room_kind_for_object(kind: TowerMapObjectKind) -> TowerRoomKind {
     match kind {
-        TowerMapObjectKind::Loot => TowerRoomKind::Cache,
+        TowerMapObjectKind::Loot | TowerMapObjectKind::SecretCache => TowerRoomKind::Cache,
         TowerMapObjectKind::Egg => TowerRoomKind::Nest,
         TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => TowerRoomKind::Encounter,
         TowerMapObjectKind::Hazard => TowerRoomKind::Hazard,
@@ -448,6 +478,7 @@ impl TowerMapObject {
             event_id: String::new(),
             hazard_id: String::new(),
             wandering: false,
+            revealed: false,
         }
     }
 

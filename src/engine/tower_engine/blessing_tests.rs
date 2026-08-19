@@ -25,6 +25,7 @@ fn cache_sense_increases_every_cache_pickup() {
         event_id: String::new(),
         hazard_id: String::new(),
         wandering: false,
+        revealed: false,
     };
 
     let result = resolve_map_object(&mut state, &data, cache);
