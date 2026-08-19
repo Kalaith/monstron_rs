@@ -9,7 +9,7 @@ You begin with a loyal slime, a cold hatchery brazier, and just enough supplies 
 - Rebuild camp facilities such as the hatchery, stable, workshop, shop, and breeding grove.
 - Hatch, raise, rest, and organize tower-born monsters.
 - Choose a party before entering the tower.
-- Fight, gather, and retreat before injuries and fatigue spiral.
+- Choose an expedition goal, survey hidden rooms, resolve landmark events, and retreat before pressure, injuries, and fatigue spiral.
 - Spend rewards on stronger buildings, better recovery, and deeper expeditions.
 
 ## Goal
@@ -34,10 +34,21 @@ Turn a fragile camp into a working monster haven that can support increasingly d
 - Esc: camp menu.
 - S/L/T: save, load, or title inside menu.
 - Mouse: build, open, trade, and greet.
+- Touch/mouse: every required tower action has a visible target, including room routing, EXPLORE, SURVEY, CAMP, RETREAT, event choices, and the Field Guide.
 
 ## Current Scope
 
-Playable camp and tower loop with monsters, hatching, breeding, jobs, expeditions, combat, fatigue, injuries, and recovery.
+Playable camp and tower loop with monsters, hatching, breeding, jobs, goal-driven expeditions, map routing, combat, fatigue, injuries, and recovery.
+
+The ten-floor tower currently includes:
+
+- 72 authored dungeon enemies across 11 active combat behaviors, six visual families, roaming hunters, and two floor guardians.
+- 18 special locations with 36 persistent, touch-first event approaches, including party requirements, cargo costs, map effects, blessings, ambushes, and shelter-building outcomes.
+- Six hazards, six anomalies, six expedition contracts, persistent room purposes, and goal-aware automated routing.
+- Concealed floor caches that use the secret-discovery atlas and can be exposed by SURVEY, loot-finder passives, or map-reading landmark events. Salvage runs hide two caches per floor.
+- A persistent Field Guide that records enemies, hazards, landmarks, and tried approaches; knowledge ranks improve future survey kits and reveal known hunter tracks in explored rooms.
+- Marked CAMP rooms with stronger recovery, Safe Run return routing, and event-created shelters that permanently reshape the current floor.
+- Pressure escalation, wandering hunters, floor-specific guardian eggs, and sealed guardian thresholds on floors 5 and 10.
 
 ## Design
 
@@ -51,7 +62,7 @@ Three pillars carry it:
 
 - **Town growth.** The camp starts broken beside the tower and grows into a monster-focused settlement. Buildings are functional systems (hatchery, stable, workshop, shop, breeding grove), not decorations.
 - **Monster raising.** A monster is an adventurer *and* a citizen, and should matter in combat, exploration, town work, breeding, and flavour. Each carries a species, element, temperament, role, passive, and town skill. The starter slime stays relevant through bond progression and unique utility.
-- **Tower dungeon.** Ten floors across Mossy Ruins (1-3), Crystal Cracks (4-6), and Sunken Garden (7-10), ending at the Verdant Crown boss. The tower is the source of eggs, materials, relics, and encounters.
+- **Tower dungeon.** Ten floors across Mossy Ruins (1-3), Crystal Cracks (4-6), and Sunken Garden (7-10), with a Mirror Matriarch threshold on floor 5 and the Verdant Crown on floor 10. The tower is a persistent knowledge game as well as the source of eggs, materials, landmarks, hazards, and encounters.
 
 The emotional goal is that the town exists *because* the monsters are helping build it, rather than buildings being abstract menu upgrades.
 
