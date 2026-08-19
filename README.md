@@ -66,4 +66,4 @@ Standing design constraints:
 ## Documentation
 
 - `docs/monster_art_pipeline.md` — art DNA, prompt export, and the local ComfyUI generation workflow.
-- `TODO.md` — open polish, balance, and art-curation work.
+- `TODO.md` — open implementation, testing, and verification work.

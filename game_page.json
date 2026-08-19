@@ -97,5 +97,5 @@
     "label": "Windows Build"
   },
   "wasm_cache_bust": "phase8-hardening-1",
-  "repository": "https://github.com/Kalaith/monstron_rs"
+  "repository": "https://github.com/WebHatchery/monstron_rs"
 }
