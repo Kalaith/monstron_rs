@@ -4,7 +4,7 @@ use serde::Deserialize;
 use crate::data::{
     BuildingDefinition, EggTypeDefinition, EnemyDefinition, GameConfig, GameData,
     MonsterSpeciesDefinition, NpcDefinition, ResourceDefinition, TowerEventDefinition,
-    TowerFloorDefinition, TowerSpecialLocationDefinition,
+    TowerFloorDefinition, TowerHazardDefinition, TowerSpecialLocationDefinition,
 };
 
 #[derive(Debug, Deserialize)]
@@ -46,6 +46,11 @@ struct EnemiesFile {
 struct TowerSpecialsFile {
     special_locations: Vec<TowerSpecialLocationDefinition>,
     events: Vec<TowerEventDefinition>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TowerHazardsFile {
+    hazards: Vec<TowerHazardDefinition>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -94,6 +99,10 @@ impl GameDataLoader {
             macroquad_toolkit::include_json_str!("../../assets/data/tower_specials.json"),
             "tower specials",
         )?;
+        let tower_hazards: TowerHazardsFile = parse_json(
+            macroquad_toolkit::include_json_str!("../../assets/data/tower_hazards.json"),
+            "tower hazards",
+        )?;
         let npcs: NpcsFile = parse_json(
             macroquad_toolkit::include_json_str!("../../assets/data/npcs.json"),
             "npcs",
@@ -114,6 +123,7 @@ impl GameDataLoader {
             enemies.enemies,
             tower_specials.special_locations,
             tower_specials.events,
+            tower_hazards.hazards,
             npcs.npcs,
         )
     }

@@ -357,8 +357,8 @@ fn draw_context_drawer(data: &GameData, run: &TowerRunState) {
     }
     let detail = focus
         .and_then(|object| object_detail(data, object))
-        .unwrap_or("Move through lit rooms to reveal what the tower is hiding.");
-    draw_wrapped_line(detail, panel.x + 16.0, panel.y + 258.0, 27, ui::TEXT_DIM);
+        .unwrap_or_else(|| "Move through lit rooms to reveal what the tower is hiding.".to_owned());
+    draw_wrapped_line(&detail, panel.x + 16.0, panel.y + 258.0, 27, ui::TEXT_DIM);
     draw_ui_text_ex(
         if focus.is_some() {
             "Approach to interact"
@@ -394,6 +394,9 @@ fn object_name<'a>(data: &'a GameData, object: &'a TowerMapObject) -> Option<&'a
         TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => data
             .enemy(&object.enemy_id)
             .map(|enemy| enemy.name.as_str()),
+        TowerMapObjectKind::Hazard => data
+            .tower_hazard(&object.hazard_id)
+            .map(|hazard| hazard.name.as_str()),
         TowerMapObjectKind::SpecialLocation => data
             .tower_special_location(&object.special_location_id)
             .map(|location| location.name.as_str()),
@@ -402,18 +405,32 @@ fn object_name<'a>(data: &'a GameData, object: &'a TowerMapObject) -> Option<&'a
     }
 }
 
-fn object_detail<'a>(data: &'a GameData, object: &'a TowerMapObject) -> Option<&'a str> {
+fn object_detail(data: &GameData, object: &TowerMapObject) -> Option<String> {
     match object.kind {
         TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => data
             .enemy(&object.enemy_id)
-            .map(|enemy| enemy.description.as_str()),
+            .map(|enemy| enemy.description.clone()),
         TowerMapObjectKind::SpecialLocation => data
             .tower_special_location(&object.special_location_id)
-            .map(|location| location.description.as_str()),
-        TowerMapObjectKind::Egg => Some("A living egg waits in a tower nest."),
-        TowerMapObjectKind::Loot => Some("Supplies can be carried safely back to town."),
-        TowerMapObjectKind::Stairs => Some("This route leads to the next floor."),
-        TowerMapObjectKind::Exit => Some("This threshold returns the party and its cargo to town."),
+            .map(|location| location.description.clone()),
+        TowerMapObjectKind::Hazard => data.tower_hazard(&object.hazard_id).map(|hazard| {
+            let counter = hazard
+                .counter_passive
+                .map(|passive| passive.to_string())
+                .or_else(|| {
+                    hazard
+                        .counter_element
+                        .map(|element| format!("{element} monster"))
+                })
+                .unwrap_or_else(|| "none".to_owned());
+            format!("{} Counter: {counter}.", hazard.description)
+        }),
+        TowerMapObjectKind::Egg => Some("A living egg waits in a tower nest.".to_owned()),
+        TowerMapObjectKind::Loot => Some("Supplies can be carried safely back to town.".to_owned()),
+        TowerMapObjectKind::Stairs => Some("This route leads to the next floor.".to_owned()),
+        TowerMapObjectKind::Exit => {
+            Some("This threshold returns the party and its cargo to town.".to_owned())
+        }
     }
 }
 
@@ -423,6 +440,7 @@ fn object_kind_label(object: &TowerMapObject) -> &'static str {
         TowerMapObjectKind::Egg => "NEST  ·  EGG",
         TowerMapObjectKind::Enemy => "ENCOUNTER  ·  WANDERING",
         TowerMapObjectKind::Boss => "ENCOUNTER  ·  BOSS",
+        TowerMapObjectKind::Hazard => "HAZARD  ·  TELEGRAPHED",
         TowerMapObjectKind::SpecialLocation => "LANDMARK  ·  EVENT",
         TowerMapObjectKind::Stairs => "ROUTE  ·  DESCENT",
         TowerMapObjectKind::Exit => "ROUTE  ·  RETURN",
@@ -441,6 +459,11 @@ fn draw_context_art(data: &GameData, object: &TowerMapObject, x: f32, y: f32, w:
         TowerMapObjectKind::SpecialLocation => {
             if let Some(location) = data.tower_special_location(&object.special_location_id) {
                 assets::draw_special_location(location.visual, x, y, w, h);
+            }
+        }
+        TowerMapObjectKind::Hazard => {
+            if let Some(hazard) = data.tower_hazard(&object.hazard_id) {
+                assets::draw_tower_hazard(hazard.visual, x, y, w, h);
             }
         }
         TowerMapObjectKind::Stairs => assets::draw_dungeon_feature(2, x, y, w, h),

@@ -32,6 +32,9 @@ pub(super) fn add_map_objects(
     for object in special_location_objects(data, floor_number, goal, rng) {
         place_room_landmark(map, object, rng);
     }
+    for object in hazard_objects(data, floor_number, goal, rng) {
+        place_object(map, object, rng);
+    }
 
     if floor.is_boss_floor {
         if let Some(enemy) = eligible_enemies(data, floor_number, true).first() {
@@ -94,6 +97,36 @@ fn special_location_objects(
         .collect()
 }
 
+fn hazard_objects(
+    data: &GameData,
+    floor_number: u32,
+    goal: TowerRunGoal,
+    rng: &mut TowerMapRng,
+) -> Vec<TowerMapObject> {
+    if goal == TowerRunGoal::SafeRun {
+        return Vec::new();
+    }
+    let eligible: Vec<_> = data
+        .tower_hazards
+        .iter()
+        .filter(|hazard| hazard.min_floor <= floor_number && hazard.max_floor >= floor_number)
+        .collect();
+    if eligible.is_empty() {
+        return Vec::new();
+    }
+    let count = if goal == TowerRunGoal::PushDeeper || floor_number >= 8 {
+        2
+    } else {
+        1
+    };
+    (0..count)
+        .filter_map(|_| {
+            let hazard = eligible.get(rng.range(0, eligible.len() as u32) as usize)?;
+            Some(TowerMapObject::hazard(&hazard.id))
+        })
+        .collect()
+}
+
 fn loot_objects(
     floor: &TowerFloorDefinition,
     goal: TowerRunGoal,
@@ -128,6 +161,7 @@ fn loot_objects(
                 enemy_id: String::new(),
                 special_location_id: String::new(),
                 event_id: String::new(),
+                hazard_id: String::new(),
             })
         })
         .collect()
@@ -168,6 +202,7 @@ fn egg_objects(
                 enemy_id: String::new(),
                 special_location_id: String::new(),
                 event_id: String::new(),
+                hazard_id: String::new(),
             })
         })
         .collect()
@@ -280,6 +315,7 @@ impl TowerMapObject {
             enemy_id: String::new(),
             special_location_id: String::new(),
             event_id: String::new(),
+            hazard_id: String::new(),
         }
     }
 
@@ -318,6 +354,13 @@ impl TowerMapObject {
             special_location_id: location_id.to_owned(),
             event_id: event_id.to_owned(),
             ..Self::empty(TowerMapObjectKind::SpecialLocation)
+        }
+    }
+
+    fn hazard(hazard_id: &str) -> Self {
+        Self {
+            hazard_id: hazard_id.to_owned(),
+            ..Self::empty(TowerMapObjectKind::Hazard)
         }
     }
 }

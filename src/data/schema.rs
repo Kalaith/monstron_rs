@@ -203,6 +203,34 @@ pub struct TowerEventDefinition {
     pub enemy_id: String,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum TowerHazardVisual {
+    Spores,
+    Brambles,
+    CinderVent,
+    Flood,
+    Frostfall,
+    CrownPollen,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TowerHazardDefinition {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub min_floor: u32,
+    pub max_floor: u32,
+    pub visual: TowerHazardVisual,
+    pub damage: i32,
+    pub pressure: u32,
+    #[serde(default)]
+    pub counter_passive: Option<PassiveSkill>,
+    #[serde(default)]
+    pub counter_element: Option<Element>,
+    #[serde(default)]
+    pub counter_rewards: Vec<ResourceAmount>,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct EnemyDefinition {
     pub id: String,

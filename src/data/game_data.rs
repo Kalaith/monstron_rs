@@ -6,7 +6,7 @@ use crate::data::{
     BalanceData, BuildingDefinition, EggTypeDefinition, Element, EnemyDefinition, GameConfig,
     MonsterRole, MonsterSpeciesDefinition, NpcDefinition, PassiveSkill, ResourceDefinition,
     ShopTradeDefinition, Temperament, TowerEventDefinition, TowerFloorDefinition,
-    TowerRewardDefinition, TowerSpecialLocationDefinition, TownSkill,
+    TowerHazardDefinition, TowerRewardDefinition, TowerSpecialLocationDefinition, TownSkill,
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -21,6 +21,7 @@ pub struct GameData {
     pub enemies: Vec<EnemyDefinition>,
     pub tower_special_locations: Vec<TowerSpecialLocationDefinition>,
     pub tower_events: Vec<TowerEventDefinition>,
+    pub tower_hazards: Vec<TowerHazardDefinition>,
     pub npcs: Vec<NpcDefinition>,
     #[serde(skip)]
     resource_index: HashMap<String, usize>,
@@ -38,6 +39,8 @@ pub struct GameData {
     tower_special_location_index: HashMap<String, usize>,
     #[serde(skip)]
     tower_event_index: HashMap<String, usize>,
+    #[serde(skip)]
+    tower_hazard_index: HashMap<String, usize>,
     #[serde(skip)]
     npc_index: HashMap<String, usize>,
     #[serde(skip)]
@@ -62,6 +65,7 @@ impl GameData {
         enemies: Vec<EnemyDefinition>,
         tower_special_locations: Vec<TowerSpecialLocationDefinition>,
         tower_events: Vec<TowerEventDefinition>,
+        tower_hazards: Vec<TowerHazardDefinition>,
         npcs: Vec<NpcDefinition>,
     ) -> Result<Self, String> {
         let mut data = Self {
@@ -75,6 +79,7 @@ impl GameData {
             enemies,
             tower_special_locations,
             tower_events,
+            tower_hazards,
             npcs,
             resource_index: HashMap::new(),
             building_index: HashMap::new(),
@@ -84,6 +89,7 @@ impl GameData {
             enemy_index: HashMap::new(),
             tower_special_location_index: HashMap::new(),
             tower_event_index: HashMap::new(),
+            tower_hazard_index: HashMap::new(),
             npc_index: HashMap::new(),
             stat_curve_index: HashMap::new(),
             cooldown_index: HashMap::new(),
@@ -263,6 +269,7 @@ impl GameData {
             Vec::new(),
             Vec::new(),
             Vec::new(),
+            Vec::new(),
         )
         .expect("fallback Hatchspire data must be valid")
     }
@@ -315,6 +322,12 @@ impl GameData {
         self.tower_event_index
             .get(id)
             .and_then(|index| self.tower_events.get(*index))
+    }
+
+    pub fn tower_hazard(&self, id: &str) -> Option<&TowerHazardDefinition> {
+        self.tower_hazard_index
+            .get(id)
+            .and_then(|index| self.tower_hazards.get(*index))
     }
 
     pub fn npc(&self, id: &str) -> Option<&NpcDefinition> {
@@ -403,6 +416,13 @@ impl GameData {
                 .enumerate()
                 .map(|(index, event)| (&event.id, index)),
             "tower event",
+        )?;
+        self.tower_hazard_index = build_unique_index(
+            self.tower_hazards
+                .iter()
+                .enumerate()
+                .map(|(index, hazard)| (&hazard.id, index)),
+            "tower hazard",
         )?;
         self.npc_index = build_unique_index(
             self.npcs
@@ -556,6 +576,17 @@ impl GameData {
                     event.id, event.enemy_id
                 ));
             }
+        }
+        for hazard in &self.tower_hazards {
+            if hazard.min_floor == 0 || hazard.max_floor < hazard.min_floor || hazard.damage < 0 {
+                return Err(format!("Tower hazard '{}' has invalid bounds", hazard.id));
+            }
+            validate_resource_stacks(
+                &resource_ids,
+                &hazard.counter_rewards,
+                "tower hazard",
+                &hazard.id,
+            )?;
         }
 
         if self.balance.monster_stat_curves.len() != self.monster_species.len() {

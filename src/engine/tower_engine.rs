@@ -358,10 +358,85 @@ fn resolve_map_object(
                 returned_to_town: false,
             }
         }
+        TowerMapObjectKind::Hazard => resolve_hazard(state, data, &object.hazard_id),
         TowerMapObjectKind::SpecialLocation => resolve_special_location(state, data, object),
         TowerMapObjectKind::Stairs => advance_floor(state, data),
         TowerMapObjectKind::Exit => return_to_town(state, data),
     }
+}
+
+fn resolve_hazard(state: &mut GameState, data: &GameData, hazard_id: &str) -> TowerResult {
+    let Some(hazard) = data.tower_hazard(hazard_id) else {
+        return result("The party crosses an unrecorded tower hazard.");
+    };
+    let countering_monster = state
+        .monster_roster
+        .party_slots
+        .iter()
+        .flatten()
+        .filter_map(|id| state.monster_roster.monster(*id))
+        .find(|monster| {
+            hazard
+                .counter_passive
+                .is_some_and(|passive| passive == monster.passive)
+                || hazard
+                    .counter_element
+                    .is_some_and(|element| element == monster.element)
+        })
+        .map(|monster| monster.name.clone());
+
+    let summary = if let Some(monster_name) = countering_monster {
+        let mut rewards = Vec::new();
+        if let Some(run) = &mut state.tower_run {
+            for reward in &hazard.counter_rewards {
+                run.add_cargo(&reward.resource_id, reward.amount);
+                rewards.push(format!(
+                    "{} {}",
+                    reward.amount,
+                    data.resource_name(&reward.resource_id)
+                ));
+            }
+        }
+        let reward_text = if rewards.is_empty() {
+            String::new()
+        } else {
+            format!(" Recovered {}.", rewards.join(", "))
+        };
+        format!(
+            "{monster_name} counters {} before it closes on the party.{reward_text}",
+            hazard.name
+        )
+    } else {
+        let party_ids: Vec<u64> = state
+            .monster_roster
+            .party_slots
+            .iter()
+            .flatten()
+            .copied()
+            .collect();
+        let mut total_damage = 0;
+        for monster_id in party_ids {
+            if let Some(monster) = state.monster_roster.monster_mut(monster_id) {
+                let before = monster.hp;
+                monster.hp = (monster.hp - hazard.damage).max(1);
+                total_damage += before - monster.hp;
+            }
+        }
+        if let Some(run) = &mut state.tower_run {
+            run.pressure = run
+                .pressure
+                .saturating_add(hazard.pressure)
+                .min(run.pressure_limit);
+        }
+        format!(
+            "{} catches the party: {total_damage} total damage and +{} pressure.",
+            hazard.name, hazard.pressure
+        )
+    };
+    if let Some(run) = &mut state.tower_run {
+        run.add_event(summary.clone());
+    }
+    result(summary)
 }
 
 fn resolve_special_location(

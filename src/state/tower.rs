@@ -42,6 +42,7 @@ pub enum TowerMapObjectKind {
     Egg,
     Enemy,
     Boss,
+    Hazard,
     SpecialLocation,
     Stairs,
     Exit,
@@ -76,6 +77,8 @@ pub struct TowerMapObject {
     pub special_location_id: String,
     #[serde(default)]
     pub event_id: String,
+    #[serde(default)]
+    pub hazard_id: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

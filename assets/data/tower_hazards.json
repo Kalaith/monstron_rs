@@ -1,0 +1,76 @@
+{
+  "hazards": [
+    {
+      "id": "spore_choke",
+      "name": "Choking Sporebed",
+      "description": "A bruised fungal bed clouds the route with bitter green spores.",
+      "min_floor": 1,
+      "max_floor": 3,
+      "visual": "Spores",
+      "damage": 2,
+      "pressure": 1,
+      "counter_passive": "Resists poison",
+      "counter_rewards": [{"resource_id": "herbs", "amount": 2}]
+    },
+    {
+      "id": "bramble_snare",
+      "name": "Listening Brambles",
+      "description": "Hooked vines tighten whenever the tower hears hurried footsteps.",
+      "min_floor": 2,
+      "max_floor": 5,
+      "visual": "Brambles",
+      "damage": 3,
+      "pressure": 1,
+      "counter_passive": "Burns brambles",
+      "counter_rewards": [{"resource_id": "wood", "amount": 3}]
+    },
+    {
+      "id": "cinder_vent",
+      "name": "Cinder Vent",
+      "description": "A cracked furnace throat pulses before bathing the passage in sparks.",
+      "min_floor": 4,
+      "max_floor": 7,
+      "visual": "CinderVent",
+      "damage": 4,
+      "pressure": 2,
+      "counter_element": "Water",
+      "counter_rewards": [{"resource_id": "ore", "amount": 2}]
+    },
+    {
+      "id": "mirror_flood",
+      "name": "Mirror Flood",
+      "description": "A clear surge hides the broken crystal edges beneath its reflection.",
+      "min_floor": 5,
+      "max_floor": 8,
+      "visual": "Flood",
+      "damage": 3,
+      "pressure": 2,
+      "counter_element": "Water",
+      "counter_rewards": [{"resource_id": "crystal", "amount": 2}]
+    },
+    {
+      "id": "frostfall",
+      "name": "Frostfall Arch",
+      "description": "Moon-cold masonry sheds a curtain of razor frost across the doorway.",
+      "min_floor": 6,
+      "max_floor": 9,
+      "visual": "Frostfall",
+      "damage": 4,
+      "pressure": 2,
+      "counter_element": "Fire",
+      "counter_rewards": [{"resource_id": "crystal", "amount": 3}]
+    },
+    {
+      "id": "crown_pollen",
+      "name": "Crown Pollen",
+      "description": "Golden dust from the living crown stings like a field of tiny thorns.",
+      "min_floor": 8,
+      "max_floor": 10,
+      "visual": "CrownPollen",
+      "damage": 5,
+      "pressure": 3,
+      "counter_passive": "Resists poison",
+      "counter_rewards": [{"resource_id": "herbs", "amount": 4}, {"resource_id": "crystal", "amount": 2}]
+    }
+  ]
+}

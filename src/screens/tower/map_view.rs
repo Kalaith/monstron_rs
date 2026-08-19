@@ -311,6 +311,7 @@ fn room_purpose(map: &TowerMapState, room: TowerRoom, index: usize) -> DungeonRo
         Some(TowerMapObjectKind::Egg) => DungeonRoomPurpose::Nest,
         Some(TowerMapObjectKind::Loot) => DungeonRoomPurpose::Cache,
         Some(TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss) => DungeonRoomPurpose::Encounter,
+        Some(TowerMapObjectKind::Hazard) => DungeonRoomPurpose::Traversal,
         Some(TowerMapObjectKind::SpecialLocation) => DungeonRoomPurpose::Shrine,
         Some(TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit) => {
             DungeonRoomPurpose::Traversal
@@ -341,6 +342,7 @@ fn draw_objects(data: &GameData, map: &TowerMapState, transform: WorldTransform)
         let size = match object.kind {
             TowerMapObjectKind::Boss => 82.0,
             TowerMapObjectKind::SpecialLocation => 76.0,
+            TowerMapObjectKind::Hazard => 72.0,
             TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => 70.0,
             _ => 58.0,
         };
@@ -379,6 +381,17 @@ fn draw_objects(data: &GameData, map: &TowerMapState, transform: WorldTransform)
                     assets::draw_dungeon_feature(4, x - size * 0.5, y - size * 0.6, size, size);
                 }
             }
+            TowerMapObjectKind::Hazard => {
+                if let Some(hazard) = data.tower_hazard(&object.hazard_id) {
+                    assets::draw_tower_hazard(
+                        hazard.visual,
+                        x - size * 0.5,
+                        y - size * 0.58,
+                        size,
+                        size,
+                    );
+                }
+            }
             TowerMapObjectKind::Stairs => {
                 assets::draw_dungeon_feature(2, x - size * 0.5, y - size * 0.58, size, size)
             }
@@ -395,6 +408,7 @@ fn draw_object_glow(x: f32, y: f32, size: f32, kind: TowerMapObjectKind) {
         TowerMapObjectKind::Egg => (181, 120, 214),
         TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => (211, 73, 67),
         TowerMapObjectKind::SpecialLocation => (99, 211, 168),
+        TowerMapObjectKind::Hazard => (232, 135, 57),
         TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => (88, 196, 206),
     };
     draw_circle(x, y, size * 0.62, color(rgb.0, rgb.1, rgb.2, 31));

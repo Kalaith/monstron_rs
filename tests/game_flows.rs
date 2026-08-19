@@ -122,6 +122,7 @@ fn tower_preparation_movement_return_and_rewards_form_one_flow() {
             enemy_id: String::new(),
             special_location_id: String::new(),
             event_id: String::new(),
+            hazard_id: String::new(),
         });
     let moved = tower_engine::move_party(&mut state, &data, dx, dy);
     assert!(moved.summary.contains("Found 3"));
@@ -182,6 +183,7 @@ fn balance_data_is_typed_and_every_reference_is_integrity_checked() {
     assert!(data.shop_trade("buy_herbs").is_some());
     assert!(data.tower_reward(10).is_some());
     assert!(data.enemies.len() >= 21);
+    assert_eq!(data.tower_hazards.len(), 6);
     for behavior in [
         hatchspire::data::EnemyBehavior::Bruiser,
         hatchspire::data::EnemyBehavior::Bulwark,

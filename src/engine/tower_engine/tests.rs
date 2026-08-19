@@ -28,6 +28,11 @@ fn generated_map_has_start_and_stairs() {
         .iter()
         .filter(|object| object.kind == TowerMapObjectKind::Enemy)
         .all(|object| data.enemy(&object.enemy_id).is_some()));
+    assert!(map
+        .objects
+        .iter()
+        .filter(|object| object.kind == TowerMapObjectKind::Hazard)
+        .all(|object| data.tower_hazard(&object.hazard_id).is_some()));
 }
 
 #[test]
@@ -51,6 +56,7 @@ fn special_location_event_applies_its_data_driven_outcome() {
             enemy_id: String::new(),
             special_location_id: "root_oracle".to_owned(),
             event_id: "roots_reveal_cache".to_owned(),
+            hazard_id: String::new(),
         },
     );
     assert!(result.summary.contains("Root Oracle"));
@@ -75,6 +81,43 @@ fn special_location_event_applies_its_data_driven_outcome() {
             .map(|stack| stack.amount),
         Some(3)
     );
+}
+
+#[test]
+fn party_traits_counter_authored_hazards_and_recover_materials() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Balanced);
+    let hp_before = state.monster_roster.monsters[0].hp;
+
+    let result = resolve_hazard(&mut state, &data, "cinder_vent");
+    let run = state.tower_run.as_ref().unwrap();
+
+    assert!(result.summary.contains("counters Cinder Vent"));
+    assert_eq!(state.monster_roster.monsters[0].hp, hp_before);
+    assert_eq!(run.pressure, 0);
+    assert_eq!(
+        run.cargo
+            .iter()
+            .find(|stack| stack.resource_id == "ore")
+            .map(|stack| stack.amount),
+        Some(2)
+    );
+}
+
+#[test]
+fn uncountered_hazard_damages_the_party_and_raises_pressure() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Balanced);
+    let hp_before = state.monster_roster.monsters[0].hp;
+
+    let result = resolve_hazard(&mut state, &data, "frostfall");
+    let run = state.tower_run.as_ref().unwrap();
+
+    assert!(result.summary.contains("Frostfall Arch catches"));
+    assert_eq!(state.monster_roster.monsters[0].hp, hp_before - 4);
+    assert_eq!(run.pressure, 2);
 }
 
 #[test]
@@ -152,6 +195,7 @@ fn movement_collects_object_on_destination_tile() {
         enemy_id: String::new(),
         special_location_id: String::new(),
         event_id: String::new(),
+        hazard_id: String::new(),
     });
 
     let result = move_party(&mut state, &data, dx, dy);

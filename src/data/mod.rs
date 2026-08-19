@@ -9,6 +9,6 @@ pub use schema::{
     EggTypeDefinition, Element, EnemyBehavior, EnemyDefinition, GameConfig, MonsterRole,
     MonsterSpeciesDefinition, MonsterStatCurveDefinition, NpcDefinition, PassiveSkill,
     ResourceAmount, ResourceDefinition, ShopTradeDefinition, Temperament, TowerEventDefinition,
-    TowerFloorDefinition, TowerLocationVisual, TowerRewardDefinition,
-    TowerSpecialLocationDefinition, TownSkill,
+    TowerFloorDefinition, TowerHazardDefinition, TowerHazardVisual, TowerLocationVisual,
+    TowerRewardDefinition, TowerSpecialLocationDefinition, TownSkill,
 };

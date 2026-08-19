@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use macroquad::prelude::*;
 
-use crate::data::{DungeonEnemyVisual, TowerLocationVisual};
+use crate::data::{DungeonEnemyVisual, TowerHazardVisual, TowerLocationVisual};
 
 const MONSTERS: &str = "monsters";
 const EGGS: &str = "eggs";
@@ -19,6 +19,7 @@ const PARTY_PORTRAITS: &str = "party_portraits";
 const PURPOSE_ROOMS: &str = "purpose_rooms";
 const MOSS_GATE_WORLD: &str = "moss_gate_world";
 const SPECIAL_LOCATIONS: &str = "special_locations";
+const HAZARDS: &str = "hazards";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DungeonBiome {
@@ -198,6 +199,18 @@ pub fn draw_special_location(visual: TowerLocationVisual, x: f32, y: f32, width:
     draw_atlas(SPECIAL_LOCATIONS, 3, 2, index, x, y, width, height);
 }
 
+pub fn draw_tower_hazard(visual: TowerHazardVisual, x: f32, y: f32, width: f32, height: f32) {
+    let index = match visual {
+        TowerHazardVisual::Spores => 0,
+        TowerHazardVisual::Brambles => 1,
+        TowerHazardVisual::CinderVent => 2,
+        TowerHazardVisual::Flood => 3,
+        TowerHazardVisual::Frostfall => 4,
+        TowerHazardVisual::CrownPollen => 5,
+    };
+    draw_atlas(HAZARDS, 3, 2, index, x, y, width, height);
+}
+
 /// Draws a large illustrated room module. The atlas is arranged as a 3x2
 /// family: moss, flooded, ember, frost, root, and void.
 pub fn draw_dungeon_room(
@@ -362,6 +375,9 @@ fn asset_bytes(asset: &str) -> &'static [u8] {
         SPECIAL_LOCATIONS => include_bytes!(
             "../../assets/generated/dungeon/dungeon_interaction_landmarks_v5_atlas.png"
         ),
+        HAZARDS => {
+            include_bytes!("../../assets/generated/dungeon/dungeon_hazard_telegraphs_v5_atlas.png")
+        }
         _ => unreachable!("unknown visual asset"),
     }
 }
