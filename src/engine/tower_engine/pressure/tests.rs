@@ -29,6 +29,11 @@ fn high_pressure_adds_one_named_wandering_enemy() {
     assert_eq!(run.pressure_stage, 2);
     assert_eq!(new_enemy_count, enemy_count + 1);
     assert!(summary.contains("wandering"));
+    assert!(run
+        .map
+        .objects
+        .iter()
+        .any(|object| object.kind == TowerMapObjectKind::Enemy && object.wandering));
     assert!(
         run.map
             .objects

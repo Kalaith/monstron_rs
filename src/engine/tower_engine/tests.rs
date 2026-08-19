@@ -100,6 +100,7 @@ fn special_location_event_applies_its_data_driven_outcome() {
             special_location_id: "root_oracle".to_owned(),
             event_id: "roots_reveal_cache".to_owned(),
             hazard_id: String::new(),
+            wandering: false,
         },
     );
     assert!(result.summary.contains("Root Oracle"));
@@ -283,6 +284,7 @@ fn movement_collects_object_on_destination_tile() {
         special_location_id: String::new(),
         event_id: String::new(),
         hazard_id: String::new(),
+        wandering: false,
     });
 
     let result = move_party(&mut state, &data, dx, dy);
@@ -412,6 +414,7 @@ fn test_map_object(kind: TowerMapObjectKind, x: u32, y: u32) -> TowerMapObject {
         special_location_id: String::new(),
         event_id: String::new(),
         hazard_id: String::new(),
+        wandering: false,
     }
 }
 

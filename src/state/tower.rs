@@ -94,6 +94,8 @@ pub struct TowerMapObject {
     pub event_id: String,
     #[serde(default)]
     pub hazard_id: String,
+    #[serde(default)]
+    pub wandering: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

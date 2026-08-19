@@ -359,13 +359,23 @@ fn draw_objects(data: &GameData, map: &TowerMapState, transform: WorldTransform)
             ),
             TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => {
                 if let Some(enemy) = data.enemy(&object.enemy_id) {
-                    assets::draw_dungeon_enemy_visual(
-                        enemy.visual,
-                        x - size * 0.5,
-                        y - size * 0.62,
-                        size,
-                        size,
-                    );
+                    if object.wandering {
+                        assets::draw_wandering_enemy_visual(
+                            enemy.visual,
+                            x - size * 0.5,
+                            y - size * 0.62,
+                            size,
+                            size,
+                        );
+                    } else {
+                        assets::draw_dungeon_enemy_visual(
+                            enemy.visual,
+                            x - size * 0.5,
+                            y - size * 0.62,
+                            size,
+                            size,
+                        );
+                    }
                 }
             }
             TowerMapObjectKind::SpecialLocation => {
@@ -392,11 +402,14 @@ fn draw_objects(data: &GameData, map: &TowerMapState, transform: WorldTransform)
                     );
                 }
             }
-            TowerMapObjectKind::Stairs => {
-                assets::draw_dungeon_feature(2, x - size * 0.5, y - size * 0.58, size, size)
-            }
-            TowerMapObjectKind::Exit => {
-                assets::draw_dungeon_feature(3, x - size * 0.5, y - size * 0.58, size, size)
+            TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => {
+                assets::draw_escalation_landmark(
+                    DungeonBiome::for_floor(map.floor),
+                    x - size * 0.5,
+                    y - size * 0.58,
+                    size,
+                    size,
+                )
             }
         }
     }

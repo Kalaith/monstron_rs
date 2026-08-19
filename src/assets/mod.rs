@@ -20,6 +20,8 @@ const PURPOSE_ROOMS: &str = "purpose_rooms";
 const MOSS_GATE_WORLD: &str = "moss_gate_world";
 const SPECIAL_LOCATIONS: &str = "special_locations";
 const HAZARDS: &str = "hazards";
+const ESCALATION_LANDMARKS: &str = "escalation_landmarks";
+const WANDERING_ENEMIES: &str = "wandering_enemies";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DungeonBiome {
@@ -176,6 +178,24 @@ pub fn draw_dungeon_enemy_visual(
     draw_dungeon_enemy(enemy_visual_index(visual), x, y, width, height);
 }
 
+pub fn draw_wandering_enemy_visual(
+    visual: DungeonEnemyVisual,
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+) {
+    let index = match visual {
+        DungeonEnemyVisual::Crawler => 2,
+        DungeonEnemyVisual::Winged => 3,
+        DungeonEnemyVisual::Rooted => 0,
+        DungeonEnemyVisual::Wisp => 1,
+        DungeonEnemyVisual::Aquatic => 5,
+        DungeonEnemyVisual::Armored => 4,
+    };
+    draw_atlas(WANDERING_ENEMIES, 2, 3, index, x, y, width, height);
+}
+
 fn enemy_visual_index(visual: DungeonEnemyVisual) -> usize {
     match visual {
         DungeonEnemyVisual::Crawler => 0,
@@ -209,6 +229,19 @@ pub fn draw_tower_hazard(visual: TowerHazardVisual, x: f32, y: f32, width: f32, 
         TowerHazardVisual::CrownPollen => 5,
     };
     draw_atlas(HAZARDS, 3, 2, index, x, y, width, height);
+}
+
+pub fn draw_escalation_landmark(biome: DungeonBiome, x: f32, y: f32, width: f32, height: f32) {
+    draw_atlas(
+        ESCALATION_LANDMARKS,
+        2,
+        3,
+        biome.atlas_index(),
+        x,
+        y,
+        width,
+        height,
+    );
 }
 
 /// Draws a large illustrated room module. The atlas is arranged as a 3x2
@@ -378,6 +411,12 @@ fn asset_bytes(asset: &str) -> &'static [u8] {
         HAZARDS => {
             include_bytes!("../../assets/generated/dungeon/dungeon_hazard_telegraphs_v5_atlas.png")
         }
+        ESCALATION_LANDMARKS => include_bytes!(
+            "../../assets/generated/dungeon/dungeon_escalation_landmark_v2_atlas.png"
+        ),
+        WANDERING_ENEMIES => include_bytes!(
+            "../../assets/generated/dungeon/dungeon_enemy_intent_wandering_atlas_v1.png"
+        ),
         _ => unreachable!("unknown visual asset"),
     }
 }

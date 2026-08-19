@@ -162,6 +162,7 @@ fn loot_objects(
                 special_location_id: String::new(),
                 event_id: String::new(),
                 hazard_id: String::new(),
+                wandering: false,
             })
         })
         .collect()
@@ -203,6 +204,7 @@ fn egg_objects(
                 special_location_id: String::new(),
                 event_id: String::new(),
                 hazard_id: String::new(),
+                wandering: false,
             })
         })
         .collect()
@@ -291,7 +293,9 @@ pub(super) fn spawn_pressure_enemy(
     let mut rng = TowerMapRng::new(seed);
     let enemy = eligible[rng.range(0, eligible.len() as u32) as usize];
     let before = map.objects.len();
-    place_object(map, TowerMapObject::enemy(&enemy.id), &mut rng);
+    let mut object = TowerMapObject::enemy(&enemy.id);
+    object.wandering = true;
+    place_object(map, object, &mut rng);
     (map.objects.len() > before).then(|| enemy.id.clone())
 }
 
@@ -332,6 +336,7 @@ impl TowerMapObject {
             special_location_id: String::new(),
             event_id: String::new(),
             hazard_id: String::new(),
+            wandering: false,
         }
     }
 
