@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::data::MonsterRole;
+use crate::data::{EnemyBehavior, MonsterRole};
 use crate::state::ResourceStack;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -87,6 +87,8 @@ pub struct Combatant {
     #[serde(default)]
     pub is_marked: bool,
     pub visual_seed: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub enemy_behavior: Option<EnemyBehavior>,
 }
 
 impl CombatState {

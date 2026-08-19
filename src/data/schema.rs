@@ -218,6 +218,38 @@ pub struct EnemyDefinition {
     pub speed: i32,
     pub xp_reward: u32,
     pub rewards: Vec<ResourceAmount>,
+    #[serde(default)]
+    pub behavior: EnemyBehavior,
+    #[serde(default)]
+    pub visual: DungeonEnemyVisual,
+    #[serde(default = "default_enemy_pack_size")]
+    pub pack_size: u32,
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub enum EnemyBehavior {
+    #[default]
+    Standard,
+    Bruiser,
+    Bulwark,
+    Harrier,
+    Hexer,
+    Swarm,
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub enum DungeonEnemyVisual {
+    #[default]
+    Crawler,
+    Winged,
+    Rooted,
+    Wisp,
+    Aquatic,
+    Armored,
+}
+
+fn default_enemy_pack_size() -> u32 {
+    1
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

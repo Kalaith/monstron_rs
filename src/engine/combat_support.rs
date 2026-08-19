@@ -1,8 +1,11 @@
-use crate::data::{EnemyDefinition, GameData, MonsterRole};
+use crate::data::{EnemyBehavior, EnemyDefinition, GameData, MonsterRole};
 use crate::state::{
     CombatOutcome, CombatSide, CombatState, CombatTurn, Combatant, DailyCommitment, GameState,
     ResourceStack, TowerFoundEgg, TowerRunState,
 };
+
+#[cfg(test)]
+mod tests;
 
 pub(crate) fn build_allies(state: &GameState) -> Vec<Combatant> {
     state
@@ -40,6 +43,7 @@ pub(crate) fn build_allies(state: &GameState) -> Vec<Combatant> {
                 is_guarding: false,
                 is_marked: false,
                 visual_seed: monster.visual_seed,
+                enemy_behavior: None,
             })
         })
         .collect()
@@ -61,15 +65,18 @@ pub(crate) fn build_named_enemies(
                 && enemy_id.is_none_or(|id| enemy.id == id)
         })
         .collect();
-    let count = if is_boss || enemy_id.is_some() {
+    let count = if is_boss {
         1
+    } else if enemy_id.is_some() {
+        eligible.first().map_or(1, |enemy| enemy.pack_size)
     } else {
         (1 + floor / 4).min(3)
     };
 
     (0..count as usize)
         .filter_map(|slot| {
-            let enemy = eligible.get((floor as usize + slot) % eligible.len().max(1))?;
+            let enemy =
+                eligible.get((floor.saturating_sub(1) as usize + slot) % eligible.len().max(1))?;
             Some(Combatant {
                 name: enemy.name.clone(),
                 source_id: enemy.id.clone(),
@@ -87,6 +94,7 @@ pub(crate) fn build_named_enemies(
                 is_guarding: false,
                 is_marked: false,
                 visual_seed: hash_id(&enemy.id) ^ u64::from(floor),
+                enemy_behavior: Some(enemy.behavior),
             })
         })
         .collect()
@@ -443,19 +451,50 @@ fn burst_strike(combat: &mut CombatState, slot: usize) -> String {
 }
 
 fn enemy_action(combat: &mut CombatState, slot: usize) {
+    let behavior = combat.enemies[slot]
+        .enemy_behavior
+        .unwrap_or(EnemyBehavior::Standard);
+    if behavior == EnemyBehavior::Bulwark && combat.round.is_multiple_of(3) {
+        combat.enemies[slot].is_defending = true;
+        combat.add_log(format!(
+            "{} braces behind its tower-grown armor.",
+            combat.enemies[slot].name
+        ));
+        return;
+    }
     let Some((target, guarded_by)) = enemy_target(combat, slot) else {
         combat.outcome = Some(CombatOutcome::Defeat);
         return;
     };
     let actor = combat.enemies[slot].clone();
     let defending = combat.allies[target].is_defending || guarded_by.is_some();
-    let damage = attack_damage(&actor, &combat.allies[target], 0);
+    let behavior_bonus = match behavior {
+        EnemyBehavior::Bruiser if combat.round.is_multiple_of(3) => 4,
+        EnemyBehavior::Swarm => {
+            combat
+                .enemies
+                .iter()
+                .filter(|enemy| enemy.is_alive())
+                .count() as i32
+                - 1
+        }
+        _ => 0,
+    };
+    let damage = attack_damage(&actor, &combat.allies[target], behavior_bonus.max(0));
     let damage = if defending {
         (damage / 2).max(1)
     } else {
         damage
     };
     combat.allies[target].hp -= damage;
+    if behavior == EnemyBehavior::Hexer && combat.round.is_multiple_of(2) {
+        combat.allies[target].morale -= 7;
+        combat.allies[target].speed = (combat.allies[target].speed - 1).max(1);
+        combat.add_log(format!(
+            "{} clouds {}'s courage.",
+            actor.name, combat.allies[target].name
+        ));
+    }
     if let Some(guard_slot) = guarded_by {
         combat.add_log(format!(
             "{} intercepts {} for {} damage.",
@@ -471,7 +510,14 @@ fn enemy_action(combat: &mut CombatState, slot: usize) {
 }
 
 fn enemy_target(combat: &CombatState, enemy_slot: usize) -> Option<(usize, Option<usize>)> {
-    let back_targeted = (combat.round + combat.floor + enemy_slot as u32).is_multiple_of(4);
+    let behavior = combat.enemies[enemy_slot]
+        .enemy_behavior
+        .unwrap_or(EnemyBehavior::Standard);
+    let back_targeted = if behavior == EnemyBehavior::Harrier {
+        (combat.round + enemy_slot as u32).is_multiple_of(2)
+    } else {
+        (combat.round + combat.floor + enemy_slot as u32).is_multiple_of(4)
+    };
     if back_targeted {
         if let Some(back_target) = row_target(&combat.allies, 3..6) {
             if let Some(guard) = guarding_front_tank(&combat.allies) {
@@ -564,7 +610,9 @@ fn attack_damage(actor: &Combatant, target: &Combatant, bonus: i32) -> i32 {
         0
     };
     let mark_bonus = if target.is_marked { 2 } else { 0 };
-    (actor.attack + bonus + mark_bonus - back_row_penalty - target.defense / 2).max(1)
+    let defending_bonus = if target.is_defending { 3 } else { 0 };
+    (actor.attack + bonus + mark_bonus - back_row_penalty - target.defense / 2 - defending_bonus)
+        .max(1)
 }
 
 fn log_if_defeated(combat: &mut CombatState, side: CombatSide, slot: usize) {

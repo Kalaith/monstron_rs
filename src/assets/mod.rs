@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use macroquad::prelude::*;
 
-use crate::data::TowerLocationVisual;
+use crate::data::{DungeonEnemyVisual, TowerLocationVisual};
 
 const MONSTERS: &str = "monsters";
 const EGGS: &str = "eggs";
@@ -120,20 +120,8 @@ pub fn draw_egg_badge(egg_type_id: &str, x: f32, y: f32, size: f32) {
     draw_atlas(EGGS, 4, 3, index, x, y, size, size);
 }
 
-pub fn draw_enemy_badge(enemy_id: &str, x: f32, y: f32, size: f32) {
-    let index = match enemy_id {
-        "moss_mite" => 0,
-        "lamp_gnat" => 1,
-        "root_snapper" => 2,
-        "ember_wisp" => 3,
-        "glass_leech" => 4,
-        "hushed_sentry" => 5,
-        "garden_shade" => 0,
-        "iron_rook" => 5,
-        "verdant_crown" => 2,
-        _ => 0,
-    };
-    draw_atlas(ENEMIES, 2, 3, index, x, y, size, size);
+pub fn draw_enemy_badge_visual(visual: DungeonEnemyVisual, x: f32, y: f32, size: f32) {
+    draw_atlas(ENEMIES, 2, 3, enemy_visual_index(visual), x, y, size, size);
 }
 
 pub fn draw_landmark(index: usize, x: f32, y: f32, width: f32, height: f32) {
@@ -177,17 +165,25 @@ pub fn draw_dungeon_enemy(index: usize, x: f32, y: f32, width: f32, height: f32)
     draw_atlas(DUNGEON_ENEMIES, 3, 2, index % 6, x, y, width, height);
 }
 
-pub fn draw_dungeon_enemy_by_id(enemy_id: &str, x: f32, y: f32, width: f32, height: f32) {
-    let index = match enemy_id {
-        "moss_mite" | "garden_shade" => 0,
-        "lamp_gnat" => 1,
-        "root_snapper" | "verdant_crown" => 2,
-        "ember_wisp" => 3,
-        "glass_leech" => 4,
-        "hushed_sentry" | "iron_rook" => 5,
-        _ => 0,
-    };
-    draw_dungeon_enemy(index, x, y, width, height);
+pub fn draw_dungeon_enemy_visual(
+    visual: DungeonEnemyVisual,
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+) {
+    draw_dungeon_enemy(enemy_visual_index(visual), x, y, width, height);
+}
+
+fn enemy_visual_index(visual: DungeonEnemyVisual) -> usize {
+    match visual {
+        DungeonEnemyVisual::Crawler => 0,
+        DungeonEnemyVisual::Winged => 1,
+        DungeonEnemyVisual::Rooted => 2,
+        DungeonEnemyVisual::Wisp => 3,
+        DungeonEnemyVisual::Aquatic => 4,
+        DungeonEnemyVisual::Armored => 5,
+    }
 }
 
 pub fn draw_special_location(visual: TowerLocationVisual, x: f32, y: f32, width: f32, height: f32) {

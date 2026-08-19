@@ -181,6 +181,16 @@ fn balance_data_is_typed_and_every_reference_is_integrity_checked() {
     assert_eq!(data.combat_cooldown("skill"), Some(0));
     assert!(data.shop_trade("buy_herbs").is_some());
     assert!(data.tower_reward(10).is_some());
+    assert!(data.enemies.len() >= 21);
+    for behavior in [
+        hatchspire::data::EnemyBehavior::Bruiser,
+        hatchspire::data::EnemyBehavior::Bulwark,
+        hatchspire::data::EnemyBehavior::Harrier,
+        hatchspire::data::EnemyBehavior::Hexer,
+        hatchspire::data::EnemyBehavior::Swarm,
+    ] {
+        assert!(data.enemies.iter().any(|enemy| enemy.behavior == behavior));
+    }
 }
 
 #[test]

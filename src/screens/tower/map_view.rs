@@ -355,20 +355,17 @@ fn draw_objects(data: &GameData, map: &TowerMapState, transform: WorldTransform)
                 y - size * 0.5,
                 size * 0.84,
             ),
-            TowerMapObjectKind::Enemy => assets::draw_dungeon_enemy_by_id(
-                &object.enemy_id,
-                x - size * 0.5,
-                y - size * 0.6,
-                size,
-                size,
-            ),
-            TowerMapObjectKind::Boss => assets::draw_dungeon_enemy_by_id(
-                &object.enemy_id,
-                x - size * 0.5,
-                y - size * 0.64,
-                size,
-                size,
-            ),
+            TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => {
+                if let Some(enemy) = data.enemy(&object.enemy_id) {
+                    assets::draw_dungeon_enemy_visual(
+                        enemy.visual,
+                        x - size * 0.5,
+                        y - size * 0.62,
+                        size,
+                        size,
+                    );
+                }
+            }
             TowerMapObjectKind::SpecialLocation => {
                 if let Some(location) = data.tower_special_location(&object.special_location_id) {
                     assets::draw_special_location(

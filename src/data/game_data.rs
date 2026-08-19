@@ -256,6 +256,9 @@ impl GameData {
                     resource_id: "coins".to_owned(),
                     amount: 3,
                 }],
+                behavior: crate::data::EnemyBehavior::Standard,
+                visual: crate::data::DungeonEnemyVisual::Crawler,
+                pack_size: 1,
             }],
             Vec::new(),
             Vec::new(),
@@ -506,6 +509,12 @@ impl GameData {
             }
             if enemy.max_hp <= 0 {
                 return Err(format!("Enemy '{}' must have positive HP", enemy.id));
+            }
+            if !(1..=3).contains(&enemy.pack_size) {
+                return Err(format!(
+                    "Enemy '{}' must use a pack size from 1 to 3",
+                    enemy.id
+                ));
             }
             for reward in &enemy.rewards {
                 if !resource_ids.contains(&reward.resource_id) {

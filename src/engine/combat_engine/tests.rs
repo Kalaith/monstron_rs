@@ -82,6 +82,7 @@ fn tank_guard_redirects_back_row_pressure() {
         let combat = state.combat.as_mut().unwrap();
         combat.floor = 3;
         combat.round = 1;
+        combat.enemies[enemy_index].enemy_behavior = Some(crate::data::EnemyBehavior::Standard);
         combat.turn_order = vec![
             CombatTurn {
                 side: CombatSide::Ally,
@@ -129,6 +130,9 @@ fn named_tower_encounter_preserves_the_map_enemy_identity() {
     start_named_encounter(&mut state, &data, 5, false, Some("glass_leech"));
     let combat = state.combat.as_ref().expect("combat should start");
 
-    assert_eq!(combat.enemies.len(), 1);
-    assert_eq!(combat.enemies[0].source_id, "glass_leech");
+    assert_eq!(combat.enemies.len(), 2);
+    assert!(combat
+        .enemies
+        .iter()
+        .all(|enemy| enemy.source_id == "glass_leech"));
 }

@@ -423,7 +423,9 @@ fn draw_context_art(data: &GameData, object: &TowerMapObject, x: f32, y: f32, w:
         TowerMapObjectKind::Loot => assets::draw_dungeon_feature(1, x, y, w, h),
         TowerMapObjectKind::Egg => assets::draw_egg_badge(&object.egg_type_id, x + 18.0, y, h),
         TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => {
-            assets::draw_dungeon_enemy_by_id(&object.enemy_id, x, y, w, h)
+            if let Some(enemy) = data.enemy(&object.enemy_id) {
+                assets::draw_dungeon_enemy_visual(enemy.visual, x, y, w, h);
+            }
         }
         TowerMapObjectKind::SpecialLocation => {
             if let Some(location) = data.tower_special_location(&object.special_location_id) {

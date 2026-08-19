@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
 
 use crate::assets;
-use crate::data::{GameData, MonsterRole};
+use crate::data::{EnemyBehavior, GameData, MonsterRole};
 use crate::engine::combat_engine::CombatCommand;
 use crate::state::{CombatOutcome, CombatSide, CombatState, Combatant, GameState};
 use crate::ui;
@@ -59,7 +59,7 @@ pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
     draw_backdrop();
     if let Some(combat) = &state.combat {
         draw_header(combat);
-        draw_formation(combat);
+        draw_formation(combat, data);
         draw_actions(combat);
         draw_rewards(combat, data);
         draw_log(combat);
@@ -137,7 +137,7 @@ fn draw_header(combat: &CombatState) {
     );
 }
 
-fn draw_formation(combat: &CombatState) {
+fn draw_formation(combat: &CombatState, data: &GameData) {
     let rect = Rect::new(32.0, 124.0, 780.0, 330.0);
     ui::draw_panel(rect);
     ui::draw_section_title("Formation", rect.x + 20.0, rect.y + 34.0);
@@ -163,10 +163,10 @@ fn draw_formation(combat: &CombatState) {
     );
 
     for combatant in &combat.allies {
-        draw_combatant(combatant, true, ally_slot_rect(combatant.slot));
+        draw_combatant(data, combatant, true, ally_slot_rect(combatant.slot));
     }
     for combatant in &combat.enemies {
-        draw_combatant(combatant, false, enemy_slot_rect(combatant.slot));
+        draw_combatant(data, combatant, false, enemy_slot_rect(combatant.slot));
     }
     if combat.outcome.is_none() {
         assets::draw_combat_vfx(
@@ -178,7 +178,7 @@ fn draw_formation(combat: &CombatState) {
     }
 }
 
-fn draw_combatant(combatant: &Combatant, is_ally: bool, rect: Rect) {
+fn draw_combatant(data: &GameData, combatant: &Combatant, is_ally: bool, rect: Rect) {
     let fill = if combatant.is_alive() {
         Color::from_rgba(29, 38, 43, 230)
     } else {
@@ -190,7 +190,9 @@ fn draw_combatant(combatant: &Combatant, is_ally: bool, rect: Rect) {
     if is_ally {
         assets::draw_monster_badge(&combatant.source_id, rect.x + 10.0, rect.y + 16.0, 34.0);
     } else {
-        assets::draw_enemy_badge(&combatant.source_id, rect.x + 10.0, rect.y + 18.0, 34.0);
+        if let Some(enemy) = data.enemy(&combatant.source_id) {
+            assets::draw_enemy_badge_visual(enemy.visual, rect.x + 10.0, rect.y + 18.0, 34.0);
+        }
     }
 
     let name_color = if combatant.is_alive() {
@@ -430,7 +432,14 @@ fn current_skill_label(combat: &CombatState) -> &'static str {
 
 fn role_label(combatant: &Combatant, is_ally: bool) -> &'static str {
     if !is_ally {
-        return "Enemy";
+        return match combatant.enemy_behavior.unwrap_or_default() {
+            EnemyBehavior::Standard => "Enemy",
+            EnemyBehavior::Bruiser => "Bruise",
+            EnemyBehavior::Bulwark => "Guard",
+            EnemyBehavior::Harrier => "Harrier",
+            EnemyBehavior::Hexer => "Hexer",
+            EnemyBehavior::Swarm => "Swarm",
+        };
     }
     match combatant.role {
         Some(MonsterRole::Scout) => "Scout",

@@ -95,6 +95,8 @@ pub fn start_named_encounter(
     combat.add_log(format!("Encounter started on floor {floor}."));
     rebuild_turn_order(&mut combat);
     advance_to_player_or_outcome(&mut combat);
+    combat.replay_roster = combat.allies.clone();
+    combat.replay_enemies = combat.enemies.clone();
     combat.replay_turn_order = combat.turn_order.clone();
     combat.replay_round = combat.round;
     combat.replay_turn_index = combat.turn_index;
