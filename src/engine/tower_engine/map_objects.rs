@@ -28,8 +28,11 @@ pub(super) fn add_map_objects(
     for object in special_location_objects(data, floor_number, goal, rng) {
         place_room_landmark(map, object, rng);
     }
-    if let Some(object) = secret_cache_object(floor, rng) {
-        place_object(map, object, rng);
+    let secret_count = if goal == TowerRunGoal::Salvage { 2 } else { 1 };
+    for _ in 0..secret_count {
+        if let Some(object) = secret_cache_object(floor, rng) {
+            place_object(map, object, rng);
+        }
     }
     for object in loot_objects(floor, goal, rng) {
         place_object(map, object, rng);

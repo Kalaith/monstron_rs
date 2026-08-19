@@ -53,3 +53,34 @@ fn salvage_survey_exposes_and_resolves_an_authored_secret_cache() {
     assert!(result.summary.contains("Opened a surveyed secret"));
     assert!(state.tower_run.as_ref().unwrap().cargo_amount() > cargo_before);
 }
+
+#[test]
+fn salvage_floor_hides_two_caches_while_balanced_floor_hides_one() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut salvage = GameState::new(&data);
+    start_run(&mut salvage, &data, TowerRunGoal::Salvage);
+    let salvage_count = salvage
+        .tower_run
+        .as_ref()
+        .unwrap()
+        .map
+        .objects
+        .iter()
+        .filter(|object| object.kind == TowerMapObjectKind::SecretCache)
+        .count();
+
+    let mut balanced = GameState::new(&data);
+    start_run(&mut balanced, &data, TowerRunGoal::Balanced);
+    let balanced_count = balanced
+        .tower_run
+        .as_ref()
+        .unwrap()
+        .map
+        .objects
+        .iter()
+        .filter(|object| object.kind == TowerMapObjectKind::SecretCache)
+        .count();
+
+    assert_eq!(salvage_count, 2);
+    assert_eq!(balanced_count, 1);
+}
