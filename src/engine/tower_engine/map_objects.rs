@@ -49,12 +49,23 @@ pub(super) fn add_map_objects(
         }
     } else {
         let enemies = eligible_enemies(data, floor_number, false);
-        for _ in 0..enemy_count(map, state, floor_number, goal) {
-            if let Some(enemy) = enemies.get(rng.range(0, enemies.len() as u32) as usize) {
-                place_object(map, TowerMapObject::enemy(&enemy.id), rng);
-            }
+        let count = enemy_count(map, state, floor_number, goal) as usize;
+        for enemy in varied_enemy_roster(enemies, count, rng) {
+            place_object(map, TowerMapObject::enemy(&enemy.id), rng);
         }
     }
+}
+
+fn varied_enemy_roster<'a>(
+    mut enemies: Vec<&'a crate::data::EnemyDefinition>,
+    count: usize,
+    rng: &mut TowerMapRng,
+) -> Vec<&'a crate::data::EnemyDefinition> {
+    for upper in (1..enemies.len()).rev() {
+        let swap = rng.range(0, upper as u32 + 1) as usize;
+        enemies.swap(upper, swap);
+    }
+    enemies.into_iter().cycle().take(count).collect()
 }
 
 fn eligible_enemies(
@@ -327,7 +338,20 @@ pub(super) fn spawn_pressure_enemy(
         return None;
     }
     let mut rng = TowerMapRng::new(seed);
-    let enemy = eligible[rng.range(0, eligible.len() as u32) as usize];
+    let fresh = eligible
+        .iter()
+        .copied()
+        .filter(|enemy| {
+            !map.objects.iter().any(|object| {
+                matches!(
+                    object.kind,
+                    TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss
+                ) && object.enemy_id == enemy.id
+            })
+        })
+        .collect::<Vec<_>>();
+    let pool = if fresh.is_empty() { &eligible } else { &fresh };
+    let enemy = pool[rng.range(0, pool.len() as u32) as usize];
     let before = map.objects.len();
     let mut object = TowerMapObject::enemy(&enemy.id);
     object.wandering = true;
