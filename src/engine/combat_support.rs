@@ -492,6 +492,24 @@ fn enemy_action(combat: &mut CombatState, slot: usize) {
             return;
         }
     }
+    if behavior == EnemyBehavior::Warden && slot == 0 && combat.round.is_multiple_of(3) {
+        if let Some(target) = combat
+            .enemies
+            .iter()
+            .enumerate()
+            .filter(|(index, enemy)| *index != slot && enemy.is_alive())
+            .min_by_key(|(_, enemy)| (enemy.hp * 100 / enemy.max_hp.max(1), enemy.slot))
+            .map(|(index, _)| index)
+        {
+            combat.enemies[target].is_defending = true;
+            combat.enemies[target].morale += 5;
+            combat.add_log(format!(
+                "{} wards wounded {} against the next strike.",
+                combat.enemies[slot].name, combat.enemies[target].name
+            ));
+            return;
+        }
+    }
     let Some((target, guarded_by)) = enemy_target(combat, slot) else {
         combat.outcome = Some(CombatOutcome::Defeat);
         return;
@@ -527,6 +545,13 @@ fn enemy_action(combat: &mut CombatState, slot: usize) {
         damage
     };
     combat.allies[target].hp -= damage;
+    if behavior == EnemyBehavior::Leech && combat.enemies[slot].hp < combat.enemies[slot].max_hp {
+        let healing = (damage / 2)
+            .max(1)
+            .min(combat.enemies[slot].max_hp - combat.enemies[slot].hp);
+        combat.enemies[slot].hp += healing;
+        combat.add_log(format!("{} siphons back {healing} HP.", actor.name));
+    }
     if behavior == EnemyBehavior::Hexer && combat.round.is_multiple_of(2) {
         combat.allies[target].morale -= 7;
         combat.allies[target].speed = (combat.allies[target].speed - 1).max(1);

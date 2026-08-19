@@ -323,6 +323,90 @@
       "rewards": [{"resource_id": "ore", "amount": 7}, {"resource_id": "crystal", "amount": 4}]
     },
     {
+      "id": "moss_tick", "name": "Moss Tick",
+      "description": "A velvet-backed parasite that swells green whenever its bite finds warmth.",
+      "min_floor": 1, "max_floor": 3, "max_hp": 16, "attack": 5, "defense": 2, "speed": 6,
+      "xp_reward": 7, "behavior": "Leech", "visual": "Crawler", "pack_size": 2,
+      "rewards": [{"resource_id": "herbs", "amount": 2}, {"resource_id": "coins", "amount": 3}]
+    },
+    {
+      "id": "gate_shieldling", "name": "Gate Shieldling",
+      "description": "A young brickback instinctively plates the most wounded member of its clutch.",
+      "min_floor": 1, "max_floor": 3, "max_hp": 20, "attack": 4, "defense": 5, "speed": 3,
+      "xp_reward": 8, "behavior": "Warden", "visual": "Armored", "pack_size": 2,
+      "rewards": [{"resource_id": "stone", "amount": 3}, {"resource_id": "wood", "amount": 1}]
+    },
+    {
+      "id": "sap_vein", "name": "Sap Vein",
+      "description": "A severed root serpent drinks strength through needle-fine wooden teeth.",
+      "min_floor": 3, "max_floor": 5, "max_hp": 24, "attack": 7, "defense": 3, "speed": 6,
+      "xp_reward": 11, "behavior": "Leech", "visual": "Rooted", "pack_size": 1,
+      "rewards": [{"resource_id": "wood", "amount": 4}, {"resource_id": "herbs", "amount": 2}]
+    },
+    {
+      "id": "mural_ward", "name": "Mural Ward",
+      "description": "Painted armor steps from the gallery wall to shelter lesser root-beasts.",
+      "min_floor": 3, "max_floor": 5, "max_hp": 27, "attack": 6, "defense": 6, "speed": 3,
+      "xp_reward": 12, "behavior": "Warden", "visual": "Armored", "pack_size": 2,
+      "rewards": [{"resource_id": "stone", "amount": 4}, {"resource_id": "coins", "amount": 4}]
+    },
+    {
+      "id": "crystal_lamprey", "name": "Crystal Lamprey",
+      "description": "A mirrored mouth turns stolen vigor into light beneath translucent skin.",
+      "min_floor": 5, "max_floor": 7, "max_hp": 28, "attack": 9, "defense": 4, "speed": 7,
+      "xp_reward": 16, "behavior": "Leech", "visual": "Aquatic", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 4}, {"resource_id": "coins", "amount": 6}]
+    },
+    {
+      "id": "runoff_aegis", "name": "Runoff Aegis",
+      "description": "A walking crystal plate angles itself between danger and the shoal.",
+      "min_floor": 5, "max_floor": 7, "max_hp": 34, "attack": 7, "defense": 8, "speed": 3,
+      "xp_reward": 18, "behavior": "Warden", "visual": "Aquatic", "pack_size": 2,
+      "rewards": [{"resource_id": "crystal", "amount": 5}, {"resource_id": "stone", "amount": 3}]
+    },
+    {
+      "id": "pale_mosquito", "name": "Pale Mosquito",
+      "description": "Moonlit wings pulse brighter as the needle-bodied hunter feeds.",
+      "min_floor": 6, "max_floor": 8, "max_hp": 24, "attack": 10, "defense": 3, "speed": 10,
+      "xp_reward": 18, "behavior": "Leech", "visual": "Winged", "pack_size": 2,
+      "rewards": [{"resource_id": "herbs", "amount": 3}, {"resource_id": "crystal", "amount": 4}]
+    },
+    {
+      "id": "moon_warder", "name": "Moon Warder",
+      "description": "A silver statue folds reflected wings around whichever sentinel is failing.",
+      "min_floor": 6, "max_floor": 8, "max_hp": 35, "attack": 8, "defense": 8, "speed": 4,
+      "xp_reward": 20, "behavior": "Warden", "visual": "Armored", "pack_size": 2,
+      "rewards": [{"resource_id": "ore", "amount": 4}, {"resource_id": "crystal", "amount": 4}]
+    },
+    {
+      "id": "bog_siphon", "name": "Bog Siphon",
+      "description": "A flooded-garden tendril drinks through every cut it opens.",
+      "min_floor": 7, "max_floor": 9, "max_hp": 32, "attack": 11, "defense": 4, "speed": 7,
+      "xp_reward": 22, "behavior": "Leech", "visual": "Rooted", "pack_size": 1,
+      "rewards": [{"resource_id": "herbs", "amount": 5}, {"resource_id": "wood", "amount": 4}]
+    },
+    {
+      "id": "bronze_gardener", "name": "Bronze Gardener",
+      "description": "A trellis sentinel bends its plated limbs into shelter for the garden pack.",
+      "min_floor": 7, "max_floor": 9, "max_hp": 40, "attack": 9, "defense": 8, "speed": 3,
+      "xp_reward": 24, "behavior": "Warden", "visual": "Armored", "pack_size": 2,
+      "rewards": [{"resource_id": "ore", "amount": 5}, {"resource_id": "herbs", "amount": 4}]
+    },
+    {
+      "id": "bell_leech", "name": "Bell Leech",
+      "description": "A black metallic feeder converts each stolen heartbeat into a low chime.",
+      "min_floor": 8, "max_floor": 10, "max_hp": 35, "attack": 13, "defense": 5, "speed": 8,
+      "xp_reward": 26, "behavior": "Leech", "visual": "Aquatic", "pack_size": 1,
+      "rewards": [{"resource_id": "ore", "amount": 6}, {"resource_id": "coins", "amount": 9}]
+    },
+    {
+      "id": "ore_sacristan", "name": "Ore Sacristan",
+      "description": "A bell-frame keeper interposes ringing plates around crownward denizens.",
+      "min_floor": 8, "max_floor": 10, "max_hp": 44, "attack": 10, "defense": 9, "speed": 3,
+      "xp_reward": 28, "behavior": "Warden", "visual": "Armored", "pack_size": 2,
+      "rewards": [{"resource_id": "ore", "amount": 7}, {"resource_id": "crystal", "amount": 4}]
+    },
+    {
       "id": "mirror_matriarch", "name": "Mirror Matriarch",
       "description": "The first runoff guardian, grown around a flawless crystal shell and a choir of reflected claws.",
       "min_floor": 5, "max_floor": 5, "is_boss": true,

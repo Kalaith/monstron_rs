@@ -109,3 +109,35 @@ fn sapper_breaks_defense_before_its_even_round_attack() {
     assert_eq!(combat.allies[0].defense, (defense - 2).max(0));
     assert!(combat.log.iter().any(|line| line.contains("breaks")));
 }
+
+#[test]
+fn leech_recovers_health_from_damage_dealt() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_named_encounter(&mut state, &data, 2, false, Some("moss_tick"));
+    let combat = state.combat.as_mut().expect("combat should start");
+    combat.enemies[0].hp -= 8;
+    let wounded_hp = combat.enemies[0].hp;
+
+    enemy_action(combat, 0);
+
+    assert!(combat.enemies[0].hp > wounded_hp);
+    assert!(combat.log.iter().any(|line| line.contains("siphons")));
+}
+
+#[test]
+fn warden_spends_its_third_round_protecting_a_wounded_ally() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_named_encounter(&mut state, &data, 2, false, Some("gate_shieldling"));
+    let combat = state.combat.as_mut().expect("combat should start");
+    combat.round = 3;
+    combat.enemies[1].hp -= 5;
+    let ally_hp = combat.allies[0].hp;
+
+    enemy_action(combat, 0);
+
+    assert_eq!(combat.allies[0].hp, ally_hp);
+    assert!(combat.enemies[1].is_defending);
+    assert!(combat.log.iter().any(|line| line.contains("wards wounded")));
+}

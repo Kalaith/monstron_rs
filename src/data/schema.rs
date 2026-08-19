@@ -345,6 +345,8 @@ pub enum EnemyBehavior {
     Regenerator,
     Packleader,
     Sapper,
+    Leech,
+    Warden,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
