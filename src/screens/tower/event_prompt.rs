@@ -112,9 +112,10 @@ fn draw_choice(
             ui::TEXT_DIM
         },
     );
-    let label = event.map_or("Unknown Approach", |entry| entry.name.as_str());
+    let tried = event.is_some_and(|entry| state.tower_discoveries.event_ids.contains(&entry.id));
+    let label = choice_label(index, event, tried);
     draw_ui_text_ex(
-        &format!("{}  {}", index + 1, label),
+        &label,
         rect.x + 20.0,
         rect.y + 32.0,
         TextParams {
@@ -219,6 +220,9 @@ fn effect_summary(data: &GameData, event: &TowerEventDefinition) -> String {
     if event.reveal_map {
         effects.push("Reveal routes".to_owned());
     }
+    if event.reveal_secrets > 0 {
+        effects.push(format!("Reveal {} secret(s)", event.reveal_secrets));
+    }
     if event.refresh_camp {
         effects.push("Camp ready".to_owned());
     }
@@ -228,10 +232,22 @@ fn effect_summary(data: &GameData, event: &TowerEventDefinition) -> String {
     if event.repel_wanderers {
         effects.push("Repel hunters".to_owned());
     }
+    if let Some(blessing) = event.blessing {
+        effects.push(format!("Gain {}", blessing.label()));
+    }
     if effects.is_empty() {
         "Unknown consequence".to_owned()
     } else {
         effects.join("  ·  ")
+    }
+}
+
+fn choice_label(index: usize, event: Option<&TowerEventDefinition>, tried: bool) -> String {
+    let name = event.map_or("Unknown Approach", |entry| entry.name.as_str());
+    if tried {
+        format!("{}  {}  ·  TRIED", index + 1, name)
+    } else {
+        format!("{}  {}", index + 1, name)
     }
 }
 
@@ -242,3 +258,6 @@ fn choice_rect(index: usize) -> Rect {
 fn leave_rect() -> Rect {
     Rect::new(525.0, 484.0, 230.0, 52.0)
 }
+
+#[cfg(test)]
+mod tests;
