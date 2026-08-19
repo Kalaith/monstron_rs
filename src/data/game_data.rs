@@ -3,14 +3,15 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
 use crate::data::{
-    BuildingDefinition, EggTypeDefinition, Element, EnemyDefinition, GameConfig, MonsterRole,
-    MonsterSpeciesDefinition, NpcDefinition, PassiveSkill, ResourceDefinition, Temperament,
-    TowerFloorDefinition, TownSkill,
+    BalanceData, BuildingDefinition, EggTypeDefinition, Element, EnemyDefinition, GameConfig,
+    MonsterRole, MonsterSpeciesDefinition, NpcDefinition, PassiveSkill, ResourceDefinition,
+    ShopTradeDefinition, Temperament, TowerFloorDefinition, TowerRewardDefinition, TownSkill,
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct GameData {
     pub config: GameConfig,
+    pub balance: BalanceData,
     pub resources: Vec<ResourceDefinition>,
     pub buildings: Vec<BuildingDefinition>,
     pub monster_species: Vec<MonsterSpeciesDefinition>,
@@ -32,11 +33,20 @@ pub struct GameData {
     enemy_index: HashMap<String, usize>,
     #[serde(skip)]
     npc_index: HashMap<String, usize>,
+    #[serde(skip)]
+    stat_curve_index: HashMap<String, usize>,
+    #[serde(skip)]
+    cooldown_index: HashMap<String, usize>,
+    #[serde(skip)]
+    shop_trade_index: HashMap<String, usize>,
+    #[serde(skip)]
+    tower_reward_index: HashMap<u32, usize>,
 }
 
 impl GameData {
     pub fn from_parts(
         config: GameConfig,
+        balance: BalanceData,
         resources: Vec<ResourceDefinition>,
         buildings: Vec<BuildingDefinition>,
         monster_species: Vec<MonsterSpeciesDefinition>,
@@ -47,6 +57,7 @@ impl GameData {
     ) -> Result<Self, String> {
         let mut data = Self {
             config,
+            balance,
             resources,
             buildings,
             monster_species,
@@ -61,6 +72,10 @@ impl GameData {
             tower_floor_index: HashMap::new(),
             enemy_index: HashMap::new(),
             npc_index: HashMap::new(),
+            stat_curve_index: HashMap::new(),
+            cooldown_index: HashMap::new(),
+            shop_trade_index: HashMap::new(),
+            tower_reward_index: HashMap::new(),
         };
         data.build_indexes()?;
         data.validate_references()?;
@@ -68,6 +83,74 @@ impl GameData {
     }
 
     pub fn fallback() -> Self {
+        let balance = BalanceData {
+            monster_stat_curves: vec![crate::data::MonsterStatCurveDefinition {
+                species_id: "slime".to_owned(),
+                hp_per_level: 3,
+                attack_per_level: 1,
+                defense_per_level: 1,
+                speed_per_interval: 1,
+                speed_interval: 2,
+            }],
+            combat_cooldowns: vec![
+                crate::data::CombatCooldownDefinition {
+                    id: "skill".to_owned(),
+                    turns: 0,
+                },
+                crate::data::CombatCooldownDefinition {
+                    id: "item".to_owned(),
+                    turns: 0,
+                },
+            ],
+            shop_trades: vec![
+                crate::data::ShopTradeDefinition {
+                    id: "buy_herbs".to_owned(),
+                    label: "Buy Herbs".to_owned(),
+                    detail: "Restock egg warming and grove supplies.".to_owned(),
+                    cost: vec![crate::data::ResourceAmount {
+                        resource_id: "coins".to_owned(),
+                        amount: 6,
+                    }],
+                    reward: vec![crate::data::ResourceAmount {
+                        resource_id: "herbs".to_owned(),
+                        amount: 3,
+                    }],
+                },
+                crate::data::ShopTradeDefinition {
+                    id: "buy_stone".to_owned(),
+                    label: "Buy Stone".to_owned(),
+                    detail: "Convert coins into upgrade materials.".to_owned(),
+                    cost: vec![crate::data::ResourceAmount {
+                        resource_id: "coins".to_owned(),
+                        amount: 8,
+                    }],
+                    reward: vec![crate::data::ResourceAmount {
+                        resource_id: "stone".to_owned(),
+                        amount: 4,
+                    }],
+                },
+                crate::data::ShopTradeDefinition {
+                    id: "sell_herbs".to_owned(),
+                    label: "Sell Herbs".to_owned(),
+                    detail: "Turn spare herbs back into coins.".to_owned(),
+                    cost: vec![crate::data::ResourceAmount {
+                        resource_id: "herbs".to_owned(),
+                        amount: 2,
+                    }],
+                    reward: vec![crate::data::ResourceAmount {
+                        resource_id: "coins".to_owned(),
+                        amount: 5,
+                    }],
+                },
+            ],
+            tower_rewards: vec![crate::data::TowerRewardDefinition {
+                floor: 1,
+                rewards: vec![crate::data::ResourceAmount {
+                    resource_id: "coins".to_owned(),
+                    amount: 2,
+                }],
+            }],
+        };
         Self::from_parts(
             GameConfig {
                 save_version: 1,
@@ -79,6 +162,7 @@ impl GameData {
                     "Pip the slime waits beside a cold hatchery brazier.".to_owned(),
                 ],
             },
+            balance,
             vec![
                 ResourceDefinition {
                     id: "coins".to_owned(),
@@ -209,6 +293,31 @@ impl GameData {
             .and_then(|index| self.npcs.get(*index))
     }
 
+    pub fn stat_curve(&self, species_id: &str) -> Option<&crate::data::MonsterStatCurveDefinition> {
+        self.stat_curve_index
+            .get(species_id)
+            .and_then(|index| self.balance.monster_stat_curves.get(*index))
+    }
+
+    pub fn combat_cooldown(&self, id: &str) -> Option<u32> {
+        self.cooldown_index
+            .get(id)
+            .and_then(|index| self.balance.combat_cooldowns.get(*index))
+            .map(|definition| definition.turns)
+    }
+
+    pub fn shop_trade(&self, id: &str) -> Option<&ShopTradeDefinition> {
+        self.shop_trade_index
+            .get(id)
+            .and_then(|index| self.balance.shop_trades.get(*index))
+    }
+
+    pub fn tower_reward(&self, floor: u32) -> Option<&TowerRewardDefinition> {
+        self.tower_reward_index
+            .get(&floor)
+            .and_then(|index| self.balance.tower_rewards.get(*index))
+    }
+
     fn build_indexes(&mut self) -> Result<(), String> {
         self.resource_index = build_unique_index(
             self.resources
@@ -257,6 +366,37 @@ impl GameData {
                 .enumerate()
                 .map(|(index, npc)| (&npc.id, index)),
             "npc",
+        )?;
+        self.stat_curve_index = build_unique_index(
+            self.balance
+                .monster_stat_curves
+                .iter()
+                .enumerate()
+                .map(|(index, curve)| (&curve.species_id, index)),
+            "monster stat curve",
+        )?;
+        self.cooldown_index = build_unique_index(
+            self.balance
+                .combat_cooldowns
+                .iter()
+                .enumerate()
+                .map(|(index, cooldown)| (&cooldown.id, index)),
+            "combat cooldown",
+        )?;
+        self.shop_trade_index = build_unique_index(
+            self.balance
+                .shop_trades
+                .iter()
+                .enumerate()
+                .map(|(index, trade)| (&trade.id, index)),
+            "shop trade",
+        )?;
+        self.tower_reward_index = build_unique_floor_index(
+            self.balance
+                .tower_rewards
+                .iter()
+                .enumerate()
+                .map(|(index, reward)| (reward.floor, index)),
         )?;
         Ok(())
     }
@@ -336,6 +476,53 @@ impl GameData {
             }
         }
 
+        if self.balance.monster_stat_curves.len() != self.monster_species.len() {
+            return Err("Every monster species must have exactly one stat curve".to_owned());
+        }
+        for species in &self.monster_species {
+            let Some(curve) = self.stat_curve(&species.id) else {
+                return Err(format!("Missing stat curve for species '{}'", species.id));
+            };
+            if curve.hp_per_level <= 0
+                || curve.attack_per_level < 0
+                || curve.defense_per_level < 0
+                || curve.speed_per_interval < 0
+                || curve.speed_interval == 0
+            {
+                return Err(format!("Invalid stat curve for species '{}'", species.id));
+            }
+        }
+
+        for cooldown in &self.balance.combat_cooldowns {
+            if cooldown.id != "skill" && cooldown.id != "item" {
+                return Err(format!("Unknown combat cooldown '{}'", cooldown.id));
+            }
+            if cooldown.turns > 10 {
+                return Err(format!("Combat cooldown '{}' is too long", cooldown.id));
+            }
+        }
+        for trade in &self.balance.shop_trades {
+            if trade.cost.is_empty() || trade.reward.is_empty() {
+                return Err(format!("Shop trade '{}' needs cost and reward", trade.id));
+            }
+            validate_resource_stacks(&resource_ids, &trade.cost, "shop trade", &trade.id)?;
+            validate_resource_stacks(&resource_ids, &trade.reward, "shop trade", &trade.id)?;
+        }
+        for reward in &self.balance.tower_rewards {
+            if self.tower_floor(reward.floor).is_none() {
+                return Err(format!(
+                    "Tower reward references missing floor {}",
+                    reward.floor
+                ));
+            }
+            validate_resource_stacks(
+                &resource_ids,
+                &reward.rewards,
+                "tower reward",
+                &reward.floor.to_string(),
+            )?;
+        }
+
         Ok(())
     }
 
@@ -345,6 +532,23 @@ impl GameData {
             .map(|resource| resource.id.clone())
             .collect()
     }
+}
+
+fn validate_resource_stacks(
+    resource_ids: &HashSet<String>,
+    stacks: &[crate::data::ResourceAmount],
+    kind: &str,
+    id: &str,
+) -> Result<(), String> {
+    for stack in stacks {
+        if !resource_ids.contains(&stack.resource_id) || stack.amount <= 0 {
+            return Err(format!(
+                "{} '{}' has invalid resource amount '{}': {}",
+                kind, id, stack.resource_id, stack.amount
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn build_unique_floor_index<I>(entries: I) -> Result<HashMap<u32, usize>, String>

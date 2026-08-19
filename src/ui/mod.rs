@@ -15,6 +15,13 @@ const BUTTON: Color = Color::new(0.173, 0.243, 0.275, 1.0);
 const BUTTON_HOVER: Color = Color::new(0.224, 0.337, 0.365, 1.0);
 const BUTTON_DISABLED: Color = Color::new(0.145, 0.157, 0.169, 1.0);
 
+#[derive(Clone, Copy, Debug)]
+pub struct Tooltip {
+    pub rect: Rect,
+    pub title: &'static str,
+    pub detail: &'static str,
+}
+
 pub fn button_clicked(rect: Rect, enabled: bool) -> bool {
     enabled && is_mouse_over(rect) && is_mouse_button_released(MouseButton::Left)
 }
@@ -50,6 +57,61 @@ pub fn draw_button(rect: Rect, label: &str, enabled: bool) {
     macroquad_toolkit::ui::draw_text_centered_in_box(
         label, rect.x, rect.y, rect.w, rect.h, font_size, text_color,
     );
+}
+
+pub fn draw_button_with_tooltip(
+    rect: Rect,
+    label: &str,
+    enabled: bool,
+    title: &'static str,
+    detail: &'static str,
+) {
+    draw_button(rect, label, enabled);
+    draw_tooltip_target(Tooltip {
+        rect,
+        title,
+        detail,
+    });
+}
+
+pub fn draw_tooltip_target(tooltip: Tooltip) {
+    let hint_x = tooltip.rect.x + tooltip.rect.w - 10.0;
+    let hint_y = tooltip.rect.y + 10.0;
+    draw_circle(hint_x, hint_y, 7.0, Color::from_rgba(19, 32, 34, 245));
+    draw_circle_lines(hint_x, hint_y, 7.0, 1.0, ACCENT);
+    draw_centered_text("?", hint_x, hint_y + 4.0, 11, ACCENT);
+
+    if is_mouse_over(tooltip.rect)
+        || is_mouse_button_down(MouseButton::Left) && is_mouse_over(tooltip.rect)
+    {
+        let panel = Rect::new(
+            (tooltip.rect.x + tooltip.rect.w - 276.0).max(12.0),
+            (tooltip.rect.y - 82.0).max(112.0),
+            264.0,
+            70.0,
+        );
+        draw_panel(panel);
+        draw_ui_text_ex(
+            tooltip.title,
+            panel.x + 12.0,
+            panel.y + 23.0,
+            TextParams {
+                font_size: 16,
+                color: TEXT_BRIGHT,
+                ..Default::default()
+            },
+        );
+        draw_ui_text_ex(
+            tooltip.detail,
+            panel.x + 12.0,
+            panel.y + 48.0,
+            TextParams {
+                font_size: 14,
+                color: TEXT_DIM,
+                ..Default::default()
+            },
+        );
+    }
 }
 
 pub fn draw_title_button(rect: Rect, label: &str, enabled: bool) {
@@ -186,7 +248,13 @@ pub fn draw_centered_text(text: &str, center_x: f32, y: f32, font_size: u16, col
 }
 
 pub fn draw_status(status_message: &str) {
-    let rect = Rect::new(24.0, VIEW_HEIGHT - 48.0, VIEW_WIDTH - 48.0, 28.0);
+    draw_status_at(
+        status_message,
+        Rect::new(24.0, VIEW_HEIGHT - 48.0, VIEW_WIDTH - 48.0, 28.0),
+    );
+}
+
+pub fn draw_status_at(status_message: &str, rect: Rect) {
     let surface = macroquad_toolkit::ui::SurfaceStyle::new(Color::new(0.063, 0.071, 0.082, 0.86));
     macroquad_toolkit::ui::draw_surface(rect, &surface);
     draw_ui_text_ex(

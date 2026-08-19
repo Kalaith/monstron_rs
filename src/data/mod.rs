@@ -5,7 +5,8 @@ mod schema;
 pub use game_data::GameData;
 pub use loader::GameDataLoader;
 pub use schema::{
-    BuildingDefinition, EggTypeDefinition, Element, EnemyDefinition, GameConfig, MonsterRole,
-    MonsterSpeciesDefinition, NpcDefinition, PassiveSkill, ResourceAmount, ResourceDefinition,
-    Temperament, TowerFloorDefinition, TownSkill,
+    BalanceData, BuildingDefinition, CombatCooldownDefinition, EggTypeDefinition, Element,
+    EnemyDefinition, GameConfig, MonsterRole, MonsterSpeciesDefinition, MonsterStatCurveDefinition,
+    NpcDefinition, PassiveSkill, ResourceAmount, ResourceDefinition, ShopTradeDefinition,
+    Temperament, TowerFloorDefinition, TowerRewardDefinition, TownSkill,
 };

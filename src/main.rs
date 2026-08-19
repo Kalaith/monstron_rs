@@ -3,17 +3,7 @@
 use macroquad::prelude::*;
 use macroquad_toolkit::capture;
 
-mod assets;
-mod data;
-mod engine;
-mod facility_actions;
-mod game;
-mod save;
-mod screens;
-mod state;
-mod ui;
-
-use game::Game;
+use hatchspire::game::Game;
 
 fn window_conf() -> Conf {
     // Hand-built Conf means no automatic arming: without this the capture run

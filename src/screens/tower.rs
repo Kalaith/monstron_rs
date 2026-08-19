@@ -75,6 +75,7 @@ pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
         draw_action_dock();
         draw_context_drawer(data, run);
         draw_journal(run);
+        ui::draw_status_at(status_message, Rect::new(250.0, 60.0, 780.0, 28.0));
     } else {
         draw_backdrop();
         draw_header(state);

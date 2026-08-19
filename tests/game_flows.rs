@@ -1,0 +1,215 @@
+use hatchspire::data::GameDataLoader;
+use hatchspire::engine::{
+    combat_engine::{self, CombatCommand},
+    combat_replay::{CombatReplay, ReplayReport},
+    egg_engine, monster_engine, tower_engine, town_engine,
+};
+use hatchspire::screens;
+use hatchspire::state::{GameState, TowerMapObject, TowerMapObjectKind, TowerRunGoal};
+
+fn data_and_state() -> (hatchspire::data::GameData, GameState) {
+    let data = GameDataLoader::load_embedded().expect("embedded game data should load");
+    let state = GameState::new(&data);
+    (data, state)
+}
+
+#[test]
+fn hatchery_care_and_hatching_flow_preserves_capacity_and_traits() {
+    let (data, mut state) = data_and_state();
+    state.town.set_building_level("hatchery", 1);
+    state.town.set_building_level("stable", 1);
+    state.resources.add("herbs", 4);
+    state
+        .egg_inventory
+        .add_egg("mossy_egg".to_owned(), 1, 1, 0xCAFE);
+
+    let care =
+        egg_engine::care_for_egg(&mut state, &data, 1, hatchspire::state::EggCareFocus::Warm);
+    assert!(care.summary.contains("warmed"));
+    let hatch = egg_engine::hatch_egg(&mut state, &data, 1);
+    assert!(hatch.summary.contains("hatched"));
+    assert!(state.egg_inventory.eggs.is_empty());
+    assert_eq!(state.monster_roster.monsters.len(), 2);
+}
+
+#[test]
+fn stable_roster_and_recovery_actions_follow_daily_commitments() {
+    let (data, mut state) = data_and_state();
+    state.town.set_building_level("stable", 1);
+    let rootling = data.species("rootling").expect("rootling data");
+    let monster_id = state
+        .monster_roster
+        .add_monster("Rooty".to_owned(), rootling, 0x100);
+
+    let joined = monster_engine::toggle_party_member(&mut state, &data, monster_id);
+    assert!(joined.summary.contains("Assigned"));
+    let slot = state
+        .monster_roster
+        .party_slots
+        .iter()
+        .position(|id| *id == Some(monster_id))
+        .expect("monster should join the party");
+    state
+        .monster_roster
+        .monster_mut(monster_id)
+        .unwrap()
+        .condition
+        .fatigue = 4;
+    state
+        .monster_roster
+        .monster_mut(monster_id)
+        .unwrap()
+        .condition
+        .injury_days = 1;
+    let recovery = monster_engine::recover_monsters(&mut state);
+    assert!(recovery.fatigue_reduced > 0 || recovery.injuries_healed > 0);
+    let benched = monster_engine::remove_party_slot(&mut state, slot);
+    assert!(benched.summary.contains("Removed"));
+}
+
+#[test]
+fn shop_trades_and_purchase_validation_are_atomic() {
+    let (data, mut state) = data_and_state();
+    state.town.set_building_level("shop", 1);
+    state.resources.add("coins", 6);
+    let coins_before = state.resources.amount("coins");
+    let herbs_before = state.resources.amount("herbs");
+    let bought = town_engine::trade_shop(&mut state, &data, town_engine::ShopTrade::BuyHerbs);
+    assert!(bought.summary.contains("Completed"));
+    assert_eq!(state.resources.amount("coins"), coins_before - 6);
+    assert_eq!(state.resources.amount("herbs"), herbs_before + 3);
+
+    state
+        .resources
+        .add("coins", -state.resources.amount("coins"));
+    let rejected = town_engine::trade_shop(&mut state, &data, town_engine::ShopTrade::BuyStone);
+    assert!(rejected.summary.contains("needs"));
+    assert_eq!(state.resources.amount("stone"), 8);
+}
+
+#[test]
+fn tower_preparation_movement_return_and_rewards_form_one_flow() {
+    let (data, mut state) = data_and_state();
+    let started = tower_engine::start_run(&mut state, &data, TowerRunGoal::Salvage);
+    assert!(started.summary.contains("enters floor"));
+    let (dx, dy, x, y) = {
+        let run = state.tower_run.as_ref().expect("run should start");
+        [(1, 0), (-1, 0), (0, 1), (0, -1)]
+            .into_iter()
+            .find_map(|(dx, dy)| {
+                let x = run.map.player_x as i32 + dx;
+                let y = run.map.player_y as i32 + dy;
+                (x >= 0 && y >= 0 && run.map.is_passable(x as u32, y as u32))
+                    .then_some((dx, dy, x as u32, y as u32))
+            })
+            .expect("start room should have an adjacent tile")
+    };
+    state
+        .tower_run
+        .as_mut()
+        .unwrap()
+        .map
+        .objects
+        .push(TowerMapObject {
+            kind: TowerMapObjectKind::Loot,
+            x,
+            y,
+            resource_id: "wood".to_owned(),
+            amount: 3,
+            egg_type_id: String::new(),
+            hatch_days: 0,
+            palette_seed: 0,
+        });
+    let moved = tower_engine::move_party(&mut state, &data, dx, dy);
+    assert!(moved.summary.contains("Found 3"));
+    let wood_before = state.resources.amount("wood");
+    let returned = tower_engine::return_to_town(&mut state, &data);
+    assert!(returned.summary.contains("Returned"));
+    assert!(state.tower_run.is_none());
+    assert_eq!(state.resources.amount("wood"), wood_before + 3);
+}
+
+#[test]
+fn combat_commands_resolution_and_replay_recover_after_victory() {
+    let (data, mut state) = data_and_state();
+    combat_engine::start_encounter(&mut state, &data, 1, false);
+    for _ in 0..80 {
+        if state
+            .combat
+            .as_ref()
+            .is_some_and(|combat| combat.outcome.is_some())
+        {
+            break;
+        }
+        combat_engine::reduce_command(&mut state, &data, CombatCommand::Attack);
+    }
+    let replay = CombatReplay::from_combat(state.combat.as_ref().expect("combat remains"));
+    assert_eq!(replay.run(&data), ReplayReport::Match);
+    let finish = combat_engine::finish_combat(&mut state, &data);
+    assert!(finish.summary.contains("Victory"));
+    assert!(state.combat.is_none());
+}
+
+#[test]
+fn town_commands_cover_purchases_and_building_progression() {
+    let (data, mut state) = data_and_state();
+    state.resources.add("wood", 20);
+    state.resources.add("herbs", 10);
+    let command = town_engine::TownCommand::AdvanceBuilding("hatchery".to_owned());
+    let built = town_engine::reduce(&mut state, &data, &command);
+    assert!(built.summary.contains("Built Hatchery"));
+    assert_eq!(state.town.building_level("hatchery"), 1);
+
+    let trade = town_engine::reduce(
+        &mut state,
+        &data,
+        &town_engine::TownCommand::GreetNpc("mara".to_owned()),
+    );
+    assert!(trade.summary.contains("Friendship"));
+}
+
+#[test]
+fn balance_data_is_typed_and_every_reference_is_integrity_checked() {
+    let (data, _) = data_and_state();
+    assert_eq!(
+        data.balance.monster_stat_curves.len(),
+        data.monster_species.len()
+    );
+    assert_eq!(data.combat_cooldown("skill"), Some(0));
+    assert!(data.shop_trade("buy_herbs").is_some());
+    assert!(data.tower_reward(10).is_some());
+}
+
+#[test]
+fn rendering_entry_points_cannot_mutate_progression_state() {
+    let town_draw: fn(&GameState, &hatchspire::data::GameData, &str, bool) = screens::town::draw;
+    let combat_draw: fn(&GameState, &hatchspire::data::GameData, &str) = screens::combat::draw;
+    let _ = (town_draw, combat_draw);
+}
+
+#[test]
+fn validation_failures_name_a_visible_recovery_action() {
+    let (data, mut state) = data_and_state();
+    state.town.set_building_level("hatchery", 1);
+    state.resources.add("wood", -state.resources.amount("wood"));
+    state
+        .resources
+        .add("herbs", -state.resources.amount("herbs"));
+    let building = town_engine::advance_building(&mut state, &data, "hatchery");
+    assert!(building.summary.contains("Tap Scavenge"));
+
+    let egg = egg_engine::care_for_egg(
+        &mut state,
+        &data,
+        999,
+        hatchspire::state::EggCareFocus::Study,
+    );
+    assert!(egg.summary.contains("Tap Town"));
+
+    let combat = combat_engine::player_action(&mut state, &data, CombatCommand::Item);
+    assert!(combat.summary.contains("Tap Town"));
+
+    state.monster_roster.party_slots.fill(None);
+    let tower = tower_engine::start_run(&mut state, &data, TowerRunGoal::SafeRun);
+    assert!(tower.summary.contains("Tap Stable"));
+}

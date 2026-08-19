@@ -10,7 +10,10 @@ mod town_state;
 
 pub use activity_log::ActivityLog;
 pub use art::MonsterArtProfile;
-pub use combat::{CombatOutcome, CombatSide, CombatState, CombatTurn, Combatant};
+pub use combat::{
+    CombatOutcome, CombatReplayCommand, CombatReplayStep, CombatSide, CombatState, CombatTurn,
+    Combatant,
+};
 pub use eggs::{EggCareFocus, EggInheritance, EggInstance, EggInventory};
 pub use game_state::GameState;
 pub use monsters::{DailyCommitment, MonsterInstance, MonsterRoster};

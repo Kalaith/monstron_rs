@@ -1,32 +1,101 @@
 use crate::data::{BuildingDefinition, GameData};
+use crate::engine::day_engine;
 use crate::state::GameState;
 
 const SHOP_ID: &str = "shop";
 const STABLE_ID: &str = "stable";
 const HATCHERY_ID: &str = "hatchery";
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
 pub enum ShopTrade {
     BuyHerbs,
     BuyStone,
     SellHerbs,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+pub enum TownCommand {
+    Sleep,
+    DungeonPrep,
+    OpenMenu,
+    CloseMenu,
+    OpenHatchery,
+    OpenStable,
+    OpenBreeding,
+    OpenWorkshop,
+    OpenShop,
+    Scavenge,
+    AdvanceBuilding(String),
+    Trade(ShopTrade),
+    GreetNpc(String),
+    Save,
+    Load,
+    BackToMenu,
+}
+
+impl ShopTrade {
+    pub const ALL: [Self; 3] = [Self::BuyHerbs, Self::BuyStone, Self::SellHerbs];
+
+    pub fn id(self) -> &'static str {
+        match self {
+            Self::BuyHerbs => "buy_herbs",
+            Self::BuyStone => "buy_stone",
+            Self::SellHerbs => "sell_herbs",
+        }
+    }
+}
+
 pub struct TownResult {
     pub summary: String,
+}
+
+pub fn reduce(state: &mut GameState, data: &GameData, command: &TownCommand) -> TownResult {
+    match command {
+        TownCommand::Sleep => day_engine::sleep(state, data).into(),
+        TownCommand::Scavenge => scavenge_supplies(state),
+        TownCommand::AdvanceBuilding(building_id) => advance_building(state, data, building_id),
+        TownCommand::Trade(trade) => trade_shop(state, data, *trade),
+        TownCommand::GreetNpc(npc_id) => greet_npc(state, data, npc_id),
+        TownCommand::DungeonPrep
+        | TownCommand::OpenMenu
+        | TownCommand::CloseMenu
+        | TownCommand::OpenHatchery
+        | TownCommand::OpenStable
+        | TownCommand::OpenBreeding
+        | TownCommand::OpenWorkshop
+        | TownCommand::OpenShop
+        | TownCommand::Save
+        | TownCommand::Load
+        | TownCommand::BackToMenu => TownResult {
+            summary: "Town command acknowledged.".to_owned(),
+        },
+    }
+}
+
+impl From<day_engine::DayResult> for TownResult {
+    fn from(result: day_engine::DayResult) -> Self {
+        Self {
+            summary: result.summary,
+        }
+    }
 }
 
 pub fn advance_building(state: &mut GameState, data: &GameData, building_id: &str) -> TownResult {
     let Some(building) = data.building(building_id) else {
         return TownResult {
-            summary: format!("Unknown building plan: {building_id}."),
+            summary: format!(
+                "Unknown building plan: {building_id}. Tap a building upgrade button."
+            ),
         };
     };
 
     let current_level = state.town.building_level(building_id);
     if current_level >= building.max_level {
         return TownResult {
-            summary: format!("{} is already at max level.", building.name),
+            summary: format!(
+                "{} is already at max level. Tap another building upgrade button.",
+                building.name
+            ),
         };
     }
 
@@ -34,7 +103,11 @@ pub fn advance_building(state: &mut GameState, data: &GameData, building_id: &st
     let cost = scaled_cost(building, next_level);
     if let Err(error) = state.resources.spend(&cost) {
         return TownResult {
-            summary: format!("{} needs {}.", building.name, cost_label(data, &error)),
+            summary: format!(
+                "{} needs {}. Tap Scavenge to gather supplies.",
+                building.name,
+                cost_label(data, &error)
+            ),
         };
     }
 
@@ -63,39 +136,37 @@ pub fn scavenge_supplies(state: &mut GameState) -> TownResult {
 pub fn trade_shop(state: &mut GameState, data: &GameData, trade: ShopTrade) -> TownResult {
     if state.town.building_level(SHOP_ID) == 0 {
         return TownResult {
-            summary: "Build the shop before trading supplies.".to_owned(),
+            summary:
+                "Build the shop before trading supplies. Tap Town, then the Shop upgrade button."
+                    .to_owned(),
         };
     }
 
-    let (cost, gain, success) = match trade {
-        ShopTrade::BuyHerbs => (
-            vec![("coins".to_owned(), 6)],
-            vec![("herbs".to_owned(), 3)],
-            "Bought 3 herbs for 6 coins.",
-        ),
-        ShopTrade::BuyStone => (
-            vec![("coins".to_owned(), 8)],
-            vec![("stone".to_owned(), 4)],
-            "Bought 4 stone for 8 coins.",
-        ),
-        ShopTrade::SellHerbs => (
-            vec![("herbs".to_owned(), 2)],
-            vec![("coins".to_owned(), 5)],
-            "Sold 2 herbs for 5 coins.",
-        ),
+    let Some(definition) = data.shop_trade(trade.id()) else {
+        return TownResult {
+            summary: format!("Trade data '{}' is unavailable.", trade.id()),
+        };
     };
+    let cost = definition
+        .cost
+        .iter()
+        .map(|stack| (stack.resource_id.clone(), stack.amount))
+        .collect::<Vec<_>>();
 
     if let Err(missing) = state.resources.spend(&cost) {
         return TownResult {
-            summary: format!("Trade needs {}.", cost_label(data, &missing)),
+            summary: format!(
+                "Trade needs {}. Tap Town to return and gather supplies.",
+                cost_label(data, &missing)
+            ),
         };
     }
 
-    for (resource_id, amount) in gain {
-        state.resources.add(&resource_id, amount);
+    for reward in &definition.reward {
+        state.resources.add(&reward.resource_id, reward.amount);
     }
 
-    let summary = success.to_owned();
+    let summary = format!("Completed {}.", definition.label);
     state.activity_log.add(state.day, summary.clone());
     TownResult { summary }
 }
@@ -103,7 +174,7 @@ pub fn trade_shop(state: &mut GameState, data: &GameData, trade: ShopTrade) -> T
 pub fn greet_npc(state: &mut GameState, data: &GameData, npc_id: &str) -> TownResult {
     let Some(npc) = data.npc(npc_id) else {
         return TownResult {
-            summary: format!("Unknown NPC: {npc_id}."),
+            summary: format!("Unknown NPC: {npc_id}. Tap a town resident instead."),
         };
     };
 

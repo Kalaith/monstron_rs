@@ -46,6 +46,11 @@ struct NpcsFile {
     npcs: Vec<NpcDefinition>,
 }
 
+#[derive(Debug, Deserialize)]
+struct BalanceFile {
+    balance: crate::data::BalanceData,
+}
+
 pub struct GameDataLoader;
 
 impl GameDataLoader {
@@ -82,9 +87,14 @@ impl GameDataLoader {
             macroquad_toolkit::include_json_str!("../../assets/data/npcs.json"),
             "npcs",
         )?;
+        let balance: BalanceFile = parse_json(
+            macroquad_toolkit::include_json_str!("../../assets/data/balance.json"),
+            "balance",
+        )?;
 
         GameData::from_parts(
             config.config,
+            balance.balance,
             resources.resources,
             buildings.buildings,
             species.monster_species,

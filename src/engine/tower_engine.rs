@@ -30,7 +30,7 @@ pub fn start_run(state: &mut GameState, data: &GameData, goal: TowerRunGoal) -> 
     let ready_members = available_party_ids(state);
     if ready_members.is_empty() {
         return result(
-            "Assign at least one rested, uncommitted monster to the party before entering the tower.",
+            "Assign at least one rested, uncommitted monster to the party before entering the tower. Tap Stable.",
         );
     }
 
@@ -40,7 +40,9 @@ pub fn start_run(state: &mut GameState, data: &GameData, goal: TowerRunGoal) -> 
         .max(1)
         .min(max_floor(data));
     let Some(floor) = data.tower_floor(start_floor) else {
-        return result(format!("Missing tower floor data for floor {start_floor}."));
+        return result(format!(
+            "Missing tower floor data for floor {start_floor}. Tap Town to return."
+        ));
     };
 
     for monster_id in ready_members {
@@ -92,7 +94,7 @@ pub fn ensure_map(state: &mut GameState, data: &GameData) {
 
 pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> TowerResult {
     if state.tower_run.is_none() {
-        return result("No tower run is active.");
+        return result("No tower run is active. Tap Town to choose a run.");
     }
     if dx == 0 && dy == 0 {
         return result("The party waits and listens.");
@@ -102,16 +104,18 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
 
     let object = {
         let Some(run) = &mut state.tower_run else {
-            return result("No tower run is active.");
+            return result("No tower run is active. Tap Town to choose a run.");
         };
         if run.map.is_empty() {
-            return result("No dungeon map is available.");
+            return result(
+                "No dungeon map is available. Tap Return to Town and re-enter the tower.",
+            );
         }
 
         let next_x = run.map.player_x as i32 + dx;
         let next_y = run.map.player_y as i32 + dy;
         if next_x < 0 || next_y < 0 || !run.map.is_passable(next_x as u32, next_y as u32) {
-            return result("A wall blocks the way.");
+            return result("A wall blocks the way. Tap a highlighted adjacent tile.");
         }
 
         run.map.player_x = next_x as u32;
@@ -132,7 +136,7 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
 
 pub fn return_to_town(state: &mut GameState, data: &GameData) -> TowerResult {
     let Some(run) = state.tower_run.take() else {
-        return result("No tower run is active.");
+        return result("No tower run is active. Tap Town to choose a run.");
     };
 
     record_floor_reached(state, data, run.current_floor);
@@ -232,7 +236,7 @@ fn resolve_map_object(
                 run.add_event(summary.clone());
                 result(summary)
             } else {
-                result("No tower run is active.")
+                result("No tower run is active. Tap Town to choose a run.")
             }
         }
         TowerMapObjectKind::Egg => {
@@ -252,7 +256,7 @@ fn resolve_map_object(
                 run.add_event(summary.clone());
                 result(summary)
             } else {
-                result("No tower run is active.")
+                result("No tower run is active. Tap Town to choose a run.")
             }
         }
         TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => {
@@ -280,7 +284,7 @@ fn resolve_map_object(
 
 fn advance_floor(state: &mut GameState, data: &GameData) -> TowerResult {
     let Some(run) = &state.tower_run else {
-        return result("No tower run is active.");
+        return result("No tower run is active. Tap Town to choose a run.");
     };
     let next_floor = (run.current_floor + 1).min(max_floor(data));
     if next_floor == run.current_floor {
@@ -317,7 +321,7 @@ fn advance_floor(state: &mut GameState, data: &GameData) -> TowerResult {
         return result(summary);
     }
 
-    result("No tower run is active.")
+    result("No tower run is active. Tap Town to choose a run.")
 }
 
 fn available_party_ids(state: &GameState) -> Vec<u64> {

@@ -7,8 +7,9 @@ use crate::engine::combat_support::{
 };
 use crate::engine::{monster_engine, tower_engine};
 use crate::state::{CombatOutcome, CombatSide, CombatState, GameState};
+use crate::state::{CombatReplayCommand, CombatReplayStep};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
 pub enum CombatCommand {
     Attack,
     Skill,
@@ -41,7 +42,8 @@ pub fn start_encounter(
 ) -> CombatResult {
     if state.combat.is_some() {
         return CombatResult {
-            summary: "A combat encounter is already active.".to_owned(),
+            summary: "A combat encounter is already active. Tap the visible combat action."
+                .to_owned(),
         };
     }
 
@@ -49,14 +51,14 @@ pub fn start_encounter(
     if allies.is_empty() {
         state.tower_run = None;
         return CombatResult {
-            summary: "No battle-ready monsters remain. The party retreats to town.".to_owned(),
+            summary: "No battle-ready monsters remain. Tap Town to recover the party.".to_owned(),
         };
     }
 
     let enemies = build_enemies(data, floor, is_boss);
     if enemies.is_empty() {
         return CombatResult {
-            summary: format!("No enemy data is available for floor {floor}."),
+            summary: format!("No enemy data is available for floor {floor}. Tap Town to return."),
         };
     }
 
@@ -65,17 +67,27 @@ pub fn start_encounter(
         round: 1,
         turn_index: 0,
         turn_order: Vec::new(),
-        allies,
+        allies: allies.clone(),
         rewards: combined_rewards(data, &enemies),
         xp_reward: encounter_xp(data, &enemies),
-        enemies,
+        enemies: enemies.clone(),
         log: Vec::new(),
         outcome: None,
         is_boss,
+        rng_seed: encounter_seed(state, floor, is_boss),
+        replay_roster: allies.clone(),
+        replay_enemies: enemies.clone(),
+        replay_turn_order: Vec::new(),
+        replay_round: 1,
+        replay_turn_index: 0,
+        command_history: Vec::new(),
     };
     combat.add_log(format!("Encounter started on floor {floor}."));
     rebuild_turn_order(&mut combat);
     advance_to_player_or_outcome(&mut combat);
+    combat.replay_turn_order = combat.turn_order.clone();
+    combat.replay_round = combat.round;
+    combat.replay_turn_index = combat.turn_index;
 
     let summary = if is_boss {
         "Boss combat started.".to_owned()
@@ -92,30 +104,34 @@ pub fn player_action(
     command: CombatCommand,
 ) -> CombatResult {
     if command == CombatCommand::Item {
-        return use_item(state);
+        let result = use_item(state);
+        if let Some(combat) = &mut state.combat {
+            record_replay_step(combat, command);
+        }
+        return result;
     }
 
     let Some(combat) = &mut state.combat else {
         return CombatResult {
-            summary: "No combat encounter is active.".to_owned(),
+            summary: "No combat encounter is active. Tap Town to return.".to_owned(),
         };
     };
 
     if combat.outcome.is_some() {
         return CombatResult {
-            summary: "The encounter is already resolved.".to_owned(),
+            summary: "The encounter is already resolved. Tap Continue.".to_owned(),
         };
     }
 
     let Some(turn) = combat.current_turn() else {
         return CombatResult {
-            summary: "Combat turn order is empty.".to_owned(),
+            summary: "Combat turn order is empty. Tap Flee to recover the encounter.".to_owned(),
         };
     };
     if turn.side != CombatSide::Ally {
         advance_to_player_or_outcome(combat);
         return CombatResult {
-            summary: "Enemies moved before the party could act.".to_owned(),
+            summary: "Enemies moved before the party could act. Tap an enabled action.".to_owned(),
         };
     }
 
@@ -142,13 +158,70 @@ pub fn player_action(
         advance_to_player_or_outcome(combat);
     }
 
+    record_replay_step(combat, command);
     CombatResult { summary }
+}
+
+pub fn reduce_command(
+    state: &mut GameState,
+    data: &GameData,
+    command: CombatCommand,
+) -> CombatResult {
+    player_action(state, data, command)
+}
+
+pub fn combat_digest(combat: &CombatState) -> String {
+    let allies = combat
+        .allies
+        .iter()
+        .map(|ally| {
+            format!(
+                "{}:{}:{}:{}",
+                ally.slot, ally.hp, ally.is_defending, ally.is_guarding
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    let enemies = combat
+        .enemies
+        .iter()
+        .map(|enemy| {
+            format!(
+                "{}:{}:{}:{}",
+                enemy.slot, enemy.hp, enemy.is_defending, enemy.is_marked
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    format!(
+        "round={};turn={};index={};outcome={:?};allies={};enemies={}",
+        combat.round,
+        combat.turn_index,
+        combat.turn_order.len(),
+        combat.outcome,
+        allies,
+        enemies
+    )
+}
+
+fn record_replay_step(combat: &mut CombatState, command: CombatCommand) {
+    let command = match command {
+        CombatCommand::Attack => CombatReplayCommand::Attack,
+        CombatCommand::Skill => CombatReplayCommand::Skill,
+        CombatCommand::Defend => CombatReplayCommand::Defend,
+        CombatCommand::Item => CombatReplayCommand::Item,
+        CombatCommand::Flee => CombatReplayCommand::Flee,
+    };
+    combat.command_history.push(CombatReplayStep {
+        command,
+        digest: combat_digest(combat),
+    });
 }
 
 pub fn finish_combat(state: &mut GameState, data: &GameData) -> CombatFinish {
     let Some(combat) = state.combat.take() else {
         return CombatFinish {
-            summary: "No combat encounter is active.".to_owned(),
+            summary: "No combat encounter is active. Tap Town to return.".to_owned(),
             destination: CombatDestination::Town,
         };
     };
@@ -170,22 +243,23 @@ pub fn finish_combat(state: &mut GameState, data: &GameData) -> CombatFinish {
 fn use_item(state: &mut GameState) -> CombatResult {
     let Some(combat) = state.combat.as_ref() else {
         return CombatResult {
-            summary: "No combat encounter is active.".to_owned(),
+            summary: "No combat encounter is active. Tap Town to return.".to_owned(),
         };
     };
     let Some(turn) = combat.current_turn() else {
         return CombatResult {
-            summary: "Combat turn order is empty.".to_owned(),
+            summary: "Combat turn order is empty. Tap Flee to recover the encounter.".to_owned(),
         };
     };
     if turn.side != CombatSide::Ally {
         return CombatResult {
-            summary: "Items can only be used on an allied turn.".to_owned(),
+            summary: "Items can only be used on an allied turn. Tap an enabled action.".to_owned(),
         };
     }
     if state.resources.amount("herbs") <= 0 {
         return CombatResult {
-            summary: "No herbs are available for a field dressing.".to_owned(),
+            summary: "No herbs are available for a field dressing. Tap Flee or return to Town."
+                .to_owned(),
         };
     }
 
@@ -205,10 +279,10 @@ fn use_item(state: &mut GameState) -> CombatResult {
 
 fn finish_victory(state: &mut GameState, data: &GameData, combat: CombatState) -> CombatFinish {
     sync_allies(state, &combat);
-    award_xp(state, combat.xp_reward);
+    award_xp(state, data, combat.xp_reward);
     apply_victory_strain(state, &combat);
     record_floor_reached(state, data, combat.floor);
-    let rewards = victory_rewards(&combat);
+    let rewards = victory_rewards(&combat, data);
 
     if let Some(run) = &mut state.tower_run {
         for reward in &rewards {
@@ -301,6 +375,14 @@ fn apply_flee_strain(state: &mut GameState, combat: &CombatState) {
         };
         monster_engine::add_fatigue(monster, 1);
     }
+}
+
+fn encounter_seed(state: &GameState, floor: u32, is_boss: bool) -> u64 {
+    0xC0AB_A7_u64
+        ^ u64::from(state.day).wrapping_mul(97)
+        ^ u64::from(floor).wrapping_mul(193)
+        ^ u64::from(is_boss as u8).wrapping_mul(389)
+        ^ state.monster_roster.next_id.wrapping_mul(577)
 }
 
 #[cfg(test)]

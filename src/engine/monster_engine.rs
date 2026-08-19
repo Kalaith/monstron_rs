@@ -14,7 +14,7 @@ pub fn toggle_party_member(
 ) -> MonsterResult {
     let Some(monster) = state.monster_roster.monster(monster_id) else {
         return MonsterResult {
-            summary: "That monster is not in the roster.".to_owned(),
+            summary: "That monster is not in the roster. Tap Town and open Stable.".to_owned(),
         };
     };
     let monster_name = monster.name.clone();
@@ -38,7 +38,7 @@ pub fn toggle_party_member(
     if monster.is_injured() {
         return MonsterResult {
             summary: format!(
-                "{monster_name} needs {} more day(s) of rest.",
+                "{monster_name} needs {} more day(s) of rest. Tap Town, then sleep.",
                 monster.condition.injury_days
             ),
         };
@@ -46,14 +46,16 @@ pub fn toggle_party_member(
 
     if state.town.monster_job(monster_id).is_some() {
         return MonsterResult {
-            summary: format!("{monster_name} is committed to town work today."),
+            summary: format!(
+                "{monster_name} is committed to town work today. Tap Workshop to clear the job."
+            ),
         };
     }
 
     if monster.condition.commitment != DailyCommitment::Free {
         return MonsterResult {
             summary: format!(
-                "{} is already committed to {} today.",
+                "{} is already committed to {} today. Tap Town, then sleep.",
                 monster_name,
                 commitment_label(monster.condition.commitment)
             ),

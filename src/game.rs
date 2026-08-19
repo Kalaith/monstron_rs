@@ -3,7 +3,7 @@ use macroquad::prelude::*;
 use crate::data::{GameData, GameDataLoader};
 use crate::engine::{
     combat_engine::{self, CombatDestination},
-    day_engine, tower_engine, town_engine,
+    tower_engine, town_engine,
 };
 use crate::save::{SaveData, SaveRepository};
 use crate::screens::{
@@ -17,8 +17,8 @@ use crate::screens::{
     town::{self, TownAction},
     workshop, AppScreen,
 };
-use crate::state::GameState;
 use crate::state::TowerRunGoal;
+use crate::state::{GameState, TownJobKind};
 use crate::ui;
 
 pub struct Game {
@@ -227,19 +227,83 @@ impl Game {
     /// facility-unlock gating so a fresh save can still reach these screens.
     pub fn begin_capture_scene(&mut self, scene: &str) {
         match scene {
-            "town" => self.start_new_game(),
-            "hatchery" => {
-                self.start_new_game();
-                self.screen = AppScreen::Hatchery;
-            }
+            "town" => self.begin_capture_fixture(AppScreen::Town),
+            "hatchery" => self.begin_capture_fixture(AppScreen::Hatchery),
+            "stable" => self.begin_capture_fixture(AppScreen::Stable),
+            "breeding" => self.begin_capture_fixture(AppScreen::Breeding),
+            "workshop" => self.begin_capture_fixture(AppScreen::Workshop),
+            "shop" => self.begin_capture_fixture(AppScreen::Shop),
             "tower" => {
-                self.start_new_game();
+                self.begin_capture_fixture(AppScreen::Town);
                 self.enter_tower(TowerRunGoal::Balanced);
+            }
+            "combat" => {
+                self.begin_capture_fixture(AppScreen::Town);
+                if let Some(state) = &mut self.state {
+                    let result = combat_engine::start_encounter(state, &self.data, 1, false);
+                    self.status_message = result.summary;
+                    self.screen = AppScreen::Combat;
+                }
+            }
+            "mainmenu" => {
+                self.state = None;
+                self.screen = AppScreen::MainMenu;
+                self.status_message = "Ready.".to_owned();
             }
             _ => {
                 // Default: boot state is the main menu.
             }
         }
+    }
+
+    fn begin_capture_fixture(&mut self, screen: AppScreen) {
+        self.start_new_game();
+        let Some(state) = &mut self.state else {
+            return;
+        };
+        for building_id in ["hatchery", "stable", "breeding_grove", "workshop", "shop"] {
+            state.town.set_building_level(building_id, 1);
+        }
+        for (resource_id, amount) in [
+            ("coins", 80),
+            ("wood", 60),
+            ("stone", 50),
+            ("ore", 8),
+            ("herbs", 30),
+            ("crystal", 4),
+        ] {
+            state.resources.add(resource_id, amount);
+        }
+        if let Some(species) = self.data.species("rillfin") {
+            state
+                .monster_roster
+                .add_monster("Ripple".to_owned(), species, 0xBEE5_7001);
+        }
+        if let Some(species) = self.data.species("emberkit") {
+            state
+                .monster_roster
+                .add_monster("Ember".to_owned(), species, 0xF17E_2002);
+        }
+        let _ = state.monster_roster.assign_to_party(2);
+        let _ = state.monster_roster.assign_to_party(3);
+        if screen == AppScreen::Stable {
+            if let Some(monster) = state.monster_roster.monster_mut(2) {
+                monster.condition.fatigue = 3;
+            }
+            if let Some(monster) = state.monster_roster.monster_mut(3) {
+                monster.condition.injury_days = 1;
+            }
+        }
+        if screen == AppScreen::Workshop {
+            state.town.set_monster_job(1, TownJobKind::Forage);
+        }
+        state
+            .egg_inventory
+            .add_egg("mossy_egg".to_owned(), 0, 3, 0xA7C4_0001);
+        self.screen = screen;
+        self.town_menu_open = false;
+        self.status_message =
+            "Seeded verification scene. Tap a visible control to continue.".to_owned();
     }
 
     fn apply_menu_action(&mut self, action: MenuAction) {
@@ -272,7 +336,7 @@ impl Game {
             TownAction::Sleep => {
                 self.town_menu_open = false;
                 if let Some(state) = &mut self.state {
-                    let result = day_engine::sleep(state, &self.data);
+                    let result = town_engine::reduce(state, &self.data, &TownAction::Sleep);
                     self.status_message = result.summary;
                     self.screen = AppScreen::EndOfDay;
                 }
@@ -298,27 +362,34 @@ impl Game {
             TownAction::Scavenge => {
                 self.town_menu_open = false;
                 if let Some(state) = &mut self.state {
-                    self.status_message = town_engine::scavenge_supplies(state).summary;
+                    self.status_message =
+                        town_engine::reduce(state, &self.data, &TownAction::Scavenge).summary;
                 }
             }
             TownAction::AdvanceBuilding(building_id) => {
                 self.town_menu_open = false;
                 if let Some(state) = &mut self.state {
-                    self.status_message =
-                        town_engine::advance_building(state, &self.data, &building_id).summary;
+                    self.status_message = town_engine::reduce(
+                        state,
+                        &self.data,
+                        &TownAction::AdvanceBuilding(building_id),
+                    )
+                    .summary;
                 }
             }
             TownAction::Trade(trade) => {
                 self.town_menu_open = false;
                 if let Some(state) = &mut self.state {
-                    self.status_message = town_engine::trade_shop(state, &self.data, trade).summary;
+                    self.status_message =
+                        town_engine::reduce(state, &self.data, &TownAction::Trade(trade)).summary;
                 }
             }
             TownAction::GreetNpc(npc_id) => {
                 self.town_menu_open = false;
                 if let Some(state) = &mut self.state {
                     self.status_message =
-                        town_engine::greet_npc(state, &self.data, &npc_id).summary;
+                        town_engine::reduce(state, &self.data, &TownAction::GreetNpc(npc_id))
+                            .summary;
                 }
             }
             TownAction::Save => self.save_game(),
@@ -391,7 +462,7 @@ impl Game {
             CombatAction::Command(command) => {
                 if let Some(state) = &mut self.state {
                     self.status_message =
-                        combat_engine::player_action(state, &self.data, command).summary;
+                        combat_engine::reduce_command(state, &self.data, command).summary;
                 }
             }
             CombatAction::Continue => {
@@ -420,7 +491,8 @@ impl Game {
                 .building(building_id)
                 .map(|building| building.name.as_str())
                 .unwrap_or(building_id);
-            self.status_message = format!("Build the {building_name} first.");
+            self.status_message =
+                format!("Build the {building_name} first. Tap its Upgrade button on the town map.");
             return;
         }
 

@@ -27,12 +27,13 @@ pub fn breed_pair(
 ) -> BreedingResult {
     if state.town.building_level(GROVE_ID) == 0 {
         return BreedingResult {
-            summary: "Build the Breeding Grove before pairing monsters.".to_owned(),
+            summary: "Build the Breeding Grove before pairing monsters. Tap Town, then upgrade the Grove.".to_owned(),
         };
     }
     if first_id == second_id {
         return BreedingResult {
-            summary: "Choose two different monsters for a breeding pair.".to_owned(),
+            summary: "Choose two different monsters for a breeding pair. Tap a second roster card."
+                .to_owned(),
         };
     }
     if !town_engine::has_egg_capacity(state) {
@@ -40,49 +41,60 @@ pub fn breed_pair(
         let capacity = town_engine::egg_capacity(state);
         return BreedingResult {
             summary: format!(
-                "Hatchery egg capacity is full ({current}/{capacity}). Build or upgrade the Hatchery before breeding."
+                "Hatchery egg capacity is full ({current}/{capacity}). Tap Town, then build or upgrade the Hatchery."
             ),
         };
     }
 
     let Some(first) = state.monster_roster.monster(first_id).cloned() else {
         return BreedingResult {
-            summary: "The first parent is no longer in the roster.".to_owned(),
+            summary:
+                "The first parent is no longer in the roster. Tap Town and choose another pair."
+                    .to_owned(),
         };
     };
     let Some(second) = state.monster_roster.monster(second_id).cloned() else {
         return BreedingResult {
-            summary: "The second parent is no longer in the roster.".to_owned(),
+            summary:
+                "The second parent is no longer in the roster. Tap Town and choose another pair."
+                    .to_owned(),
         };
     };
 
     if !pair_is_compatible(&first, &second) {
         return BreedingResult {
             summary: format!(
-                "{} and {} need a shared element, shared role, or stronger bonds.",
+                "{} and {} need a shared element, shared role, or stronger bonds. Tap Stable to inspect them.",
                 first.name, second.name
             ),
         };
     }
 
     if let Err(summary) = monster_engine::can_take_daily_action(state, &first) {
-        return BreedingResult { summary };
+        return BreedingResult {
+            summary: format!("{summary} Tap Stable to recover the parent."),
+        };
     }
     if let Err(summary) = monster_engine::can_take_daily_action(state, &second) {
-        return BreedingResult { summary };
+        return BreedingResult {
+            summary: format!("{summary} Tap Stable to recover the parent."),
+        };
     }
 
     let Some(egg_type) = select_egg_type(data, &first, &second, state.tower_progress.best_floor)
     else {
         return BreedingResult {
-            summary: "No egg type can carry that lineage yet.".to_owned(),
+            summary: "No egg type can carry that lineage yet. Tap Town to return.".to_owned(),
         };
     };
 
     let cost = breeding_cost();
     if let Err(missing) = state.resources.spend(&cost) {
         return BreedingResult {
-            summary: format!("Breeding needs {}.", cost_text(data, &missing)),
+            summary: format!(
+                "Breeding needs {}. Tap Town to trade or scavenge supplies.",
+                cost_text(data, &missing)
+            ),
         };
     }
 

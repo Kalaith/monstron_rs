@@ -137,8 +137,11 @@ pub(crate) fn flee_chance(combat: &CombatState) -> i32 {
 }
 
 pub(crate) fn flee_succeeds(combat: &CombatState) -> bool {
-    let roll =
-        ((combat.floor * 37 + combat.round * 17 + combat.turn_index as u32 * 11) % 100) as i32;
+    let roll = (((combat.rng_seed as u32)
+        .wrapping_add(combat.floor * 37)
+        .wrapping_add(combat.round * 17)
+        .wrapping_add(combat.turn_index as u32 * 11))
+        % 100) as i32;
     roll < flee_chance(combat)
 }
 
@@ -220,7 +223,7 @@ pub(crate) fn sync_allies(state: &mut GameState, combat: &CombatState) {
     }
 }
 
-pub(crate) fn award_xp(state: &mut GameState, xp_reward: u32) {
+pub(crate) fn award_xp(state: &mut GameState, data: &GameData, xp_reward: u32) {
     for slot in state
         .monster_roster
         .party_slots
@@ -236,12 +239,15 @@ pub(crate) fn award_xp(state: &mut GameState, xp_reward: u32) {
             while monster.xp >= monster.level * 20 {
                 monster.xp -= monster.level * 20;
                 monster.level += 1;
-                monster.max_hp += 3;
+                let curve = data.stat_curve(&monster.species_id);
+                monster.max_hp += curve.map_or(3, |curve| curve.hp_per_level);
                 monster.hp = monster.max_hp;
-                monster.attack += 1;
-                monster.defense += 1;
-                if monster.level % 2 == 0 {
-                    monster.speed += 1;
+                monster.attack += curve.map_or(1, |curve| curve.attack_per_level);
+                monster.defense += curve.map_or(1, |curve| curve.defense_per_level);
+                if let Some(curve) = curve {
+                    if monster.level % curve.speed_interval == 0 {
+                        monster.speed += curve.speed_per_interval;
+                    }
                 }
             }
         }
@@ -309,10 +315,15 @@ pub(crate) fn reward_text(data: &GameData, rewards: &[ResourceStack]) -> String 
         .join(", ")
 }
 
-pub(crate) fn victory_rewards(combat: &CombatState) -> Vec<ResourceStack> {
+pub(crate) fn victory_rewards(combat: &CombatState, data: &GameData) -> Vec<ResourceStack> {
     let mut rewards = combat.rewards.clone();
+    if let Some(floor_reward) = data.tower_reward(combat.floor) {
+        for reward in &floor_reward.rewards {
+            add_reward(&mut rewards, &reward.resource_id, reward.amount);
+        }
+    }
     if combat.enemies.iter().any(|enemy| enemy.is_marked) {
-        add_reward(&mut rewards, "coins", 2 + combat.floor as i32 / 2);
+        add_reward(&mut rewards, "coins", 2);
     }
     rewards
 }

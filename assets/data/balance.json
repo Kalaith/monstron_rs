@@ -1,0 +1,51 @@
+{
+  "balance": {
+    "monster_stat_curves": [
+      { "species_id": "slime", "hp_per_level": 3, "attack_per_level": 1, "defense_per_level": 1, "speed_per_interval": 1, "speed_interval": 2 },
+      { "species_id": "rootling", "hp_per_level": 4, "attack_per_level": 1, "defense_per_level": 1, "speed_per_interval": 1, "speed_interval": 2 },
+      { "species_id": "glowmoth", "hp_per_level": 3, "attack_per_level": 1, "defense_per_level": 1, "speed_per_interval": 1, "speed_interval": 2 },
+      { "species_id": "pebblepup", "hp_per_level": 3, "attack_per_level": 1, "defense_per_level": 1, "speed_per_interval": 1, "speed_interval": 2 },
+      { "species_id": "emberkit", "hp_per_level": 3, "attack_per_level": 1, "defense_per_level": 1, "speed_per_interval": 1, "speed_interval": 2 },
+      { "species_id": "rillfin", "hp_per_level": 3, "attack_per_level": 1, "defense_per_level": 1, "speed_per_interval": 1, "speed_interval": 2 }
+    ],
+    "combat_cooldowns": [
+      { "id": "skill", "turns": 0 },
+      { "id": "item", "turns": 0 }
+    ],
+    "shop_trades": [
+      {
+        "id": "buy_herbs",
+        "label": "Buy Herbs",
+        "detail": "Restock egg warming and grove supplies.",
+        "cost": [{ "resource_id": "coins", "amount": 6 }],
+        "reward": [{ "resource_id": "herbs", "amount": 3 }]
+      },
+      {
+        "id": "buy_stone",
+        "label": "Buy Stone",
+        "detail": "Convert coins into upgrade materials.",
+        "cost": [{ "resource_id": "coins", "amount": 8 }],
+        "reward": [{ "resource_id": "stone", "amount": 4 }]
+      },
+      {
+        "id": "sell_herbs",
+        "label": "Sell Herbs",
+        "detail": "Turn spare herbs back into coins.",
+        "cost": [{ "resource_id": "herbs", "amount": 2 }],
+        "reward": [{ "resource_id": "coins", "amount": 5 }]
+      }
+    ],
+    "tower_rewards": [
+      { "floor": 1, "rewards": [{ "resource_id": "coins", "amount": 2 }] },
+      { "floor": 2, "rewards": [{ "resource_id": "coins", "amount": 3 }] },
+      { "floor": 3, "rewards": [{ "resource_id": "coins", "amount": 3 }] },
+      { "floor": 4, "rewards": [{ "resource_id": "coins", "amount": 4 }] },
+      { "floor": 5, "rewards": [{ "resource_id": "coins", "amount": 4 }] },
+      { "floor": 6, "rewards": [{ "resource_id": "coins", "amount": 5 }] },
+      { "floor": 7, "rewards": [{ "resource_id": "coins", "amount": 5 }] },
+      { "floor": 8, "rewards": [{ "resource_id": "coins", "amount": 6 }] },
+      { "floor": 9, "rewards": [{ "resource_id": "coins", "amount": 6 }] },
+      { "floor": 10, "rewards": [{ "resource_id": "coins", "amount": 8 }] }
+    ]
+  }
+}

@@ -16,25 +16,28 @@ pub fn care_for_egg(
 ) -> EggResult {
     if state.town.building_level(HATCHERY_ID) == 0 {
         return EggResult {
-            summary: "Build the hatchery before caring for eggs.".to_owned(),
+            summary: "Build the hatchery before caring for eggs. Tap Town, then the Hatchery upgrade button.".to_owned(),
         };
     }
 
     let Some(egg) = state.egg_inventory.eggs.iter().find(|egg| egg.id == egg_id) else {
         return EggResult {
-            summary: "That egg is no longer in the hatchery.".to_owned(),
+            summary: "That egg is no longer in the hatchery. Tap Town to return.".to_owned(),
         };
     };
 
     if egg.last_care_day == state.day {
         return EggResult {
-            summary: "That egg has already received care today.".to_owned(),
+            summary:
+                "That egg has already received care today. Tap Town and sleep to advance the day."
+                    .to_owned(),
         };
     }
 
     if care_focus == EggCareFocus::Warm && egg.days_remaining == 0 {
         return EggResult {
-            summary: "That egg is already ready to hatch.".to_owned(),
+            summary: "That egg is already ready to hatch. Tap Hatch when it is available."
+                .to_owned(),
         };
     }
 
@@ -42,7 +45,11 @@ pub fn care_for_egg(
     if !cost.is_empty() {
         if let Err(missing) = state.resources.spend(&cost) {
             return EggResult {
-                summary: format!("{} needs {}.", care_focus, cost_text(data, &missing)),
+                summary: format!(
+                    "{} needs {}. Tap Town to trade for more supplies.",
+                    care_focus,
+                    cost_text(data, &missing)
+                ),
             };
         }
     }
@@ -50,7 +57,7 @@ pub fn care_for_egg(
     let day = state.day;
     let Some(egg) = state.egg_inventory.egg_mut(egg_id) else {
         return EggResult {
-            summary: "That egg is no longer in the hatchery.".to_owned(),
+            summary: "That egg is no longer in the hatchery. Tap Town to return.".to_owned(),
         };
     };
 
@@ -68,19 +75,22 @@ pub fn care_for_egg(
 pub fn hatch_egg(state: &mut GameState, data: &GameData, egg_id: u64) -> EggResult {
     if state.town.building_level(HATCHERY_ID) == 0 {
         return EggResult {
-            summary: "Build the hatchery before hatching eggs.".to_owned(),
+            summary: "Build the hatchery before hatching eggs. Tap Town, then the Hatchery upgrade button.".to_owned(),
         };
     }
 
     let Some(existing) = state.egg_inventory.eggs.iter().find(|egg| egg.id == egg_id) else {
         return EggResult {
-            summary: "That egg is no longer in the hatchery.".to_owned(),
+            summary: "That egg is no longer in the hatchery. Tap Town to return.".to_owned(),
         };
     };
 
     if existing.days_remaining > 0 {
         return EggResult {
-            summary: format!("That egg needs {} more day(s).", existing.days_remaining),
+            summary: format!(
+                "That egg needs {} more day(s). Tap Town, then sleep to warm it.",
+                existing.days_remaining
+            ),
         };
     }
 
@@ -89,14 +99,14 @@ pub fn hatch_egg(state: &mut GameState, data: &GameData, egg_id: u64) -> EggResu
         let capacity = town_engine::monster_capacity(state);
         return EggResult {
             summary: format!(
-                "Stable capacity is full ({current}/{capacity}). Build or upgrade the Stable before hatching."
+                "Stable capacity is full ({current}/{capacity}). Tap Town, then build or upgrade the Stable."
             ),
         };
     }
 
     let Some(egg) = state.egg_inventory.remove_egg(egg_id) else {
         return EggResult {
-            summary: "That egg is no longer in the hatchery.".to_owned(),
+            summary: "That egg is no longer in the hatchery. Tap Town to return.".to_owned(),
         };
     };
     let Some(egg_type) = data.egg_type(&egg.egg_type_id) else {

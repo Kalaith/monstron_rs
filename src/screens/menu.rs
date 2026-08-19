@@ -76,6 +76,21 @@ pub fn draw(title_texture: &Texture2D, has_save: bool) {
     ui::draw_title_button(load_game_rect(), "Load Game", has_save);
     ui::draw_title_button(settings_rect(), "Settings", true);
     ui::draw_title_button(exit_game_rect(), "Exit Game", true);
+    ui::draw_tooltip_target(ui::Tooltip {
+        rect: new_game_rect(),
+        title: "New Game",
+        detail: "Start a fresh camp beside the tower.",
+    });
+    ui::draw_tooltip_target(ui::Tooltip {
+        rect: load_game_rect(),
+        title: "Load Game",
+        detail: "Restore the last saved camp.",
+    });
+    ui::draw_tooltip_target(ui::Tooltip {
+        rect: settings_rect(),
+        title: "Settings",
+        detail: "Change the window display mode.",
+    });
 }
 
 pub fn draw_settings(fullscreen_enabled: bool) {

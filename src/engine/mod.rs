@@ -1,5 +1,6 @@
 pub mod breeding_engine;
 pub mod combat_engine;
+pub mod combat_replay;
 mod combat_support;
 pub mod day_engine;
 pub mod egg_engine;

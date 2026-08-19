@@ -2,31 +2,13 @@ use macroquad::prelude::*;
 
 use crate::assets;
 use crate::data::GameData;
-use crate::engine::town_engine::{self, ShopTrade};
+use crate::engine::town_engine;
 use crate::screens::{town_layout, town_panels};
 use crate::state::GameState;
 use crate::ui;
 use macroquad_toolkit::ui::draw_ui_text_ex;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum TownAction {
-    Sleep,
-    DungeonPrep,
-    OpenMenu,
-    CloseMenu,
-    OpenHatchery,
-    OpenStable,
-    OpenBreeding,
-    OpenWorkshop,
-    OpenShop,
-    Scavenge,
-    AdvanceBuilding(String),
-    Trade(ShopTrade),
-    GreetNpc(String),
-    Save,
-    Load,
-    BackToMenu,
-}
+pub use crate::engine::town_engine::TownCommand as TownAction;
 
 pub fn handle_input(state: &GameState, data: &GameData, menu_open: bool) -> Option<TownAction> {
     if menu_open {
@@ -106,6 +88,7 @@ pub fn draw(state: &GameState, data: &GameData, status_message: &str, menu_open:
     draw_town_backdrop();
     draw_header(state);
     town_panels::draw(state, data);
+    draw_town_tooltips(data);
     if menu_open {
         draw_escape_menu();
     }
@@ -202,6 +185,37 @@ fn draw_header(state: &GameState) {
         },
     );
     ui::draw_button(town_layout::menu_button_rect(), "Menu", true);
+    ui::draw_tooltip_target(ui::Tooltip {
+        rect: town_layout::menu_button_rect(),
+        title: "Camp Menu",
+        detail: "Save, load, or return to the title.",
+    });
+}
+
+fn draw_town_tooltips(data: &GameData) {
+    for (index, building) in data.buildings.iter().enumerate() {
+        ui::draw_tooltip_target(ui::Tooltip {
+            rect: town_layout::building_button_rect(index),
+            title: "Building upgrade",
+            detail: "Spend the listed supplies to improve this building.",
+        });
+        if facility_action(&building.id).is_some() {
+            ui::draw_tooltip_target(ui::Tooltip {
+                rect: town_layout::building_open_button_rect(index),
+                title: "Enter facility",
+                detail: "Open this facility's care, trade, or work actions.",
+            });
+        }
+    }
+    for index in 0..6 {
+        let x = 28.0 + index as f32 * 206.0;
+        let y = if index % 2 == 0 { 182.0 } else { 252.0 };
+        ui::draw_tooltip_target(ui::Tooltip {
+            rect: Rect::new(x, y, 190.0, 190.0),
+            title: "Camp map",
+            detail: "Explore the camp map to find its facilities.",
+        });
+    }
 }
 
 fn draw_escape_menu() {
@@ -236,4 +250,14 @@ fn draw_escape_menu() {
     ui::draw_button(town_layout::menu_save_rect(), "Save", true);
     ui::draw_button(town_layout::menu_load_rect(), "Load", true);
     ui::draw_button(town_layout::menu_title_rect(), "Title", true);
+    ui::draw_tooltip_target(ui::Tooltip {
+        rect: town_layout::menu_save_rect(),
+        title: "Save camp",
+        detail: "Write the current day and roster to the save slot.",
+    });
+    ui::draw_tooltip_target(ui::Tooltip {
+        rect: town_layout::menu_load_rect(),
+        title: "Load camp",
+        detail: "Restore the last saved day and progression.",
+    });
 }

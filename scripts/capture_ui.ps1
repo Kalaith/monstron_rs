@@ -9,15 +9,20 @@
     src/main.rs. Scenes are seeded via Game::begin_capture_scene:
       - "mainmenu" -> boot state (main menu)
       - "town"     -> fresh save, town screen
-      - "hatchery" -> fresh save, hatchery screen
-      - "tower"     -> fresh save, active first-floor dungeon run
+      - "hatchery" -> seeded hatchery screen
+      - "stable"   -> seeded stable roster and recovery scene
+      - "breeding" -> seeded breeding grove scene
+      - "workshop" -> seeded workshop assignments scene
+      - "shop"     -> seeded shop scene
+      - "tower"    -> seeded active first-floor dungeon run
+      - "combat"   -> seeded first-floor combat scene
 
 .EXAMPLE
     ./scripts/capture_ui.ps1
     ./scripts/capture_ui.ps1 -Frames 60 -SkipBuild
 #>
 param(
-    [string[]]$Scenes = @("mainmenu", "town", "hatchery", "tower"),
+    [string[]]$Scenes = @("mainmenu", "town", "hatchery", "stable", "breeding", "workshop", "shop", "tower", "combat"),
     [int]$Frames = 150,
     [string]$OutputDir = "docs\verification",
     [switch]$SkipBuild

@@ -11,6 +11,45 @@ pub struct GameConfig {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct MonsterStatCurveDefinition {
+    pub species_id: String,
+    pub hp_per_level: i32,
+    pub attack_per_level: i32,
+    pub defense_per_level: i32,
+    pub speed_per_interval: i32,
+    pub speed_interval: u32,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CombatCooldownDefinition {
+    pub id: String,
+    pub turns: u32,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ShopTradeDefinition {
+    pub id: String,
+    pub label: String,
+    pub detail: String,
+    pub cost: Vec<ResourceAmount>,
+    pub reward: Vec<ResourceAmount>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TowerRewardDefinition {
+    pub floor: u32,
+    pub rewards: Vec<ResourceAmount>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct BalanceData {
+    pub monster_stat_curves: Vec<MonsterStatCurveDefinition>,
+    pub combat_cooldowns: Vec<CombatCooldownDefinition>,
+    pub shop_trades: Vec<ShopTradeDefinition>,
+    pub tower_rewards: Vec<TowerRewardDefinition>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ResourceDefinition {
     pub id: String,
     pub name: String,

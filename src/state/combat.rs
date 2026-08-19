@@ -16,6 +16,20 @@ pub struct CombatState {
     pub log: Vec<String>,
     pub outcome: Option<CombatOutcome>,
     pub is_boss: bool,
+    #[serde(default)]
+    pub rng_seed: u64,
+    #[serde(default)]
+    pub replay_roster: Vec<Combatant>,
+    #[serde(default)]
+    pub replay_enemies: Vec<Combatant>,
+    #[serde(default)]
+    pub replay_turn_order: Vec<CombatTurn>,
+    #[serde(default)]
+    pub replay_round: u32,
+    #[serde(default)]
+    pub replay_turn_index: usize,
+    #[serde(default)]
+    pub command_history: Vec<CombatReplayStep>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -35,6 +49,21 @@ pub enum CombatOutcome {
     Victory,
     Defeat,
     Fled,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum CombatReplayCommand {
+    Attack,
+    Skill,
+    Defend,
+    Item,
+    Flee,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct CombatReplayStep {
+    pub command: CombatReplayCommand,
+    pub digest: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

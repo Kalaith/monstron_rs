@@ -90,7 +90,12 @@ impl Game {
             }
             ShopAction::Trade(trade) => {
                 if let Some(state) = &mut self.state {
-                    self.status_message = town_engine::trade_shop(state, &self.data, trade).summary;
+                    self.status_message = town_engine::reduce(
+                        state,
+                        &self.data,
+                        &town_engine::TownCommand::Trade(trade),
+                    )
+                    .summary;
                 }
             }
         }

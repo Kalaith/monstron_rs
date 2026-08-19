@@ -6,12 +6,6 @@ use crate::state::GameState;
 use crate::ui;
 use macroquad_toolkit::ui::{draw_ui_text_ex, measure_ui_text};
 
-const TRADES: [ShopTrade; 3] = [
-    ShopTrade::BuyHerbs,
-    ShopTrade::BuyStone,
-    ShopTrade::SellHerbs,
-];
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ShopAction {
     ToTown,
@@ -26,7 +20,7 @@ pub fn handle_input() -> Option<ShopAction> {
         return Some(ShopAction::ToTown);
     }
 
-    for (index, trade) in TRADES.iter().enumerate() {
+    for (index, trade) in ShopTrade::ALL.iter().enumerate() {
         if ui::button_clicked(trade_button_rect(index), true) {
             return Some(ShopAction::Trade(*trade));
         }
@@ -95,10 +89,13 @@ fn draw_trades(data: &GameData) {
     ui::draw_panel(rect);
     ui::draw_section_title("Trades", rect.x + 20.0, rect.y + 34.0);
 
-    for (index, trade) in TRADES.iter().enumerate() {
+    for (index, trade) in ShopTrade::ALL.iter().enumerate() {
+        let Some(definition) = data.shop_trade(trade.id()) else {
+            continue;
+        };
         let y = rect.y + 84.0 + index as f32 * 108.0;
         draw_ui_text_ex(
-            trade_label(*trade),
+            &definition.label,
             rect.x + 28.0,
             y,
             TextParams {
@@ -108,7 +105,7 @@ fn draw_trades(data: &GameData) {
             },
         );
         draw_ui_text_ex(
-            trade_detail(*trade),
+            &definition.detail,
             rect.x + 28.0,
             y + 28.0,
             TextParams {
@@ -118,7 +115,7 @@ fn draw_trades(data: &GameData) {
             },
         );
         draw_ui_text_ex(
-            trade_cost(data, *trade).as_str(),
+            &trade_cost(data, *trade),
             rect.x + 28.0,
             y + 55.0,
             TextParams {
@@ -162,28 +159,28 @@ fn draw_resources(state: &GameState, data: &GameData) {
     }
 }
 
-fn trade_label(trade: ShopTrade) -> &'static str {
-    match trade {
-        ShopTrade::BuyHerbs => "Buy Herbs",
-        ShopTrade::BuyStone => "Buy Stone",
-        ShopTrade::SellHerbs => "Sell Herbs",
-    }
-}
-
-fn trade_detail(trade: ShopTrade) -> &'static str {
-    match trade {
-        ShopTrade::BuyHerbs => "Restock egg warming and grove supplies.",
-        ShopTrade::BuyStone => "Convert coins into upgrade materials.",
-        ShopTrade::SellHerbs => "Turn spare herbs back into coins.",
-    }
-}
-
 fn trade_cost(data: &GameData, trade: ShopTrade) -> String {
-    match trade {
-        ShopTrade::BuyHerbs => format!("Pay 6 {}, gain 3 Herbs", data.resource_name("coins")),
-        ShopTrade::BuyStone => format!("Pay 8 {}, gain 4 Stone", data.resource_name("coins")),
-        ShopTrade::SellHerbs => "Pay 2 Herbs, gain 5 Coins".to_owned(),
-    }
+    let Some(definition) = data.shop_trade(trade.id()) else {
+        return "Trade data unavailable".to_owned();
+    };
+    let format_stacks = |stacks: &[crate::data::ResourceAmount]| {
+        stacks
+            .iter()
+            .map(|stack| {
+                format!(
+                    "{} {}",
+                    stack.amount,
+                    data.resource_name(&stack.resource_id)
+                )
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    format!(
+        "Pay {}, gain {}",
+        format_stacks(&definition.cost),
+        format_stacks(&definition.reward)
+    )
 }
 
 fn town_button_rect() -> Rect {

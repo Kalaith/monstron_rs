@@ -23,13 +23,17 @@ pub fn assign_job(
 ) -> JobResult {
     if state.town.building_level(WORKSHOP_ID) == 0 {
         return JobResult {
-            summary: "Build the workshop before assigning town jobs.".to_owned(),
+            summary:
+                "Build the workshop before assigning town jobs. Tap Town, then upgrade Workshop."
+                    .to_owned(),
         };
     }
 
     let Some(monster) = state.monster_roster.monster(monster_id) else {
         return JobResult {
-            summary: "That monster is no longer in the roster.".to_owned(),
+            summary:
+                "That monster is no longer in the roster. Tap Stable to choose another worker."
+                    .to_owned(),
         };
     };
     let monster_name = monster.name.clone();
@@ -42,7 +46,7 @@ pub fn assign_job(
     if monster.is_injured() {
         return JobResult {
             summary: format!(
-                "{} needs {} more day(s) of rest.",
+                "{} needs {} more day(s) of rest. Tap Town, then sleep.",
                 monster.name, monster.condition.injury_days
             ),
         };
@@ -50,7 +54,7 @@ pub fn assign_job(
     if monster.condition.commitment != DailyCommitment::Free {
         return JobResult {
             summary: format!(
-                "{} is already committed to {} today.",
+                "{} is already committed to {} today. Tap Clear or sleep.",
                 monster.name,
                 monster_engine::commitment_label(monster.condition.commitment)
             ),
