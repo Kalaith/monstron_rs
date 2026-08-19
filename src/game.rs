@@ -27,6 +27,8 @@ pub struct Game {
     pub(crate) screen: AppScreen,
     pub(crate) status_message: String,
     pub(crate) town_menu_open: bool,
+    tower_guide_open: bool,
+    tower_guide_page: usize,
     title_texture: Texture2D,
     fullscreen_enabled: bool,
 }
@@ -54,6 +56,8 @@ impl Game {
             screen: AppScreen::MainMenu,
             status_message,
             town_menu_open: false,
+            tower_guide_open: false,
+            tower_guide_page: 0,
             title_texture,
             fullscreen_enabled: false,
         }
@@ -135,7 +139,12 @@ impl Game {
             }
             AppScreen::Tower => {
                 if let Some(state) = &self.state {
-                    if let Some(action) = tower::handle_input(state) {
+                    if let Some(action) = tower::handle_input(
+                        state,
+                        &self.data,
+                        self.tower_guide_open,
+                        self.tower_guide_page,
+                    ) {
                         self.apply_tower_action(action);
                     }
                 } else {
@@ -207,7 +216,13 @@ impl Game {
             }
             AppScreen::Tower => {
                 if let Some(state) = &self.state {
-                    tower::draw(state, &self.data, &self.status_message);
+                    tower::draw(
+                        state,
+                        &self.data,
+                        &self.status_message,
+                        self.tower_guide_open,
+                        self.tower_guide_page,
+                    );
                 }
             }
             AppScreen::Combat => {
@@ -520,10 +535,25 @@ impl Game {
                     self.status_message = tower_engine::return_to_town(state, &self.data).summary;
                 }
                 self.screen = AppScreen::Town;
+                self.tower_guide_open = false;
             }
             TowerAction::ToTown => {
                 self.screen = AppScreen::Town;
+                self.tower_guide_open = false;
                 self.status_message = "Returned to tower camp.".to_owned();
+            }
+            TowerAction::OpenGuide => {
+                self.tower_guide_open = true;
+                self.tower_guide_page = 0;
+            }
+            TowerAction::CloseGuide => self.tower_guide_open = false,
+            TowerAction::GuidePage(delta) => {
+                self.tower_guide_page = if delta < 0 {
+                    self.tower_guide_page
+                        .saturating_sub(delta.unsigned_abs() as usize)
+                } else {
+                    self.tower_guide_page.saturating_add(delta as usize)
+                };
             }
         }
     }

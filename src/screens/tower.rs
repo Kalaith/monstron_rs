@@ -1,6 +1,7 @@
 use macroquad::prelude::*;
 
 mod event_prompt;
+mod field_guide;
 mod journal;
 mod map_view;
 
@@ -21,15 +22,30 @@ pub enum TowerAction {
     LeaveEvent,
     ReturnToTown,
     ToTown,
+    OpenGuide,
+    CloseGuide,
+    GuidePage(i32),
 }
 
-pub fn handle_input(state: &GameState) -> Option<TowerAction> {
+pub fn handle_input(
+    state: &GameState,
+    data: &GameData,
+    guide_open: bool,
+    guide_page: usize,
+) -> Option<TowerAction> {
+    if guide_open {
+        return field_guide::handle_input(state, data, guide_page);
+    }
     if is_key_pressed(KeyCode::Escape) {
         return if state.tower_run.is_some() {
             Some(TowerAction::ReturnToTown)
         } else {
             Some(TowerAction::ToTown)
         };
+    }
+
+    if ui::button_clicked(guide_button_rect(state.tower_run.is_some()), true) {
+        return Some(TowerAction::OpenGuide);
     }
 
     if state.tower_run.is_some() {
@@ -86,7 +102,13 @@ pub fn handle_input(state: &GameState) -> Option<TowerAction> {
     None
 }
 
-pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
+pub fn draw(
+    state: &GameState,
+    data: &GameData,
+    status_message: &str,
+    guide_open: bool,
+    guide_page: usize,
+) {
     if let Some(run) = &state.tower_run {
         map_view::draw_map_world(state, data, run);
         draw_run_overlay(state, data, run);
@@ -95,16 +117,21 @@ pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
         draw_context_drawer(data, run);
         journal::draw(data, run);
         event_prompt::draw(data, run);
+        ui::draw_button(guide_button_rect(true), "FIELD GUIDE", true);
         ui::draw_status_at(status_message, Rect::new(250.0, 60.0, 780.0, 28.0));
     } else {
         draw_backdrop();
         draw_header(state);
         draw_empty_run();
         draw_floor_reference(state, data);
+        ui::draw_button(guide_button_rect(false), "OPEN FIELD GUIDE", true);
     }
 
     if state.tower_run.is_none() {
         ui::draw_status(status_message);
+    }
+    if guide_open {
+        field_guide::draw(state, data, guide_page);
     }
 }
 
@@ -685,4 +712,12 @@ fn camp_button_rect() -> Rect {
 
 fn retreat_button_rect() -> Rect {
     Rect::new(738.0, 650.0, 180.0, 58.0)
+}
+
+fn guide_button_rect(active_run: bool) -> Rect {
+    if active_run {
+        Rect::new(18.0, 348.0, 218.0, 46.0)
+    } else {
+        Rect::new(998.0, 616.0, 250.0, 52.0)
+    }
 }
