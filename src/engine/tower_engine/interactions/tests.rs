@@ -87,6 +87,23 @@ fn root_oracle_event_charts_the_authored_secret_cache_room() {
 }
 
 #[test]
+fn recovery_event_converts_its_landmark_room_into_a_routable_shelter() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::SafeRun);
+    let run = state.tower_run.as_mut().unwrap();
+    run.map.ensure_room_kinds();
+    run.map.room_kinds[0] = crate::state::TowerRoomKind::Landmark;
+
+    let result = apply_tower_event(&mut state, &data, "lantern_well", "restorative_draught");
+    let run = state.tower_run.as_ref().unwrap();
+
+    assert!(result.summary.contains("marked CAMP shelter"));
+    assert_eq!(run.map.room_kind(0), crate::state::TowerRoomKind::Camp);
+    assert!(crate::engine::tower_engine::camp_sheltered(run));
+}
+
+#[test]
 fn wardstone_is_consumed_to_cancel_an_uncountered_hazard() {
     let data = GameDataLoader::load_embedded().expect("embedded data should load");
     let mut state = GameState::new(&data);

@@ -2,7 +2,7 @@ use super::discovery::record_enemy_discovery;
 use super::exploration_talents::chart_nearest_secret_rooms;
 use super::{result, TowerEncounterRequest, TowerResult};
 use crate::data::{GameData, TowerBlessing};
-use crate::state::{GameState, TowerFoundEgg, TowerTileVisibility};
+use crate::state::{GameState, TowerFoundEgg, TowerRoomKind, TowerTileVisibility};
 
 pub(super) fn resolve_hazard(
     state: &mut GameState,
@@ -115,6 +115,7 @@ pub(super) fn apply_tower_event(
     let mut survey_charges_added = 0;
     let mut hunters_repelled = 0;
     let mut secrets_revealed = 0;
+    let mut shelter_established = false;
     if let Some(run) = &mut state.tower_run {
         for reward in &event.rewards {
             run.add_cargo(&reward.resource_id, reward.amount);
@@ -166,6 +167,9 @@ pub(super) fn apply_tower_event(
         if event.reveal_secrets > 0 {
             secrets_revealed = chart_nearest_secret_rooms(&mut run.map, event.reveal_secrets);
         }
+        if event.creates_shelter {
+            shelter_established = establish_current_room_shelter(run);
+        }
         if let Some(egg) = data.egg_type(&event.egg_type_id) {
             run.found_eggs.push(TowerFoundEgg {
                 egg_type_id: egg.id.clone(),
@@ -214,6 +218,9 @@ pub(super) fn apply_tower_event(
     if event.refresh_camp {
         summary.push_str(" The party can CAMP again immediately.");
     }
+    if shelter_established {
+        summary.push_str(" This landmark room is now a marked CAMP shelter.");
+    }
     if survey_charges_added > 0 {
         summary.push_str(&format!(
             " Restocked {survey_charges_added} survey flare(s)."
@@ -248,6 +255,21 @@ pub(super) fn apply_tower_event(
         }),
         returned_to_town: false,
     }
+}
+
+fn establish_current_room_shelter(run: &mut crate::state::TowerRunState) -> bool {
+    let room_index = run.map.rooms.iter().position(|room| {
+        run.map.player_x >= room.start_x
+            && run.map.player_x < room.start_x + room.width
+            && run.map.player_y >= room.start_y
+            && run.map.player_y < room.start_y + room.height
+    });
+    let Some(index) = room_index else {
+        return false;
+    };
+    run.map.ensure_room_kinds();
+    run.map.room_kinds[index] = TowerRoomKind::Camp;
+    true
 }
 
 fn event_seed(map_seed: u64, event_id: &str) -> u64 {

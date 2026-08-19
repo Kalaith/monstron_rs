@@ -226,6 +226,9 @@ fn effect_summary(data: &GameData, event: &TowerEventDefinition) -> String {
     if event.refresh_camp {
         effects.push("Camp ready".to_owned());
     }
+    if event.creates_shelter {
+        effects.push("Create shelter".to_owned());
+    }
     if event.survey_charges > 0 {
         effects.push(format!("+{} survey", event.survey_charges));
     }

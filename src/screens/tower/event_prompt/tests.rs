@@ -15,4 +15,9 @@ fn event_preview_marks_tried_choices_and_names_advanced_effects() {
     let preview = effect_summary(&data, event);
     assert!(preview.contains("Reveal 1 secret"));
     assert!(preview.contains("Gain Cache Sense"));
+
+    let shelter = data
+        .tower_event("rekindle_camp")
+        .expect("waykeeper shelter event should exist");
+    assert!(effect_summary(&data, shelter).contains("Create shelter"));
 }

@@ -186,7 +186,8 @@
       "cargo_costs": [{ "resource_id": "herbs", "amount": 2 }],
       "required_passive": "Resists poison",
       "pressure_delta": -1,
-      "party_healing": 7
+      "party_healing": 7,
+      "creates_shelter": true
     },
     {
       "id": "lamp_gnat_swarm",
@@ -276,6 +277,7 @@
       "narrative": "The old ward circles the party in a quiet amber ring.",
       "party_healing": 4,
       "refresh_camp": true,
+      "creates_shelter": true,
       "blessing": "Wardstone"
     },
     {
@@ -391,7 +393,8 @@
       "narrative": "Careful heat frees mature cuttings without cracking the rootglass.",
       "required_passive": "Burns brambles",
       "rewards": [{ "resource_id": "herbs", "amount": 6 }],
-      "party_healing": 4
+      "party_healing": 4,
+      "creates_shelter": true
     },
     {
       "id": "break_rootglass",
@@ -440,7 +443,8 @@
       "cargo_costs": [{ "resource_id": "coins", "amount": 6 }],
       "survey_charges": 3,
       "refresh_camp": true,
-      "party_healing": 3
+      "party_healing": 3,
+      "creates_shelter": true
     },
     {
       "id": "wake_waystation_ward",
