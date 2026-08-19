@@ -4,13 +4,17 @@ use macroquad_toolkit::ui::draw_ui_text_ex;
 use super::TowerAction;
 use crate::data::{GameData, TowerEventDefinition};
 use crate::engine::tower_engine;
-use crate::state::TowerRunState;
+use crate::state::{GameState, TowerRunState};
 use crate::ui;
 
-pub(super) fn handle_input(data: &GameData, run: &TowerRunState) -> Option<TowerAction> {
+pub(super) fn handle_input(
+    state: &GameState,
+    data: &GameData,
+    run: &TowerRunState,
+) -> Option<TowerAction> {
     let pending = run.pending_event.as_ref()?;
     for (index, event_id) in pending.event_ids.iter().take(2).enumerate() {
-        let enabled = tower_engine::event_choice_available(run, data, event_id);
+        let enabled = tower_engine::event_choice_available(state, data, event_id);
         if ui::button_clicked(choice_rect(index), enabled) {
             return Some(TowerAction::ChooseEvent(event_id.clone()));
         }
@@ -21,7 +25,7 @@ pub(super) fn handle_input(data: &GameData, run: &TowerRunState) -> Option<Tower
     None
 }
 
-pub(super) fn draw(data: &GameData, run: &TowerRunState) {
+pub(super) fn draw(state: &GameState, data: &GameData, run: &TowerRunState) {
     let Some(pending) = &run.pending_event else {
         return;
     };
@@ -59,6 +63,7 @@ pub(super) fn draw(data: &GameData, run: &TowerRunState) {
     for (index, event_id) in pending.event_ids.iter().take(2).enumerate() {
         draw_choice(
             data,
+            state,
             run,
             data.tower_event(event_id),
             choice_rect(index),
@@ -80,12 +85,14 @@ pub(super) fn draw(data: &GameData, run: &TowerRunState) {
 
 fn draw_choice(
     data: &GameData,
+    state: &GameState,
     run: &TowerRunState,
     event: Option<&TowerEventDefinition>,
     rect: Rect,
     index: usize,
 ) {
-    let enabled = event.is_some_and(|event| run.can_afford_cargo(&event.cargo_costs));
+    let enabled =
+        event.is_some_and(|event| tower_engine::event_choice_available(state, data, &event.id));
     draw_rectangle(
         rect.x,
         rect.y,
@@ -138,22 +145,33 @@ fn draw_choice(
                 ..Default::default()
             },
         );
+        let mut requirements = Vec::new();
         if !event.cargo_costs.is_empty() {
-            let costs = event
-                .cargo_costs
-                .iter()
-                .map(|cost| {
-                    format!(
-                        "{} {}/{}",
-                        data.resource_name(&cost.resource_id),
-                        run.cargo_amount_for(&cost.resource_id),
-                        cost.amount
-                    )
-                })
-                .collect::<Vec<_>>()
-                .join("  ·  ");
+            requirements.push(
+                event
+                    .cargo_costs
+                    .iter()
+                    .map(|cost| {
+                        format!(
+                            "{} {}/{}",
+                            data.resource_name(&cost.resource_id),
+                            run.cargo_amount_for(&cost.resource_id),
+                            cost.amount
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join("  ·  "),
+            );
+        }
+        if let Some(passive) = event.required_passive {
+            requirements.push(format!("Party: {passive}"));
+        }
+        if let Some(element) = event.required_element {
+            requirements.push(format!("Party: {element} affinity"));
+        }
+        if !requirements.is_empty() {
             draw_ui_text_ex(
-                &format!("Cargo: {costs}"),
+                &requirements.join("  ·  "),
                 rect.x + 438.0,
                 rect.y + 78.0,
                 TextParams {

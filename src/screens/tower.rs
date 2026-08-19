@@ -56,7 +56,7 @@ pub fn handle_input(
             .as_ref()
             .is_some_and(|run| run.pending_event.is_some())
         {
-            return event_prompt::handle_input(data, state.tower_run.as_ref().unwrap());
+            return event_prompt::handle_input(state, data, state.tower_run.as_ref().unwrap());
         }
         if is_key_pressed(KeyCode::W) || is_key_pressed(KeyCode::Up) {
             return Some(TowerAction::Move(0, -1));
@@ -122,7 +122,7 @@ pub fn draw(
         context_drawer::draw(data, run);
         journal::draw(data, run);
         journal::draw_anomaly(data, run);
-        event_prompt::draw(data, run);
+        event_prompt::draw(state, data, run);
         ui::draw_button(guide_button_rect(true), "FIELD GUIDE", true);
         ui::draw_status_at(status_message, Rect::new(250.0, 60.0, 780.0, 28.0));
     } else {

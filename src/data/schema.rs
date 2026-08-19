@@ -198,6 +198,10 @@ pub struct TowerEventDefinition {
     #[serde(default)]
     pub cargo_costs: Vec<ResourceAmount>,
     #[serde(default)]
+    pub required_passive: Option<PassiveSkill>,
+    #[serde(default)]
+    pub required_element: Option<Element>,
+    #[serde(default)]
     pub pressure_delta: i32,
     #[serde(default)]
     pub party_healing: i32,

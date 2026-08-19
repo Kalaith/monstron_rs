@@ -7,12 +7,14 @@ mod blessing_tests;
 mod boss_gate_tests;
 mod contracts;
 mod discovery;
+mod event_choices;
 mod interactions;
 mod map_gen;
 mod map_objects;
 mod navigation;
 mod pressure;
 mod survey;
+pub use event_choices::{choose_special_event, event_choice_available, leave_special_event};
 pub use survey::survey_floor;
 #[cfg(test)]
 mod tests;
@@ -21,13 +23,14 @@ use crate::data::{GameData, TowerBlessing};
 use crate::engine::{monster_engine, town_engine};
 use crate::state::{
     DailyCommitment, GameState, ResourceStack, TowerFoundEgg, TowerMapObject, TowerMapObjectKind,
-    TowerPendingEvent, TowerRunGoal, TowerRunState,
+    TowerRunGoal, TowerRunState,
 };
 use anomalies::{anomaly_effect, select_anomaly_id};
 pub use contracts::contract_progress;
 use contracts::refresh_contract;
 use discovery::record_visible_discoveries;
-use interactions::{apply_tower_event, resolve_hazard};
+use event_choices::resolve_special_location;
+use interactions::resolve_hazard;
 use map_gen::{generate_map, reveal_current_area};
 use map_objects::{advance_wandering_enemy, WanderingAdvance};
 use navigation::{explore_direction, route_direction};
@@ -493,110 +496,6 @@ fn resolve_exit(state: &mut GameState, data: &GameData, object: TowerMapObject) 
         }
     }
     return_to_town(state, data)
-}
-
-fn resolve_special_location(
-    state: &mut GameState,
-    data: &GameData,
-    object: TowerMapObject,
-) -> TowerResult {
-    let Some(location) = data.tower_special_location(&object.special_location_id) else {
-        return result("The party finds an unrecorded tower landmark.");
-    };
-    let mut event_ids = location.event_ids.clone();
-    if let Some(index) = event_ids.iter().position(|id| id == &object.event_id) {
-        event_ids.rotate_left(index);
-    }
-    if let Some(run) = &mut state.tower_run {
-        run.pending_event = Some(TowerPendingEvent {
-            special_location_id: location.id.clone(),
-            event_ids,
-        });
-        let summary = format!(
-            "Discovered {}. Choose a visible approach or tap LEAVE.",
-            location.name
-        );
-        run.add_event(summary.clone());
-        return result(summary);
-    }
-    result("No tower run is active. Tap Town to choose a run.")
-}
-
-pub fn choose_special_event(state: &mut GameState, data: &GameData, event_id: &str) -> TowerResult {
-    let Some(pending) = state
-        .tower_run
-        .as_ref()
-        .and_then(|run| run.pending_event.clone())
-    else {
-        return result("No landmark decision is waiting. Tap EXPLORE.");
-    };
-    if !pending
-        .event_ids
-        .iter()
-        .any(|candidate| candidate == event_id)
-    {
-        return result("That landmark approach is unavailable. Tap a visible choice.");
-    }
-    let Some(event) = data.tower_event(event_id) else {
-        return result("That landmark approach is no longer recorded.");
-    };
-    let Some(run) = state.tower_run.as_ref() else {
-        return result("No tower run is active. Tap Town to choose a run.");
-    };
-    if !run.can_afford_cargo(&event.cargo_costs) {
-        return result(event_cost_shortfall(run, data, event));
-    }
-    if let Some(run) = &mut state.tower_run {
-        run.spend_cargo(&event.cargo_costs);
-        run.pending_event = None;
-        run.stats.landmarks_resolved += 1;
-    }
-    let outcome = apply_tower_event(state, data, &pending.special_location_id, event_id);
-    with_contract_refresh(outcome, state, data)
-}
-
-pub fn event_choice_available(run: &TowerRunState, data: &GameData, event_id: &str) -> bool {
-    data.tower_event(event_id)
-        .is_some_and(|event| run.can_afford_cargo(&event.cargo_costs))
-}
-
-fn event_cost_shortfall(
-    run: &TowerRunState,
-    data: &GameData,
-    event: &crate::data::TowerEventDefinition,
-) -> String {
-    let missing = event
-        .cargo_costs
-        .iter()
-        .filter_map(|cost| {
-            let amount = cost.amount - run.cargo_amount_for(&cost.resource_id);
-            (amount > 0).then(|| format!("{amount} {}", data.resource_name(&cost.resource_id)))
-        })
-        .collect::<Vec<_>>();
-    format!(
-        "{} needs {} more in expedition cargo. Choose another approach or tap LEAVE.",
-        event.name,
-        missing.join(", ")
-    )
-}
-
-pub fn leave_special_event(state: &mut GameState, data: &GameData) -> TowerResult {
-    let Some(pending) = state
-        .tower_run
-        .as_mut()
-        .and_then(|run| run.pending_event.take())
-    else {
-        return result("No landmark decision is waiting. Tap EXPLORE.");
-    };
-    let location_name = data
-        .tower_special_location(&pending.special_location_id)
-        .map(|location| location.name.as_str())
-        .unwrap_or("the landmark");
-    let summary = format!("The party leaves {location_name} undisturbed.");
-    if let Some(run) = &mut state.tower_run {
-        run.add_event(summary.clone());
-    }
-    result(summary)
 }
 
 fn advance_floor(state: &mut GameState, data: &GameData) -> TowerResult {

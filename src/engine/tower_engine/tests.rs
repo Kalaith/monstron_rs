@@ -3,7 +3,7 @@ use super::map_gen::{generate_map, reveal_current_area};
 use super::navigation::explore_direction;
 use super::*;
 use crate::data::GameDataLoader;
-use crate::state::{TowerMapState, TowerTileKind, TowerTileVisibility};
+use crate::state::{TowerMapState, TowerPendingEvent, TowerTileKind, TowerTileVisibility};
 
 #[test]
 fn generated_map_has_start_and_stairs() {
@@ -140,11 +140,7 @@ fn landmark_cost_is_atomic_and_keeps_the_decision_open_when_unaffordable() {
         event_ids: vec!["engine_salvage".to_owned(), "engine_backdraft".to_owned()],
     });
 
-    assert!(!event_choice_available(
-        state.tower_run.as_ref().unwrap(),
-        &data,
-        "engine_salvage"
-    ));
+    assert!(!event_choice_available(&state, &data, "engine_salvage"));
     let result = choose_special_event(&mut state, &data, "engine_salvage");
     let run = state.tower_run.as_ref().unwrap();
     assert!(result.summary.contains("1 Wood more"));
@@ -158,6 +154,43 @@ fn landmark_cost_is_atomic_and_keeps_the_decision_open_when_unaffordable() {
     assert_eq!(run.cargo_amount_for("wood"), 0);
     assert_eq!(run.cargo_amount_for("ore"), 4);
     assert!(run.pending_event.is_none());
+}
+
+#[test]
+fn landmark_party_requirement_keeps_cost_and_decision_intact() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Balanced);
+    let run = state.tower_run.as_mut().unwrap();
+    run.add_cargo("herbs", 2);
+    run.pending_event = Some(TowerPendingEvent {
+        special_location_id: "lantern_well".to_owned(),
+        event_ids: vec!["restorative_draught".to_owned()],
+    });
+
+    assert!(!event_choice_available(
+        &state,
+        &data,
+        "restorative_draught"
+    ));
+    let result = choose_special_event(&mut state, &data, "restorative_draught");
+    assert!(result.summary.contains("Resists poison"));
+    assert_eq!(
+        state.tower_run.as_ref().unwrap().cargo_amount_for("herbs"),
+        2
+    );
+    assert!(state.tower_run.as_ref().unwrap().pending_event.is_some());
+
+    let party_id = state.monster_roster.party_slots[0].unwrap();
+    state.monster_roster.monster_mut(party_id).unwrap().passive =
+        crate::data::PassiveSkill::ResistsPoison;
+    let result = choose_special_event(&mut state, &data, "restorative_draught");
+    assert!(result.summary.contains("Restorative Draught"));
+    assert_eq!(
+        state.tower_run.as_ref().unwrap().cargo_amount_for("herbs"),
+        0
+    );
+    assert!(state.tower_run.as_ref().unwrap().pending_event.is_none());
 }
 
 #[test]
@@ -266,6 +299,9 @@ fn charting_event_reveals_every_passable_route() {
     let data = GameDataLoader::load_embedded().expect("embedded data should load");
     let mut state = GameState::new(&data);
     start_run(&mut state, &data, TowerRunGoal::Scout);
+    let party_id = state.monster_roster.party_slots[0].unwrap();
+    state.monster_roster.monster_mut(party_id).unwrap().passive =
+        crate::data::PassiveSkill::DetectsEggs;
     state.tower_run.as_mut().unwrap().pending_event = Some(TowerPendingEvent {
         special_location_id: "moonwell_chartroom".to_owned(),
         event_ids: vec!["moonwell_chart".to_owned()],
