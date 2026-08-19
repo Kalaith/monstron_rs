@@ -196,6 +196,8 @@ pub struct TowerEventDefinition {
     #[serde(default)]
     pub rewards: Vec<ResourceAmount>,
     #[serde(default)]
+    pub cargo_costs: Vec<ResourceAmount>,
+    #[serde(default)]
     pub pressure_delta: i32,
     #[serde(default)]
     pub party_healing: i32,

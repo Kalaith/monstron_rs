@@ -128,6 +128,7 @@
       "id": "restorative_draught",
       "name": "Restorative Draught",
       "narrative": "Cool light follows the water and closes the party's wounds.",
+      "cargo_costs": [{ "resource_id": "herbs", "amount": 2 }],
       "pressure_delta": -1,
       "party_healing": 7
     },
@@ -141,6 +142,7 @@
       "id": "roots_reveal_cache",
       "name": "Buried Route",
       "narrative": "The root-map points toward supplies sealed inside the wall.",
+      "cargo_costs": [{ "resource_id": "crystal", "amount": 1 }],
       "rewards": [{ "resource_id": "wood", "amount": 5 }, { "resource_id": "herbs", "amount": 3 }],
       "blessing": "CacheSense"
     },
@@ -155,6 +157,7 @@
       "id": "engine_salvage",
       "name": "Engine Salvage",
       "narrative": "The party coaxes intact ore and coins from the dormant mechanism.",
+      "cargo_costs": [{ "resource_id": "wood", "amount": 2 }],
       "rewards": [{ "resource_id": "ore", "amount": 4 }, { "resource_id": "coins", "amount": 6 }]
     },
     {
@@ -168,6 +171,7 @@
       "id": "archive_dividend",
       "name": "Archive Dividend",
       "narrative": "One tablet dissolves into a fistful of memory-bright crystal.",
+      "cargo_costs": [{ "resource_id": "ore", "amount": 1 }],
       "rewards": [{ "resource_id": "crystal", "amount": 5 }],
       "pressure_delta": 1
     },
@@ -181,6 +185,7 @@
       "id": "thorn_cache",
       "name": "Thorn-Held Cache",
       "narrative": "Behind the crown thorn, old tribute waits for a steady hand.",
+      "cargo_costs": [{ "resource_id": "herbs", "amount": 2 }],
       "rewards": [{ "resource_id": "coins", "amount": 10 }, { "resource_id": "crystal", "amount": 3 }],
       "pressure_delta": 2
     },
@@ -223,6 +228,7 @@
       "id": "tune_bell",
       "name": "Tune the Bell",
       "narrative": "The forge yields ore as its suspended hammers find the lost note.",
+      "cargo_costs": [{ "resource_id": "ore", "amount": 2 }],
       "rewards": [{ "resource_id": "ore", "amount": 5 }, { "resource_id": "crystal", "amount": 2 }],
       "pressure_delta": 2
     },
@@ -238,6 +244,7 @@
       "id": "moonwell_egg",
       "name": "Reach Into the Reflection",
       "narrative": "The reflected hand returns holding an egg cold with moonlight.",
+      "cargo_costs": [{ "resource_id": "crystal", "amount": 2 }],
       "egg_type_id": "moonlit_egg",
       "pressure_delta": 1
     },
@@ -259,12 +266,14 @@
       "id": "star_cache",
       "name": "Gather Fallen Light",
       "narrative": "Fragments caught beneath the lens cool into usable crystal.",
+      "cargo_costs": [{ "resource_id": "ore", "amount": 2 }],
       "rewards": [{ "resource_id": "crystal", "amount": 6 }, { "resource_id": "coins", "amount": 5 }]
     },
     {
       "id": "crown_tribute",
       "name": "Accept the Old Tribute",
       "narrative": "The deepest bowl opens around an egg marked with the living crown.",
+      "cargo_costs": [{ "resource_id": "coins", "amount": 6 }],
       "egg_type_id": "boss_egg",
       "pressure_delta": 3,
       "blessing": "Wardstone"

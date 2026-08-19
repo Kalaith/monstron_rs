@@ -3,13 +3,15 @@ use macroquad_toolkit::ui::draw_ui_text_ex;
 
 use super::TowerAction;
 use crate::data::{GameData, TowerEventDefinition};
+use crate::engine::tower_engine;
 use crate::state::TowerRunState;
 use crate::ui;
 
-pub(super) fn handle_input(run: &TowerRunState) -> Option<TowerAction> {
+pub(super) fn handle_input(data: &GameData, run: &TowerRunState) -> Option<TowerAction> {
     let pending = run.pending_event.as_ref()?;
     for (index, event_id) in pending.event_ids.iter().take(2).enumerate() {
-        if ui::button_clicked(choice_rect(index), true) {
+        let enabled = tower_engine::event_choice_available(run, data, event_id);
+        if ui::button_clicked(choice_rect(index), enabled) {
             return Some(TowerAction::ChooseEvent(event_id.clone()));
         }
     }
@@ -55,7 +57,13 @@ pub(super) fn draw(data: &GameData, run: &TowerRunState) {
     );
 
     for (index, event_id) in pending.event_ids.iter().take(2).enumerate() {
-        draw_choice(data, data.tower_event(event_id), choice_rect(index), index);
+        draw_choice(
+            data,
+            run,
+            data.tower_event(event_id),
+            choice_rect(index),
+            index,
+        );
     }
     ui::draw_button(leave_rect(), "LEAVE UNDISTURBED", true);
     draw_ui_text_ex(
@@ -70,7 +78,14 @@ pub(super) fn draw(data: &GameData, run: &TowerRunState) {
     );
 }
 
-fn draw_choice(data: &GameData, event: Option<&TowerEventDefinition>, rect: Rect, index: usize) {
+fn draw_choice(
+    data: &GameData,
+    run: &TowerRunState,
+    event: Option<&TowerEventDefinition>,
+    rect: Rect,
+    index: usize,
+) {
+    let enabled = event.is_some_and(|event| run.can_afford_cargo(&event.cargo_costs));
     draw_rectangle(
         rect.x,
         rect.y,
@@ -78,7 +93,18 @@ fn draw_choice(data: &GameData, event: Option<&TowerEventDefinition>, rect: Rect
         rect.h,
         Color::from_rgba(13, 23, 24, 248),
     );
-    draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 2.0, super::gold_dim());
+    draw_rectangle_lines(
+        rect.x,
+        rect.y,
+        rect.w,
+        rect.h,
+        2.0,
+        if enabled {
+            super::gold_dim()
+        } else {
+            ui::TEXT_DIM
+        },
+    );
     let label = event.map_or("Unknown Approach", |entry| entry.name.as_str());
     draw_ui_text_ex(
         &format!("{}  {}", index + 1, label),
@@ -86,7 +112,11 @@ fn draw_choice(data: &GameData, event: Option<&TowerEventDefinition>, rect: Rect
         rect.y + 32.0,
         TextParams {
             font_size: 22,
-            color: ui::TEXT_BRIGHT,
+            color: if enabled {
+                ui::TEXT_BRIGHT
+            } else {
+                ui::TEXT_DIM
+            },
             ..Default::default()
         },
     );
@@ -108,6 +138,35 @@ fn draw_choice(data: &GameData, event: Option<&TowerEventDefinition>, rect: Rect
                 ..Default::default()
             },
         );
+        if !event.cargo_costs.is_empty() {
+            let costs = event
+                .cargo_costs
+                .iter()
+                .map(|cost| {
+                    format!(
+                        "{} {}/{}",
+                        data.resource_name(&cost.resource_id),
+                        run.cargo_amount_for(&cost.resource_id),
+                        cost.amount
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("  ·  ");
+            draw_ui_text_ex(
+                &format!("Cargo: {costs}"),
+                rect.x + 438.0,
+                rect.y + 78.0,
+                TextParams {
+                    font_size: 14,
+                    color: if enabled {
+                        super::gold_bright()
+                    } else {
+                        Color::from_rgba(220, 112, 91, 255)
+                    },
+                    ..Default::default()
+                },
+            );
+        }
     }
 }
 

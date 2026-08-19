@@ -535,12 +535,47 @@ pub fn choose_special_event(state: &mut GameState, data: &GameData, event_id: &s
     {
         return result("That landmark approach is unavailable. Tap a visible choice.");
     }
+    let Some(event) = data.tower_event(event_id) else {
+        return result("That landmark approach is no longer recorded.");
+    };
+    let Some(run) = state.tower_run.as_ref() else {
+        return result("No tower run is active. Tap Town to choose a run.");
+    };
+    if !run.can_afford_cargo(&event.cargo_costs) {
+        return result(event_cost_shortfall(run, data, event));
+    }
     if let Some(run) = &mut state.tower_run {
+        run.spend_cargo(&event.cargo_costs);
         run.pending_event = None;
         run.stats.landmarks_resolved += 1;
     }
     let outcome = apply_tower_event(state, data, &pending.special_location_id, event_id);
     with_contract_refresh(outcome, state, data)
+}
+
+pub fn event_choice_available(run: &TowerRunState, data: &GameData, event_id: &str) -> bool {
+    data.tower_event(event_id)
+        .is_some_and(|event| run.can_afford_cargo(&event.cargo_costs))
+}
+
+fn event_cost_shortfall(
+    run: &TowerRunState,
+    data: &GameData,
+    event: &crate::data::TowerEventDefinition,
+) -> String {
+    let missing = event
+        .cargo_costs
+        .iter()
+        .filter_map(|cost| {
+            let amount = cost.amount - run.cargo_amount_for(&cost.resource_id);
+            (amount > 0).then(|| format!("{amount} {}", data.resource_name(&cost.resource_id)))
+        })
+        .collect::<Vec<_>>();
+    format!(
+        "{} needs {} more in expedition cargo. Choose another approach or tap LEAVE.",
+        event.name,
+        missing.join(", ")
+    )
 }
 
 pub fn leave_special_event(state: &mut GameState, data: &GameData) -> TowerResult {

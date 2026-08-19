@@ -55,7 +55,7 @@ pub fn handle_input(
             .as_ref()
             .is_some_and(|run| run.pending_event.is_some())
         {
-            return event_prompt::handle_input(state.tower_run.as_ref().unwrap());
+            return event_prompt::handle_input(data, state.tower_run.as_ref().unwrap());
         }
         if is_key_pressed(KeyCode::W) || is_key_pressed(KeyCode::Up) {
             return Some(TowerAction::Move(0, -1));

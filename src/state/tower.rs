@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::data::TowerBlessing;
+use crate::data::{ResourceAmount, TowerBlessing};
 use crate::state::ResourceStack;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -209,6 +209,36 @@ impl TowerRunState {
 
     pub fn cargo_amount(&self) -> i32 {
         self.cargo.iter().map(|stack| stack.amount.max(0)).sum()
+    }
+
+    pub fn cargo_amount_for(&self, resource_id: &str) -> i32 {
+        self.cargo
+            .iter()
+            .find(|stack| stack.resource_id == resource_id)
+            .map_or(0, |stack| stack.amount.max(0))
+    }
+
+    pub fn can_afford_cargo(&self, costs: &[ResourceAmount]) -> bool {
+        costs
+            .iter()
+            .all(|cost| self.cargo_amount_for(&cost.resource_id) >= cost.amount)
+    }
+
+    pub fn spend_cargo(&mut self, costs: &[ResourceAmount]) -> bool {
+        if !self.can_afford_cargo(costs) {
+            return false;
+        }
+        for cost in costs {
+            if let Some(stack) = self
+                .cargo
+                .iter_mut()
+                .find(|stack| stack.resource_id == cost.resource_id)
+            {
+                stack.amount -= cost.amount;
+            }
+        }
+        self.cargo.retain(|stack| stack.amount > 0);
+        true
     }
 
     pub fn add_event(&mut self, message: String) {

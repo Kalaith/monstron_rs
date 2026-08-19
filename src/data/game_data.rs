@@ -453,6 +453,12 @@ impl GameData {
         }
         for event in &self.tower_events {
             validate_resource_stacks(&resource_ids, &event.rewards, "tower event", &event.id)?;
+            validate_resource_stacks(
+                &resource_ids,
+                &event.cargo_costs,
+                "tower event cost",
+                &event.id,
+            )?;
             if !event.enemy_id.is_empty() && self.enemy(&event.enemy_id).is_none() {
                 return Err(format!(
                     "Tower event '{}' references missing enemy '{}'",

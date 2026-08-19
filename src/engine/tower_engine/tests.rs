@@ -106,6 +106,7 @@ fn special_location_event_applies_its_data_driven_outcome() {
     assert!(result.summary.contains("Root Oracle"));
     assert!(state.tower_run.as_ref().unwrap().pending_event.is_some());
     assert_eq!(state.tower_run.as_ref().unwrap().cargo_amount(), 0);
+    state.tower_run.as_mut().unwrap().add_cargo("crystal", 1);
 
     let result = choose_special_event(&mut state, &data, "roots_reveal_cache");
     let run = state.tower_run.as_ref().expect("tower run should remain");
@@ -125,6 +126,38 @@ fn special_location_event_applies_its_data_driven_outcome() {
             .map(|stack| stack.amount),
         Some(3)
     );
+}
+
+#[test]
+fn landmark_cost_is_atomic_and_keeps_the_decision_open_when_unaffordable() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Scout);
+    let run = state.tower_run.as_mut().unwrap();
+    run.add_cargo("wood", 1);
+    run.pending_event = Some(TowerPendingEvent {
+        special_location_id: "cinder_engine".to_owned(),
+        event_ids: vec!["engine_salvage".to_owned(), "engine_backdraft".to_owned()],
+    });
+
+    assert!(!event_choice_available(
+        state.tower_run.as_ref().unwrap(),
+        &data,
+        "engine_salvage"
+    ));
+    let result = choose_special_event(&mut state, &data, "engine_salvage");
+    let run = state.tower_run.as_ref().unwrap();
+    assert!(result.summary.contains("1 Wood more"));
+    assert_eq!(run.cargo_amount_for("wood"), 1);
+    assert!(run.pending_event.is_some());
+
+    state.tower_run.as_mut().unwrap().add_cargo("wood", 1);
+    let result = choose_special_event(&mut state, &data, "engine_salvage");
+    let run = state.tower_run.as_ref().unwrap();
+    assert!(result.summary.contains("Engine Salvage"));
+    assert_eq!(run.cargo_amount_for("wood"), 0);
+    assert_eq!(run.cargo_amount_for("ore"), 4);
+    assert!(run.pending_event.is_none());
 }
 
 #[test]
