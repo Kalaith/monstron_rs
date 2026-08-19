@@ -5,6 +5,7 @@ mod anomaly_runtime_tests;
 mod blessing_tests;
 #[cfg(test)]
 mod boss_gate_tests;
+mod camp;
 mod contracts;
 mod discovery;
 mod event_choices;
@@ -17,6 +18,7 @@ mod pressure;
 #[cfg(test)]
 mod secret_tests;
 mod survey;
+pub use camp::camp_party;
 pub use event_choices::{choose_special_event, event_choice_available, leave_special_event};
 pub use survey::survey_floor;
 #[cfg(test)]
@@ -331,47 +333,6 @@ pub fn route_party_to(state: &mut GameState, data: &GameData, target: (u32, u32)
 
 pub fn room_tap_direction(run: &TowerRunState, target: (u32, u32)) -> Option<(i32, i32)> {
     route_direction(&run.map, run.goal, target.0, target.1)
-}
-
-pub fn camp_party(state: &mut GameState, data: &GameData) -> TowerResult {
-    let Some(run) = &state.tower_run else {
-        return result("No tower run is active. Tap Town to choose a run.");
-    };
-    if run.camp_cooldown > 0 {
-        return result(format!(
-            "The party must travel {} more step(s) before camping again. Tap EXPLORE or RETREAT.",
-            run.camp_cooldown
-        ));
-    }
-
-    let mending_lights = state.tower_run.as_ref().is_some_and(|run| {
-        anomaly_effect(run, data) == Some(crate::data::TowerAnomalyEffect::MendingLights)
-    });
-    let healing = if mending_lights { 5 } else { 3 };
-    let party_ids: Vec<u64> = state
-        .monster_roster
-        .party_slots
-        .iter()
-        .flatten()
-        .copied()
-        .collect();
-    let mut total_healed = 0;
-    for monster_id in party_ids {
-        if let Some(monster) = state.monster_roster.monster_mut(monster_id) {
-            let before = monster.hp;
-            monster.hp = (monster.hp + healing).min(monster.max_hp);
-            total_healed += monster.hp - before;
-        }
-    }
-    let run = state.tower_run.as_mut().expect("tower run checked above");
-    let pressure_reduced = run.pressure.min(2);
-    run.pressure -= pressure_reduced;
-    run.camp_cooldown = if mending_lights { 6 } else { 8 };
-    let summary = format!(
-        "The party makes a brief camp: {total_healed} total HP restored and pressure reduced by {pressure_reduced}."
-    );
-    run.add_event(summary.clone());
-    result(summary)
 }
 
 pub fn return_to_town(state: &mut GameState, data: &GameData) -> TowerResult {

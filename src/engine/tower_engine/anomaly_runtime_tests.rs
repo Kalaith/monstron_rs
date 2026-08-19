@@ -58,15 +58,15 @@ fn nesting_pollen_shortens_found_egg_incubation() {
 }
 
 #[test]
-fn mending_lights_improve_camp_healing_and_cooldown() {
+fn mending_lights_stack_with_the_marked_camp_room() {
     let (data, mut state) = run_with_anomaly("mending_lights");
     state.monster_roster.monsters[0].hp -= 8;
     let hp_before = state.monster_roster.monsters[0].hp;
 
     camp_party(&mut state, &data);
 
-    assert_eq!(state.monster_roster.monsters[0].hp, hp_before + 5);
-    assert_eq!(state.tower_run.as_ref().unwrap().camp_cooldown, 6);
+    assert_eq!(state.monster_roster.monsters[0].hp, hp_before + 7);
+    assert_eq!(state.tower_run.as_ref().unwrap().camp_cooldown, 4);
 }
 
 #[test]

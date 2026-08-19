@@ -423,11 +423,12 @@ fn camp_recovers_the_party_but_has_a_travel_cooldown() {
     let hp_after_first = state.monster_roster.monsters[0].hp;
     let second = camp_party(&mut state, &data);
 
-    assert!(first.summary.contains("3 total HP"));
-    assert_eq!(state.tower_run.as_ref().unwrap().pressure, 2);
-    assert_eq!(state.tower_run.as_ref().unwrap().camp_cooldown, 8);
+    assert!(first.summary.contains("5 total HP"));
+    assert!(first.summary.contains("marked shelter"));
+    assert_eq!(state.tower_run.as_ref().unwrap().pressure, 1);
+    assert_eq!(state.tower_run.as_ref().unwrap().camp_cooldown, 6);
     assert_eq!(state.monster_roster.monsters[0].hp, hp_after_first);
-    assert!(second.summary.contains("travel 8 more step"));
+    assert!(second.summary.contains("travel 6 more step"));
 }
 
 #[test]
