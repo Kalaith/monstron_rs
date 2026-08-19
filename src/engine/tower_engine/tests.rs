@@ -1,4 +1,5 @@
 use super::map_gen::{generate_map, reveal_current_area};
+use super::navigation::explore_direction;
 use super::*;
 use crate::data::GameDataLoader;
 use crate::state::{TowerMapState, TowerTileKind, TowerTileVisibility};
@@ -118,6 +119,60 @@ fn movement_collects_object_on_destination_tile() {
     assert_eq!(run.rooms_explored, 1);
     assert!(run.map.object_at(target_x, target_y).is_none());
     assert_eq!(run.cargo_amount(), 3);
+}
+
+#[test]
+fn movement_builds_pressure_at_a_readable_pace() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Balanced);
+    let run = state.tower_run.as_ref().expect("tower run should start");
+    let (dx, dy) = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        .into_iter()
+        .find(|(dx, dy)| {
+            let x = run.map.player_x as i32 + dx;
+            let y = run.map.player_y as i32 + dy;
+            x >= 0 && y >= 0 && run.map.is_passable(x as u32, y as u32)
+        })
+        .expect("start room should have a passable neighbor");
+    state.tower_run.as_mut().unwrap().rooms_explored = 3;
+
+    move_party(&mut state, &data, dx, dy);
+
+    assert_eq!(state.tower_run.as_ref().unwrap().pressure, 1);
+}
+
+#[test]
+fn camp_recovers_the_party_but_has_a_travel_cooldown() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::SafeRun);
+    state.monster_roster.monsters[0].hp -= 8;
+    state.tower_run.as_mut().unwrap().pressure = 4;
+
+    let first = camp_party(&mut state);
+    let hp_after_first = state.monster_roster.monsters[0].hp;
+    let second = camp_party(&mut state);
+
+    assert!(first.summary.contains("3 total HP"));
+    assert_eq!(state.tower_run.as_ref().unwrap().pressure, 2);
+    assert_eq!(state.tower_run.as_ref().unwrap().camp_cooldown, 8);
+    assert_eq!(state.monster_roster.monsters[0].hp, hp_after_first);
+    assert!(second.summary.contains("travel 8 more step"));
+}
+
+#[test]
+fn explore_finds_a_step_toward_hidden_passable_space() {
+    let mut map = TowerMapState::new(6, 3, 1, 11);
+    for x in 1..5 {
+        map.set_tile(x, 1, TowerTileKind::Corridor);
+    }
+    map.player_x = 1;
+    map.player_y = 1;
+    map.set_visibility(1, 1, TowerTileVisibility::Visible);
+    map.set_visibility(2, 1, TowerTileVisibility::Explored);
+
+    assert_eq!(explore_direction(&map), Some((1, 0)));
 }
 
 #[test]

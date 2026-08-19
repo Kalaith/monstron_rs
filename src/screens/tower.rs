@@ -13,6 +13,8 @@ use macroquad_toolkit::ui::draw_ui_text_ex;
 pub enum TowerAction {
     Move(i32, i32),
     TapMove(i32, i32),
+    Explore,
+    Camp,
     ReturnToTown,
     ToTown,
 }
@@ -56,7 +58,13 @@ pub fn handle_input(state: &GameState) -> Option<TowerAction> {
         if let Some(action) = map_view::world_tap_action(state.tower_run.as_ref().unwrap()) {
             return Some(action);
         }
-        if ui::button_clicked(Rect::new(738.0, 650.0, 180.0, 58.0), true) {
+        if ui::button_clicked(explore_button_rect(), true) {
+            return Some(TowerAction::Explore);
+        }
+        if ui::button_clicked(camp_button_rect(), true) {
+            return Some(TowerAction::Camp);
+        }
+        if ui::button_clicked(retreat_button_rect(), true) {
             return Some(TowerAction::ReturnToTown);
         }
         if ui::button_clicked(return_button_rect(), true) {
@@ -72,7 +80,7 @@ pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
         map_view::draw_map_world(state, data, run);
         draw_run_overlay(state, data, run);
         draw_party_rail(state);
-        draw_action_dock();
+        draw_action_dock(run);
         draw_context_drawer(data, run);
         draw_journal(run);
         ui::draw_status_at(status_message, Rect::new(250.0, 60.0, 780.0, 28.0));
@@ -203,6 +211,20 @@ fn draw_run_overlay(state: &GameState, data: &GameData, run: &TowerRunState) {
         TextParams {
             font_size: 19,
             color: gold_bright(),
+            ..Default::default()
+        },
+    );
+    draw_ui_text_ex(
+        &format!("Pressure {}/{}", run.pressure, run.pressure_limit),
+        555.0,
+        34.0,
+        TextParams {
+            font_size: 18,
+            color: if run.pressure + 2 >= run.pressure_limit {
+                Color::from_rgba(232, 112, 82, 255)
+            } else {
+                gold_bright()
+            },
             ..Default::default()
         },
     );
@@ -413,7 +435,7 @@ fn draw_context_art(data: &GameData, object: &TowerMapObject, x: f32, y: f32, w:
     }
 }
 
-fn draw_action_dock() {
+fn draw_action_dock(run: &TowerRunState) {
     for (index, (icon, title)) in [("+", "Explore"), ("*", "Camp"), ("<", "Retreat")]
         .iter()
         .enumerate()
@@ -437,6 +459,18 @@ fn draw_action_dock() {
             TextParams {
                 font_size: 22,
                 color: gold_bright(),
+                ..Default::default()
+            },
+        );
+    }
+    if run.camp_cooldown > 0 {
+        draw_ui_text_ex(
+            &format!("Ready in {} steps", run.camp_cooldown),
+            camp_button_rect().x + 38.0,
+            camp_button_rect().y - 8.0,
+            TextParams {
+                font_size: 13,
+                color: ui::TEXT_DIM,
                 ..Default::default()
             },
         );
@@ -611,4 +645,16 @@ fn town_button_rect() -> Rect {
 
 fn return_button_rect() -> Rect {
     town_button_rect()
+}
+
+fn explore_button_rect() -> Rect {
+    Rect::new(350.0, 650.0, 180.0, 58.0)
+}
+
+fn camp_button_rect() -> Rect {
+    Rect::new(544.0, 650.0, 180.0, 58.0)
+}
+
+fn retreat_button_rect() -> Rect {
+    Rect::new(738.0, 650.0, 180.0, 58.0)
 }

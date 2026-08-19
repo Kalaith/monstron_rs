@@ -1,5 +1,6 @@
 mod map_gen;
 mod map_objects;
+mod navigation;
 #[cfg(test)]
 mod tests;
 
@@ -10,6 +11,7 @@ use crate::state::{
     TowerRunGoal, TowerRunState,
 };
 use map_gen::{generate_map, reveal_current_area};
+use navigation::explore_direction;
 
 pub struct TowerResult {
     pub summary: String,
@@ -103,6 +105,14 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
 
     ensure_map(state, data);
 
+    if state
+        .tower_run
+        .as_ref()
+        .is_some_and(|run| run.pressure >= run.pressure_limit)
+    {
+        return result("The tower is fully awake. Tap CAMP to recover or RETREAT with the cargo.");
+    }
+
     let object = {
         let Some(run) = &mut state.tower_run else {
             return result("No tower run is active. Tap Town to choose a run.");
@@ -122,6 +132,10 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
         run.map.player_x = next_x as u32;
         run.map.player_y = next_y as u32;
         run.rooms_explored += 1;
+        run.camp_cooldown = run.camp_cooldown.saturating_sub(1);
+        if run.rooms_explored.is_multiple_of(4) {
+            run.pressure = run.pressure.saturating_add(1).min(run.pressure_limit);
+        }
         reveal_current_area(&mut run.map);
         run.map
             .object_index_at(run.map.player_x, run.map.player_y)
@@ -129,10 +143,72 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
     };
 
     let Some(object) = object else {
-        return result("The party advances through the dungeon.");
+        let pressure_warning = state
+            .tower_run
+            .as_ref()
+            .filter(|run| run.pressure + 2 >= run.pressure_limit)
+            .map(|run| {
+                format!(
+                    " Tower pressure is {}/{}.",
+                    run.pressure, run.pressure_limit
+                )
+            })
+            .unwrap_or_default();
+        return result(format!(
+            "The party advances through the dungeon.{pressure_warning}"
+        ));
     };
 
     resolve_map_object(state, data, object)
+}
+
+pub fn explore_party(state: &mut GameState, data: &GameData) -> TowerResult {
+    ensure_map(state, data);
+    let Some(direction) = state
+        .tower_run
+        .as_ref()
+        .and_then(|run| explore_direction(&run.map))
+    else {
+        return result("No unexplored route is reachable. Tap RETREAT or choose a visible room.");
+    };
+    move_party(state, data, direction.0, direction.1)
+}
+
+pub fn camp_party(state: &mut GameState) -> TowerResult {
+    let Some(run) = &state.tower_run else {
+        return result("No tower run is active. Tap Town to choose a run.");
+    };
+    if run.camp_cooldown > 0 {
+        return result(format!(
+            "The party must travel {} more step(s) before camping again. Tap EXPLORE or RETREAT.",
+            run.camp_cooldown
+        ));
+    }
+
+    let party_ids: Vec<u64> = state
+        .monster_roster
+        .party_slots
+        .iter()
+        .flatten()
+        .copied()
+        .collect();
+    let mut total_healed = 0;
+    for monster_id in party_ids {
+        if let Some(monster) = state.monster_roster.monster_mut(monster_id) {
+            let before = monster.hp;
+            monster.hp = (monster.hp + 3).min(monster.max_hp);
+            total_healed += monster.hp - before;
+        }
+    }
+    let run = state.tower_run.as_mut().expect("tower run checked above");
+    let pressure_reduced = run.pressure.min(2);
+    run.pressure -= pressure_reduced;
+    run.camp_cooldown = 8;
+    let summary = format!(
+        "The party makes a brief camp: {total_healed} total HP restored and pressure reduced by {pressure_reduced}."
+    );
+    run.add_event(summary.clone());
+    result(summary)
 }
 
 pub fn return_to_town(state: &mut GameState, data: &GameData) -> TowerResult {

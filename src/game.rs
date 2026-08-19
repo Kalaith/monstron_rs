@@ -462,6 +462,34 @@ impl Game {
                     }
                 }
             }
+            TowerAction::Explore => {
+                if let Some(state) = &mut self.state {
+                    let result = tower_engine::explore_party(state, &self.data);
+                    let returned_to_town = result.returned_to_town;
+                    self.status_message = result.summary;
+                    if returned_to_town {
+                        self.screen = AppScreen::Town;
+                    }
+                    if let Some(encounter) = result.encounter {
+                        let combat_result = combat_engine::start_named_encounter(
+                            state,
+                            &self.data,
+                            encounter.floor,
+                            encounter.is_boss,
+                            encounter.enemy_id.as_deref(),
+                        );
+                        self.status_message = combat_result.summary;
+                        if state.combat.is_some() {
+                            self.screen = AppScreen::Combat;
+                        }
+                    }
+                }
+            }
+            TowerAction::Camp => {
+                if let Some(state) = &mut self.state {
+                    self.status_message = tower_engine::camp_party(state).summary;
+                }
+            }
             TowerAction::ReturnToTown => {
                 if let Some(state) = &mut self.state {
                     self.status_message = tower_engine::return_to_town(state, &self.data).summary;
