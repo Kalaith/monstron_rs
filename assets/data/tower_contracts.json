@@ -1,0 +1,52 @@
+{
+  "contracts": [
+    {
+      "id": "balanced",
+      "name": "Keeper's Measure",
+      "description": "Travel ten steps while keeping the expedition intact.",
+      "target": "Steps",
+      "target_amount": 10,
+      "rewards": [{"resource_id": "coins", "amount": 6}]
+    },
+    {
+      "id": "egg_hunt",
+      "name": "Nest Survey",
+      "description": "Recover two eggs before returning to the hatchery.",
+      "target": "Eggs",
+      "target_amount": 2,
+      "rewards": [{"resource_id": "herbs", "amount": 5}, {"resource_id": "crystal", "amount": 1}]
+    },
+    {
+      "id": "salvage",
+      "name": "Ruin Dividend",
+      "description": "Gather twenty units of cargo from caches and events.",
+      "target": "Cargo",
+      "target_amount": 20,
+      "rewards": [{"resource_id": "coins", "amount": 12}]
+    },
+    {
+      "id": "scout",
+      "name": "Landmark Ledger",
+      "description": "Resolve two special landmarks for the expedition journal.",
+      "target": "Landmarks",
+      "target_amount": 2,
+      "rewards": [{"resource_id": "crystal", "amount": 3}, {"resource_id": "coins", "amount": 4}]
+    },
+    {
+      "id": "push_deeper",
+      "name": "Downward Claim",
+      "description": "Descend one floor during this expedition.",
+      "target": "Floors",
+      "target_amount": 1,
+      "rewards": [{"resource_id": "ore", "amount": 4}, {"resource_id": "coins", "amount": 5}]
+    },
+    {
+      "id": "safe_run",
+      "name": "Measured Footing",
+      "description": "Travel twelve steps and use the tower's safer routes.",
+      "target": "Steps",
+      "target_amount": 12,
+      "rewards": [{"resource_id": "herbs", "amount": 4}, {"resource_id": "coins", "amount": 5}]
+    }
+  ]
+}

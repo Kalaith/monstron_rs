@@ -231,6 +231,26 @@ pub struct TowerHazardDefinition {
     pub counter_rewards: Vec<ResourceAmount>,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum TowerContractTarget {
+    Eggs,
+    Cargo,
+    Steps,
+    Floors,
+    Landmarks,
+    HazardsCountered,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TowerContractDefinition {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub target: TowerContractTarget,
+    pub target_amount: u32,
+    pub rewards: Vec<ResourceAmount>,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct EnemyDefinition {
     pub id: String,

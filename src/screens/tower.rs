@@ -5,7 +5,7 @@ mod map_view;
 
 use crate::assets;
 use crate::data::GameData;
-use crate::engine::town_engine;
+use crate::engine::{tower_engine, town_engine};
 use crate::state::{GameState, TowerMapObject, TowerMapObjectKind, TowerRunState};
 use crate::ui;
 use macroquad_toolkit::ui::draw_ui_text_ex;
@@ -92,7 +92,7 @@ pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
         draw_party_rail(state);
         draw_action_dock(run);
         draw_context_drawer(data, run);
-        draw_journal(run);
+        draw_journal(data, run);
         event_prompt::draw(data, run);
         ui::draw_status_at(status_message, Rect::new(250.0, 60.0, 780.0, 28.0));
     } else {
@@ -513,7 +513,7 @@ fn draw_action_dock(run: &TowerRunState) {
     }
 }
 
-fn draw_journal(run: &TowerRunState) {
+fn draw_journal(data: &GameData, run: &TowerRunState) {
     let panel = Rect::new(18.0, 538.0, 218.0, 148.0);
     draw_overlay_panel(panel);
     draw_ui_text_ex(
@@ -526,11 +526,38 @@ fn draw_journal(run: &TowerRunState) {
             ..Default::default()
         },
     );
+    if let Some((progress, contract)) = tower_engine::contract_progress(run, data) {
+        let marker = if run.contract_complete {
+            " COMPLETE"
+        } else {
+            ""
+        };
+        draw_ui_text_ex(
+            &format!(
+                "{}  {}/{}{}",
+                contract.name,
+                progress.min(contract.target_amount),
+                contract.target_amount,
+                marker
+            ),
+            panel.x + 16.0,
+            panel.y + 49.0,
+            TextParams {
+                font_size: 12,
+                color: if run.contract_complete {
+                    gold_bright()
+                } else {
+                    ui::TEXT_DIM
+                },
+                ..Default::default()
+            },
+        );
+    }
     for (index, message) in run.event_log.iter().rev().take(2).enumerate() {
         draw_ui_text_ex(
             &format!("• {}", message),
             panel.x + 16.0,
-            panel.y + 78.0 + index as f32 * 24.0,
+            panel.y + 76.0 + index as f32 * 24.0,
             TextParams {
                 font_size: 12,
                 color: ui::TEXT_DIM,

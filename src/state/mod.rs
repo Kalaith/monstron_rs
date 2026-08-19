@@ -20,7 +20,7 @@ pub use monsters::{DailyCommitment, MonsterInstance, MonsterRoster};
 pub use resources::{ResourceInventory, ResourceStack};
 pub use tower::{
     TowerFoundEgg, TowerMapObject, TowerMapObjectKind, TowerMapRng, TowerMapState,
-    TowerPendingEvent, TowerProgress, TowerRoom, TowerRunGoal, TowerRunState, TowerTileKind,
-    TowerTileVisibility,
+    TowerPendingEvent, TowerProgress, TowerRoom, TowerRunGoal, TowerRunState, TowerRunStats,
+    TowerTileKind, TowerTileVisibility,
 };
 pub use town_state::{TownJobKind, TownState};

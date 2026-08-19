@@ -26,6 +26,12 @@ pub struct TowerRunState {
     pub event_log: Vec<String>,
     #[serde(default)]
     pub pending_event: Option<TowerPendingEvent>,
+    #[serde(default)]
+    pub contract_id: String,
+    #[serde(default)]
+    pub contract_complete: bool,
+    #[serde(default)]
+    pub stats: TowerRunStats,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -131,6 +137,13 @@ pub struct TowerPendingEvent {
     pub event_ids: Vec<String>,
 }
 
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct TowerRunStats {
+    pub floors_descended: u32,
+    pub landmarks_resolved: u32,
+    pub hazards_countered: u32,
+}
+
 impl TowerRunState {
     pub fn new(current_floor: u32, pressure_limit: u32, goal: TowerRunGoal) -> Self {
         Self {
@@ -145,6 +158,9 @@ impl TowerRunState {
             found_eggs: Vec::new(),
             event_log: vec![format!("Entered floor {current_floor} on a {goal} run.")],
             pending_event: None,
+            contract_id: goal.contract_id().to_owned(),
+            contract_complete: false,
+            stats: TowerRunStats::default(),
         }
     }
 
@@ -394,6 +410,17 @@ impl TowerRunGoal {
             Self::Scout => "Fewer enemies and more open routes; rewards are modest.",
             Self::PushDeeper => "More stairs and deeper routes; enemies are denser.",
             Self::SafeRun => "Fewer enemies and traps; fewer rewards.",
+        }
+    }
+
+    pub fn contract_id(self) -> &'static str {
+        match self {
+            Self::Balanced => "balanced",
+            Self::EggHunt => "egg_hunt",
+            Self::Salvage => "salvage",
+            Self::Scout => "scout",
+            Self::PushDeeper => "push_deeper",
+            Self::SafeRun => "safe_run",
         }
     }
 }

@@ -184,6 +184,7 @@ fn balance_data_is_typed_and_every_reference_is_integrity_checked() {
     assert!(data.tower_reward(10).is_some());
     assert!(data.enemies.len() >= 21);
     assert_eq!(data.tower_hazards.len(), 6);
+    assert_eq!(data.tower_contracts.len(), 6);
     for behavior in [
         hatchspire::data::EnemyBehavior::Bruiser,
         hatchspire::data::EnemyBehavior::Bulwark,

@@ -1,3 +1,4 @@
+mod contracts;
 mod map_gen;
 mod map_objects;
 mod navigation;
@@ -10,6 +11,8 @@ use crate::state::{
     DailyCommitment, GameState, ResourceStack, TowerFoundEgg, TowerMapObject, TowerMapObjectKind,
     TowerPendingEvent, TowerRunGoal, TowerRunState,
 };
+pub use contracts::contract_progress;
+use contracts::refresh_contract;
 use map_gen::{generate_map, reveal_current_area};
 use navigation::explore_direction;
 
@@ -154,12 +157,17 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
                 )
             })
             .unwrap_or_default();
-        return result(format!(
-            "The party advances through the dungeon.{pressure_warning}"
-        ));
+        return with_contract_refresh(
+            result(format!(
+                "The party advances through the dungeon.{pressure_warning}"
+            )),
+            state,
+            data,
+        );
     };
 
-    resolve_map_object(state, data, object)
+    let outcome = resolve_map_object(state, data, object);
+    with_contract_refresh(outcome, state, data)
 }
 
 pub fn explore_party(state: &mut GameState, data: &GameData) -> TowerResult {
@@ -388,6 +396,7 @@ fn resolve_hazard(state: &mut GameState, data: &GameData, hazard_id: &str) -> To
     let summary = if let Some(monster_name) = countering_monster {
         let mut rewards = Vec::new();
         if let Some(run) = &mut state.tower_run {
+            run.stats.hazards_countered += 1;
             for reward in &hazard.counter_rewards {
                 run.add_cargo(&reward.resource_id, reward.amount);
                 rewards.push(format!(
@@ -483,8 +492,10 @@ pub fn choose_special_event(state: &mut GameState, data: &GameData, event_id: &s
     }
     if let Some(run) = &mut state.tower_run {
         run.pending_event = None;
+        run.stats.landmarks_resolved += 1;
     }
-    apply_tower_event(state, data, &pending.special_location_id, event_id)
+    let outcome = apply_tower_event(state, data, &pending.special_location_id, event_id);
+    with_contract_refresh(outcome, state, data)
 }
 
 pub fn leave_special_event(state: &mut GameState, data: &GameData) -> TowerResult {
@@ -613,6 +624,7 @@ fn advance_floor(state: &mut GameState, data: &GameData) -> TowerResult {
 
     if let Some(run) = &mut state.tower_run {
         run.current_floor = next_floor;
+        run.stats.floors_descended += 1;
         run.pressure_limit = next_floor_data.pressure_limit;
         run.map = map;
         let summary = format!(
@@ -678,4 +690,20 @@ fn result(summary: impl Into<String>) -> TowerResult {
         encounter: None,
         returned_to_town: false,
     }
+}
+
+fn with_contract_refresh(
+    mut outcome: TowerResult,
+    state: &mut GameState,
+    data: &GameData,
+) -> TowerResult {
+    if let Some(contract_summary) = state
+        .tower_run
+        .as_mut()
+        .and_then(|run| refresh_contract(run, data))
+    {
+        outcome.summary.push(' ');
+        outcome.summary.push_str(&contract_summary);
+    }
+    outcome
 }
