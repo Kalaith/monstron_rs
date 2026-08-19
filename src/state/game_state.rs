@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::data::GameData;
 use crate::state::{
     ActivityLog, CombatState, EggInventory, MonsterInstance, MonsterRoster, ResourceInventory,
-    TowerProgress, TowerRunState, TownState,
+    TowerDiscoveryState, TowerProgress, TowerRunState, TownState,
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -14,6 +14,8 @@ pub struct GameState {
     pub monster_roster: MonsterRoster,
     pub egg_inventory: EggInventory,
     pub tower_progress: TowerProgress,
+    #[serde(default)]
+    pub tower_discoveries: TowerDiscoveryState,
     #[serde(default)]
     pub tower_run: Option<TowerRunState>,
     #[serde(default)]
@@ -86,6 +88,7 @@ impl GameState {
                 best_floor: 0,
                 unlocked_floor: 1,
             },
+            tower_discoveries: TowerDiscoveryState::default(),
             tower_run: None,
             combat: None,
             npc_relationships: data

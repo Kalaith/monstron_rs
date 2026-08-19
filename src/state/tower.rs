@@ -3,6 +3,13 @@ use std::fmt;
 
 use crate::state::ResourceStack;
 
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct TowerDiscoveryState {
+    pub enemy_ids: Vec<String>,
+    pub special_location_ids: Vec<String>,
+    pub hazard_ids: Vec<String>,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TowerProgress {
     pub best_floor: u32,
@@ -195,6 +202,29 @@ impl TowerRunState {
             let overflow = self.event_log.len() - 7;
             self.event_log.drain(0..overflow);
         }
+    }
+}
+
+impl TowerDiscoveryState {
+    pub fn discover_enemy(&mut self, id: &str) -> bool {
+        discover_id(&mut self.enemy_ids, id)
+    }
+
+    pub fn discover_special_location(&mut self, id: &str) -> bool {
+        discover_id(&mut self.special_location_ids, id)
+    }
+
+    pub fn discover_hazard(&mut self, id: &str) -> bool {
+        discover_id(&mut self.hazard_ids, id)
+    }
+}
+
+fn discover_id(ids: &mut Vec<String>, id: &str) -> bool {
+    if id.is_empty() || ids.iter().any(|known| known == id) {
+        false
+    } else {
+        ids.push(id.to_owned());
+        true
     }
 }
 

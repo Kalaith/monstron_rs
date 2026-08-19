@@ -1,3 +1,4 @@
+use super::discovery::record_visible_discoveries;
 use super::map_gen::{generate_map, reveal_current_area};
 use super::navigation::explore_direction;
 use super::*;
@@ -33,6 +34,48 @@ fn generated_map_has_start_and_stairs() {
         .iter()
         .filter(|object| object.kind == TowerMapObjectKind::Hazard)
         .all(|object| data.tower_hazard(&object.hazard_id).is_some()));
+}
+
+#[test]
+fn visible_map_content_enters_the_persistent_field_guide_once() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Scout);
+    let positions = state
+        .tower_run
+        .as_ref()
+        .unwrap()
+        .map
+        .objects
+        .iter()
+        .map(|object| (object.x, object.y))
+        .collect::<Vec<_>>();
+    for (x, y) in positions {
+        state
+            .tower_run
+            .as_mut()
+            .unwrap()
+            .map
+            .set_visibility(x, y, TowerTileVisibility::Visible);
+    }
+
+    record_visible_discoveries(&mut state, &data, None);
+    let counts = (
+        state.tower_discoveries.enemy_ids.len(),
+        state.tower_discoveries.special_location_ids.len(),
+        state.tower_discoveries.hazard_ids.len(),
+    );
+    record_visible_discoveries(&mut state, &data, None);
+
+    assert!(counts.0 > 0 && counts.1 > 0 && counts.2 > 0);
+    assert_eq!(
+        counts,
+        (
+            state.tower_discoveries.enemy_ids.len(),
+            state.tower_discoveries.special_location_ids.len(),
+            state.tower_discoveries.hazard_ids.len(),
+        )
+    );
 }
 
 #[test]

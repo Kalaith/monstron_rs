@@ -53,6 +53,10 @@ fn older_saves_without_phase6_or_phase7_fields_still_load() {
         .as_object_mut()
         .expect("town should be an object")
         .remove("assignments");
+    value["state"]
+        .as_object_mut()
+        .expect("state should be an object")
+        .remove("tower_discoveries");
     for egg in value["state"]["egg_inventory"]["eggs"]
         .as_array_mut()
         .expect("eggs should be an array")
@@ -79,6 +83,7 @@ fn older_saves_without_phase6_or_phase7_fields_still_load() {
     assert!(loaded.state.town.assignments.is_empty());
     assert!(loaded.state.egg_inventory.eggs[0].inheritance.is_none());
     assert_eq!(loaded.state.monster_roster.monsters[0].condition.fatigue, 0);
+    assert!(loaded.state.tower_discoveries.enemy_ids.is_empty());
     assert!(loaded.state.monster_roster.monsters[0]
         .art_profile
         .is_empty());

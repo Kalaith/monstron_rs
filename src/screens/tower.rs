@@ -627,9 +627,27 @@ fn draw_floor_reference(state: &GameState, data: &GameData) {
     let rect = Rect::new(620.0, 124.0, 628.0, 476.0);
     ui::draw_panel(rect);
     ui::draw_section_title("Known Floors", rect.x + 20.0, rect.y + 34.0);
+    draw_ui_text_ex(
+        &format!(
+            "FIELD GUIDE  Enemies {}/{}  Landmarks {}/{}  Hazards {}/{}",
+            state.tower_discoveries.enemy_ids.len(),
+            data.enemies.len(),
+            state.tower_discoveries.special_location_ids.len(),
+            data.tower_special_locations.len(),
+            state.tower_discoveries.hazard_ids.len(),
+            data.tower_hazards.len()
+        ),
+        rect.x + 20.0,
+        rect.y + 60.0,
+        TextParams {
+            font_size: 14,
+            color: gold_bright(),
+            ..Default::default()
+        },
+    );
 
     for (index, floor) in data.tower_floors.iter().take(10).enumerate() {
-        let y = rect.y + 76.0 + index as f32 * 38.0;
+        let y = rect.y + 88.0 + index as f32 * 38.0;
         let color = if floor.floor <= state.tower_progress.unlocked_floor {
             ui::TEXT_BRIGHT
         } else {

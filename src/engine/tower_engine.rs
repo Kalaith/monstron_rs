@@ -1,4 +1,5 @@
 mod contracts;
+mod discovery;
 mod map_gen;
 mod map_objects;
 mod navigation;
@@ -13,6 +14,7 @@ use crate::state::{
 };
 pub use contracts::contract_progress;
 use contracts::refresh_contract;
+use discovery::{record_enemy_discovery, record_visible_discoveries};
 use map_gen::{generate_map, reveal_current_area};
 use navigation::explore_direction;
 
@@ -59,6 +61,7 @@ pub fn start_run(state: &mut GameState, data: &GameData, goal: TowerRunGoal) -> 
     let map = generate_map(state, data, start_floor, goal, seed);
     state.tower_run =
         Some(TowerRunState::new(start_floor, floor.pressure_limit, goal).with_map(map));
+    record_visible_discoveries(state, data, None);
     let summary = format!(
         "The party enters floor {}: {}. Move through the map to find stairs, eggs, caches, and enemies.",
         floor.floor, floor.name
@@ -84,6 +87,7 @@ pub fn ensure_map(state: &mut GameState, data: &GameData) {
             run.map = map;
             run.add_event(format!("Generated a map for floor {floor}."));
         }
+        record_visible_discoveries(state, data, None);
         return;
     }
 
@@ -96,6 +100,7 @@ pub fn ensure_map(state: &mut GameState, data: &GameData) {
             run.add_event("Recovered the party's map notes.".to_owned());
         }
     }
+    record_visible_discoveries(state, data, None);
 }
 
 pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> TowerResult {
@@ -144,6 +149,8 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
             .object_index_at(run.map.player_x, run.map.player_y)
             .map(|index| run.map.objects.remove(index))
     };
+
+    record_visible_discoveries(state, data, object.as_ref());
 
     let Some(object) = object else {
         let pressure_warning = state
@@ -580,6 +587,9 @@ fn apply_tower_event(
     }
 
     let enemy_id = (!event.enemy_id.is_empty()).then_some(event.enemy_id.clone());
+    if let Some(enemy_id) = &enemy_id {
+        record_enemy_discovery(state, data, enemy_id);
+    }
     TowerResult {
         summary,
         encounter: enemy_id.map(|enemy_id| TowerEncounterRequest {
