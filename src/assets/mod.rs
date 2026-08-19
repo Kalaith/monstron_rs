@@ -22,6 +22,7 @@ const SPECIAL_LOCATIONS: &str = "special_locations";
 const HAZARDS: &str = "hazards";
 const ESCALATION_LANDMARKS: &str = "escalation_landmarks";
 const WANDERING_ENEMIES: &str = "wandering_enemies";
+const ENEMY_INTENT_SILHOUETTES: &str = "enemy_intent_silhouettes";
 const ESCAPE_CUES: &str = "escape_cues";
 const ANOMALIES: &str = "anomalies";
 const SECRETS: &str = "secrets";
@@ -197,6 +198,25 @@ pub fn draw_wandering_enemy_visual(
         DungeonEnemyVisual::Armored => 4,
     };
     draw_atlas(WANDERING_ENEMIES, 2, 3, index, x, y, width, height);
+}
+
+pub fn draw_enemy_intent_silhouette(
+    visual: DungeonEnemyVisual,
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+) {
+    draw_atlas(
+        ENEMY_INTENT_SILHOUETTES,
+        3,
+        2,
+        enemy_visual_index(visual),
+        x,
+        y,
+        width,
+        height,
+    );
 }
 
 fn enemy_visual_index(visual: DungeonEnemyVisual) -> usize {
@@ -442,6 +462,9 @@ fn asset_bytes(asset: &str) -> &'static [u8] {
         ),
         WANDERING_ENEMIES => include_bytes!(
             "../../assets/generated/dungeon/dungeon_enemy_intent_wandering_atlas_v1.png"
+        ),
+        ENEMY_INTENT_SILHOUETTES => include_bytes!(
+            "../../assets/generated/dungeon/dungeon_enemy_intent_silhouette_v2_atlas_v1.png"
         ),
         ESCAPE_CUES => include_bytes!(
             "../../assets/generated/dungeon/dungeon_escalation_escape_cue_atlas_v1.png"

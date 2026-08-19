@@ -40,7 +40,7 @@ pub(super) fn draw_map_world(state: &GameState, data: &GameData, run: &TowerRunS
         draw_rooms(map, transform);
     }
     draw_route_target(map, transform, run.route_target);
-    draw_objects(data, map, transform, run.boss_defeated);
+    draw_objects(state, data, map, transform, run.boss_defeated);
     draw_party(state, map, transform);
     draw_world_fog(map);
 }
@@ -390,15 +390,20 @@ fn object_in_room(map: &TowerMapState, room: TowerRoom) -> Option<&TowerMapObjec
 }
 
 fn draw_objects(
+    state: &GameState,
     data: &GameData,
     map: &TowerMapState,
     transform: WorldTransform,
     boss_defeated: bool,
 ) {
     for object in &map.objects {
-        if !map.is_visible(object.x, object.y)
-            || (object.kind == TowerMapObjectKind::SecretCache && !object.revealed)
-        {
+        if object.kind == TowerMapObjectKind::SecretCache && !object.revealed {
+            continue;
+        }
+        if !map.is_visible(object.x, object.y) {
+            if should_draw_known_track(state, map, object) {
+                draw_known_track(data, map, transform, object);
+            }
             continue;
         }
         let position = map_point(map, transform, object.x, object.y);
@@ -507,6 +512,44 @@ fn draw_objects(
     }
 }
 
+fn should_draw_known_track(
+    state: &GameState,
+    map: &TowerMapState,
+    object: &TowerMapObject,
+) -> bool {
+    object.kind == TowerMapObjectKind::Enemy
+        && object.wandering
+        && map.visibility_at(object.x, object.y) == TowerTileVisibility::Explored
+        && state.tower_discoveries.enemy_ids.contains(&object.enemy_id)
+}
+
+fn draw_known_track(
+    data: &GameData,
+    map: &TowerMapState,
+    transform: WorldTransform,
+    object: &TowerMapObject,
+) {
+    let Some(enemy) = data.enemy(&object.enemy_id) else {
+        return;
+    };
+    let position = map_point(map, transform, object.x, object.y);
+    let size = 54.0;
+    draw_circle(position.x, position.y, 32.0, color(187, 89, 69, 18));
+    assets::draw_enemy_intent_silhouette(
+        enemy.visual,
+        position.x - size * 0.5,
+        position.y - size * 0.58,
+        size,
+        size,
+    );
+    draw_ui_track_label(position.x, position.y + 29.0);
+}
+
+fn draw_ui_track_label(x: f32, y: f32) {
+    draw_rectangle(x - 28.0, y - 14.0, 56.0, 18.0, color(8, 12, 14, 210));
+    draw_text("TRACK", x - 23.0, y, 14.0, color(232, 153, 111, 235));
+}
+
 fn draw_object_glow(x: f32, y: f32, size: f32, kind: TowerMapObjectKind) {
     let rgb = match kind {
         TowerMapObjectKind::Loot | TowerMapObjectKind::SecretCache => (230, 171, 63),
@@ -582,3 +625,6 @@ fn draw_world_fog(map: &TowerMapState) {
 fn color(r: u8, g: u8, b: u8, a: u8) -> Color {
     Color::from_rgba(r, g, b, a)
 }
+
+#[cfg(test)]
+mod tests;
