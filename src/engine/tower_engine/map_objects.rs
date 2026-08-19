@@ -279,6 +279,22 @@ fn place_object(map: &mut TowerMapState, mut object: TowerMapObject, rng: &mut T
     }
 }
 
+pub(super) fn spawn_pressure_enemy(
+    map: &mut TowerMapState,
+    data: &GameData,
+    seed: u64,
+) -> Option<String> {
+    let eligible = eligible_enemies(data, map.floor, false);
+    if eligible.is_empty() {
+        return None;
+    }
+    let mut rng = TowerMapRng::new(seed);
+    let enemy = eligible[rng.range(0, eligible.len() as u32) as usize];
+    let before = map.objects.len();
+    place_object(map, TowerMapObject::enemy(&enemy.id), &mut rng);
+    (map.objects.len() > before).then(|| enemy.id.clone())
+}
+
 fn place_room_landmark(map: &mut TowerMapState, mut object: TowerMapObject, rng: &mut TowerMapRng) {
     if map.rooms.len() <= 1 {
         return;

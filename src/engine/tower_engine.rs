@@ -3,6 +3,7 @@ mod discovery;
 mod map_gen;
 mod map_objects;
 mod navigation;
+mod pressure;
 #[cfg(test)]
 mod tests;
 
@@ -17,6 +18,7 @@ use contracts::refresh_contract;
 use discovery::{record_enemy_discovery, record_visible_discoveries};
 use map_gen::{generate_map, reveal_current_area};
 use navigation::explore_direction;
+use pressure::refresh_pressure;
 
 pub struct TowerResult {
     pub summary: String,
@@ -743,6 +745,10 @@ fn with_contract_refresh(
     state: &mut GameState,
     data: &GameData,
 ) -> TowerResult {
+    if let Some(pressure_summary) = refresh_pressure(state, data) {
+        outcome.summary.push(' ');
+        outcome.summary.push_str(&pressure_summary);
+    }
     if let Some(contract_summary) = state
         .tower_run
         .as_mut()

@@ -23,6 +23,8 @@ pub struct TowerRunState {
     pub pressure: u32,
     pub pressure_limit: u32,
     #[serde(default)]
+    pub pressure_stage: u8,
+    #[serde(default)]
     pub camp_cooldown: u32,
     #[serde(default)]
     pub goal: TowerRunGoal,
@@ -158,6 +160,7 @@ impl TowerRunState {
             rooms_explored: 0,
             pressure: 0,
             pressure_limit,
+            pressure_stage: 0,
             camp_cooldown: 0,
             goal,
             map: TowerMapState::empty(),
