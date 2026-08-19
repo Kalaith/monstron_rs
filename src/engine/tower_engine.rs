@@ -8,6 +8,7 @@ mod boss_gate_tests;
 mod contracts;
 mod discovery;
 mod event_choices;
+mod exploration_talents;
 mod interactions;
 mod map_gen;
 mod map_objects;
@@ -21,7 +22,7 @@ pub use survey::survey_floor;
 #[cfg(test)]
 mod tests;
 
-use crate::data::{GameData, TowerBlessing};
+use crate::data::{GameData, PassiveSkill, TowerBlessing};
 use crate::engine::{monster_engine, town_engine};
 use crate::state::{
     DailyCommitment, GameState, ResourceStack, TowerFoundEgg, TowerMapObject, TowerMapObjectKind,
@@ -32,6 +33,7 @@ pub use contracts::contract_progress;
 use contracts::refresh_contract;
 use discovery::record_visible_discoveries;
 use event_choices::resolve_special_location;
+use exploration_talents::{party_has_passive, reveal_secret_in_current_room};
 use interactions::resolve_hazard;
 use map_gen::{generate_map, reveal_current_area};
 use map_objects::{advance_wandering_enemy, WanderingAdvance};
@@ -154,7 +156,8 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
         return result("The tower is fully awake. Tap CAMP to recover or RETREAT with the cargo.");
     }
 
-    let (object, hunter_moved) = {
+    let has_loot_finder = party_has_passive(state, PassiveSkill::FindsSmallLoot);
+    let (object, hunter_moved, secrets_revealed) = {
         let Some(run) = &mut state.tower_run else {
             return result("No tower run is active. Tap Town to choose a run.");
         };
@@ -192,6 +195,11 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
             run.pressure = run.pressure.saturating_add(1).min(run.pressure_limit);
         }
         reveal_current_area(&mut run.map);
+        let secrets_revealed = if has_loot_finder {
+            reveal_secret_in_current_room(&mut run.map)
+        } else {
+            0
+        };
         let object = run
             .map
             .object_index_at(run.map.player_x, run.map.player_y)
@@ -207,9 +215,9 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
             None
         };
         match advance {
-            Some(WanderingAdvance::Encounter(hunter)) => (Some(hunter), false),
-            Some(WanderingAdvance::Moved) => (object, true),
-            None => (object, false),
+            Some(WanderingAdvance::Encounter(hunter)) => (Some(hunter), false, secrets_revealed),
+            Some(WanderingAdvance::Moved) => (object, true, secrets_revealed),
+            None => (object, false, secrets_revealed),
         }
     };
 
@@ -232,16 +240,26 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
         } else {
             ""
         };
+        let talent_notice = if secrets_revealed > 0 {
+            " A loot-finder hears a hollow seam: a concealed cache appears on the map."
+        } else {
+            ""
+        };
         return with_contract_refresh(
             result(format!(
-                "The party advances through the dungeon.{pressure_warning}{hunter_warning}"
+                "The party advances through the dungeon.{pressure_warning}{hunter_warning}{talent_notice}"
             )),
             state,
             data,
         );
     };
 
-    let outcome = resolve_map_object(state, data, object);
+    let mut outcome = resolve_map_object(state, data, object);
+    if secrets_revealed > 0 && !outcome.summary.contains("surveyed secret") {
+        outcome
+            .summary
+            .push_str(" A loot-finder also exposes a concealed cache in this room.");
+    }
     with_contract_refresh(outcome, state, data)
 }
 

@@ -6,6 +6,7 @@ use crate::state::{GameState, TowerMapState, TowerRoomKind, TowerRunGoal, TowerT
 pub(super) struct SurveyReveal {
     pub center: (u32, u32),
     pub signatures: usize,
+    pub secrets: usize,
 }
 
 pub fn survey_floor(state: &mut GameState, data: &GameData) -> TowerResult {
@@ -37,12 +38,18 @@ pub fn survey_floor(state: &mut GameState, data: &GameData) -> TowerResult {
         1 => "1 visible signature".to_owned(),
         count => format!("{count} visible signatures"),
     };
+    let secret_label = match reveal.secrets {
+        0 => String::new(),
+        1 => " The flare exposes 1 concealed cache.".to_owned(),
+        count => format!(" The flare exposes {count} concealed caches."),
+    };
     let summary = format!(
         "A survey flare charts a hidden room near grid {}, {} with {}. Pressure rises by 1; tap the revealed room to route toward it.",
         reveal.center.0 + 1,
         reveal.center.1 + 1,
         signature_label
     );
+    let summary = format!("{summary}{secret_label}");
     if let Some(run) = &mut state.tower_run {
         run.add_event(summary.clone());
     }
@@ -81,6 +88,7 @@ pub(super) fn reveal_hidden_room_for_goal(
             }
         }
     }
+    let mut secrets = 0;
     for object in &mut map.objects {
         if object.kind == crate::state::TowerMapObjectKind::SecretCache
             && object.x >= room.start_x
@@ -89,6 +97,7 @@ pub(super) fn reveal_hidden_room_for_goal(
             && object.y < max_y
         {
             object.revealed = true;
+            secrets += 1;
         }
     }
     let signatures = map
@@ -104,6 +113,7 @@ pub(super) fn reveal_hidden_room_for_goal(
     Some(SurveyReveal {
         center: room.center(),
         signatures,
+        secrets,
     })
 }
 
