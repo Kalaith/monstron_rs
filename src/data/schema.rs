@@ -167,6 +167,8 @@ pub struct TowerFloorDefinition {
     pub is_boss_floor: bool,
     #[serde(default)]
     pub guardian_enemy_id: String,
+    #[serde(default)]
+    pub guardian_egg_type_id: String,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]

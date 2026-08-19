@@ -162,3 +162,24 @@ fn boss_victory_opens_the_live_crown_threshold() {
         .iter()
         .any(|egg| egg.egg_type_id == "boss_egg"));
 }
+
+#[test]
+fn mirror_guardian_victory_awards_its_authored_ripple_egg() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    crate::engine::tower_engine::start_run(&mut state, &data, TowerRunGoal::PushDeeper);
+    state.tower_run.as_mut().unwrap().current_floor = 5;
+    start_named_encounter(&mut state, &data, 5, true, Some("mirror_matriarch"));
+    state.combat.as_mut().unwrap().outcome = Some(CombatOutcome::Victory);
+
+    let finish = finish_combat(&mut state, &data);
+
+    assert_eq!(finish.destination, CombatDestination::Tower);
+    assert!(state
+        .tower_run
+        .as_ref()
+        .unwrap()
+        .found_eggs
+        .iter()
+        .any(|egg| egg.egg_type_id == "ripple_egg"));
+}

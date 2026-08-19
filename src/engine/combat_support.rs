@@ -307,7 +307,12 @@ pub(crate) fn record_floor_reached(state: &mut GameState, data: &GameData, floor
 }
 
 pub(crate) fn add_boss_egg(run: &mut TowerRunState, data: &GameData, floor: u32) {
-    let Some(egg_type) = data.egg_type("boss_egg") else {
+    let egg_type_id = data
+        .tower_floor(floor)
+        .map(|floor| floor.guardian_egg_type_id.as_str())
+        .filter(|id| !id.is_empty())
+        .unwrap_or("boss_egg");
+    let Some(egg_type) = data.egg_type(egg_type_id) else {
         return;
     };
     run.found_eggs.push(TowerFoundEgg {

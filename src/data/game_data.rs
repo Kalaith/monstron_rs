@@ -399,6 +399,14 @@ impl GameData {
                         floor.floor, floor.guardian_enemy_id
                     ));
                 }
+                if floor.guardian_egg_type_id.is_empty()
+                    || self.egg_type(&floor.guardian_egg_type_id).is_none()
+                {
+                    return Err(format!(
+                        "Tower floor {} guardian needs a valid egg reward '{}'",
+                        floor.floor, floor.guardian_egg_type_id
+                    ));
+                }
             }
 
             for egg_type_id in &floor.egg_types {

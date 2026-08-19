@@ -69,7 +69,8 @@
       "egg_types": ["ember_egg", "ripple_egg"],
       "pressure_limit": 13,
       "unlocks_floor": 6,
-      "guardian_enemy_id": "mirror_matriarch"
+      "guardian_enemy_id": "mirror_matriarch",
+      "guardian_egg_type_id": "ripple_egg"
     },
     {
       "floor": 6,
@@ -141,7 +142,8 @@
       "pressure_limit": 18,
       "unlocks_floor": 10,
       "is_boss_floor": true,
-      "guardian_enemy_id": "verdant_crown"
+      "guardian_enemy_id": "verdant_crown",
+      "guardian_egg_type_id": "boss_egg"
     }
   ]
 }
