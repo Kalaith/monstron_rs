@@ -131,6 +131,9 @@ fn object_detail(data: &GameData, run: &TowerRunState, object: &TowerMapObject) 
         }),
         TowerMapObjectKind::Egg => Some("A living egg waits in a tower nest.".to_owned()),
         TowerMapObjectKind::Loot => Some("Supplies can be carried safely back to town.".to_owned()),
+        TowerMapObjectKind::Stairs if boss_gate_is_sealed(data, run) => {
+            Some("The floor guardian seals the deeper stair. Defeat it or tap RETREAT.".to_owned())
+        }
         TowerMapObjectKind::Stairs => Some("This route leads to the next floor.".to_owned()),
         TowerMapObjectKind::Exit if boss_gate_is_sealed(data, run) => {
             Some("The guardian seals this threshold. Defeat it or tap RETREAT.".to_owned())
@@ -216,5 +219,5 @@ fn boss_gate_is_sealed(data: &GameData, run: &TowerRunState) -> bool {
     !run.boss_defeated
         && data
             .tower_floor(run.current_floor)
-            .is_some_and(|floor| floor.is_boss_floor)
+            .is_some_and(|floor| floor.is_boss_floor || !floor.guardian_enemy_id.is_empty())
 }

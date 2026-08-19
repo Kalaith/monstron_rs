@@ -144,6 +144,7 @@ pub(super) fn build() -> GameData {
             pressure_limit: 8,
             unlocks_floor: 2,
             is_boss_floor: false,
+            guardian_enemy_id: String::new(),
         }],
         vec![EnemyDefinition {
             id: "moss_mite".to_owned(),

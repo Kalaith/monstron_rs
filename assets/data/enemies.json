@@ -323,6 +323,14 @@
       "rewards": [{"resource_id": "ore", "amount": 7}, {"resource_id": "crystal", "amount": 4}]
     },
     {
+      "id": "mirror_matriarch", "name": "Mirror Matriarch",
+      "description": "The first runoff guardian, grown around a flawless crystal shell and a choir of reflected claws.",
+      "min_floor": 5, "max_floor": 5, "is_boss": true,
+      "max_hp": 58, "attack": 10, "defense": 7, "speed": 5,
+      "xp_reward": 34, "behavior": "Packleader", "visual": "Aquatic", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 8}, {"resource_id": "coins", "amount": 12}]
+    },
+    {
       "id": "verdant_crown", "name": "Verdant Crown",
       "description": "The first living crown rooted through the tower cap.",
       "min_floor": 10, "max_floor": 10, "is_boss": true,

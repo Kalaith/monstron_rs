@@ -38,7 +38,9 @@ pub(super) fn add_map_objects(
         place_object(map, object, rng);
     }
 
-    if floor.is_boss_floor {
+    if !floor.guardian_enemy_id.is_empty() {
+        place_object(map, TowerMapObject::boss(&floor.guardian_enemy_id), rng);
+    } else if floor.is_boss_floor {
         if let Some(enemy) = eligible_enemies(data, floor_number, true).first() {
             place_object(map, TowerMapObject::boss(&enemy.id), rng);
         }

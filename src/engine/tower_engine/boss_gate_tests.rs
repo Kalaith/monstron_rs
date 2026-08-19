@@ -34,3 +34,29 @@ fn crown_exit_reseals_until_the_guardian_falls() {
     assert_eq!(run.map.objects.len(), 1);
     assert_eq!(run.map.objects[0].kind, TowerMapObjectKind::Exit);
 }
+
+#[test]
+fn mirror_checkpoint_names_its_guardian_and_seals_the_deeper_stair() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    let map = generate_map(&state, &data, 5, TowerRunGoal::PushDeeper, 505);
+    let stairs = map
+        .objects
+        .iter()
+        .find(|object| object.kind == TowerMapObjectKind::Stairs)
+        .cloned()
+        .expect("checkpoint should retain a deeper stair");
+    assert!(map.objects.iter().any(|object| {
+        object.kind == TowerMapObjectKind::Boss && object.enemy_id == "mirror_matriarch"
+    }));
+    state.tower_run = Some(TowerRunState::new(5, 13, TowerRunGoal::PushDeeper).with_map(map));
+
+    let result = resolve_map_object(&mut state, &data, stairs.clone());
+    assert!(result.summary.contains("guardian seals"));
+    assert_eq!(state.tower_run.as_ref().unwrap().current_floor, 5);
+
+    state.tower_run.as_mut().unwrap().boss_defeated = true;
+    let result = resolve_map_object(&mut state, &data, stairs);
+    assert!(result.summary.contains("Descended to floor 6"));
+    assert_eq!(state.tower_run.as_ref().unwrap().current_floor, 6);
+}

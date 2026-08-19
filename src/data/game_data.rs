@@ -383,6 +383,23 @@ impl GameData {
                     ));
                 }
             }
+            if !floor.guardian_enemy_id.is_empty() {
+                let Some(guardian) = self.enemy(&floor.guardian_enemy_id) else {
+                    return Err(format!(
+                        "Tower floor {} references missing guardian '{}'",
+                        floor.floor, floor.guardian_enemy_id
+                    ));
+                };
+                if !guardian.is_boss
+                    || guardian.min_floor > floor.floor
+                    || guardian.max_floor < floor.floor
+                {
+                    return Err(format!(
+                        "Tower floor {} guardian '{}' is not an eligible boss",
+                        floor.floor, floor.guardian_enemy_id
+                    ));
+                }
+            }
 
             for egg_type_id in &floor.egg_types {
                 if self.egg_type(egg_type_id).is_none() {

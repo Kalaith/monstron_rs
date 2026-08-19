@@ -525,17 +525,16 @@ fn resolve_map_object(
         }
         TowerMapObjectKind::Hazard => resolve_hazard(state, data, &object.hazard_id),
         TowerMapObjectKind::SpecialLocation => resolve_special_location(state, data, object),
-        TowerMapObjectKind::Stairs => advance_floor(state, data),
+        TowerMapObjectKind::Stairs => resolve_stairs(state, data, object),
         TowerMapObjectKind::Exit => resolve_exit(state, data, object),
     }
 }
 
 fn resolve_exit(state: &mut GameState, data: &GameData, object: TowerMapObject) -> TowerResult {
-    let sealed = state.tower_run.as_ref().is_some_and(|run| {
-        data.tower_floor(run.current_floor)
-            .is_some_and(|floor| floor.is_boss_floor)
-            && !run.boss_defeated
-    });
+    let sealed = state
+        .tower_run
+        .as_ref()
+        .is_some_and(|run| guardian_gate_is_sealed(data, run));
     if sealed {
         if let Some(run) = &mut state.tower_run {
             run.map.objects.push(object);
@@ -546,6 +545,29 @@ fn resolve_exit(state: &mut GameState, data: &GameData, object: TowerMapObject) 
         }
     }
     return_to_town(state, data)
+}
+
+fn resolve_stairs(state: &mut GameState, data: &GameData, object: TowerMapObject) -> TowerResult {
+    let sealed = state
+        .tower_run
+        .as_ref()
+        .is_some_and(|run| guardian_gate_is_sealed(data, run));
+    if sealed {
+        if let Some(run) = &mut state.tower_run {
+            run.map.objects.push(object);
+            let summary = "A floor guardian seals the deeper stair. Defeat it or tap RETREAT.";
+            run.add_event(summary.to_owned());
+            return result(summary);
+        }
+    }
+    advance_floor(state, data)
+}
+
+fn guardian_gate_is_sealed(data: &GameData, run: &TowerRunState) -> bool {
+    !run.boss_defeated
+        && data
+            .tower_floor(run.current_floor)
+            .is_some_and(|floor| floor.is_boss_floor || !floor.guardian_enemy_id.is_empty())
 }
 
 fn advance_floor(state: &mut GameState, data: &GameData) -> TowerResult {
