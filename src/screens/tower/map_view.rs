@@ -38,7 +38,7 @@ pub(super) fn draw_map_world(state: &GameState, data: &GameData, run: &TowerRunS
         draw_authoritative_ruin(map, transform);
         draw_rooms(map, transform);
     }
-    draw_objects(data, map, transform);
+    draw_objects(data, map, transform, run.boss_defeated);
     draw_party(state, map, transform);
     draw_world_fog(map);
 }
@@ -331,7 +331,12 @@ fn object_in_room(map: &TowerMapState, room: TowerRoom) -> Option<&TowerMapObjec
     })
 }
 
-fn draw_objects(data: &GameData, map: &TowerMapState, transform: WorldTransform) {
+fn draw_objects(
+    data: &GameData,
+    map: &TowerMapState,
+    transform: WorldTransform,
+    boss_defeated: bool,
+) {
     for object in &map.objects {
         if !map.is_visible(object.x, object.y) {
             continue;
@@ -402,14 +407,34 @@ fn draw_objects(data: &GameData, map: &TowerMapState, transform: WorldTransform)
                     );
                 }
             }
-            TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => {
-                assets::draw_escalation_landmark(
-                    DungeonBiome::for_floor(map.floor),
-                    x - size * 0.5,
-                    y - size * 0.58,
-                    size,
-                    size,
-                )
+            TowerMapObjectKind::Stairs => assets::draw_escalation_landmark(
+                DungeonBiome::for_floor(map.floor),
+                x - size * 0.5,
+                y - size * 0.58,
+                size,
+                size,
+            ),
+            TowerMapObjectKind::Exit => {
+                let boss_floor = data
+                    .tower_floor(map.floor)
+                    .is_some_and(|floor| floor.is_boss_floor);
+                if boss_floor && !boss_defeated {
+                    assets::draw_escalation_landmark(
+                        DungeonBiome::for_floor(map.floor),
+                        x - size * 0.5,
+                        y - size * 0.58,
+                        size,
+                        size,
+                    )
+                } else {
+                    assets::draw_escape_cue(
+                        DungeonBiome::for_floor(map.floor),
+                        x - size * 0.5,
+                        y - size * 0.58,
+                        size,
+                        size,
+                    )
+                }
             }
         }
     }

@@ -373,7 +373,15 @@ fn draw_context_drawer(data: &GameData, run: &TowerRunState) {
         },
     );
     if let Some(object) = focus {
-        draw_context_art(data, object, panel.x + 20.0, panel.y + 78.0, 168.0, 150.0);
+        draw_context_art(
+            data,
+            run,
+            object,
+            panel.x + 20.0,
+            panel.y + 78.0,
+            168.0,
+            150.0,
+        );
     } else {
         assets::draw_room_vignette(
             run.current_floor,
@@ -384,7 +392,7 @@ fn draw_context_drawer(data: &GameData, run: &TowerRunState) {
         );
     }
     let detail = focus
-        .and_then(|object| object_detail(data, object))
+        .and_then(|object| object_detail(data, run, object))
         .unwrap_or_else(|| "Move through lit rooms to reveal what the tower is hiding.".to_owned());
     draw_wrapped_line(&detail, panel.x + 16.0, panel.y + 258.0, 27, ui::TEXT_DIM);
     draw_ui_text_ex(
@@ -433,7 +441,7 @@ fn object_name<'a>(data: &'a GameData, object: &'a TowerMapObject) -> Option<&'a
     }
 }
 
-fn object_detail(data: &GameData, object: &TowerMapObject) -> Option<String> {
+fn object_detail(data: &GameData, run: &TowerRunState, object: &TowerMapObject) -> Option<String> {
     match object.kind {
         TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => data
             .enemy(&object.enemy_id)
@@ -456,8 +464,16 @@ fn object_detail(data: &GameData, object: &TowerMapObject) -> Option<String> {
         TowerMapObjectKind::Egg => Some("A living egg waits in a tower nest.".to_owned()),
         TowerMapObjectKind::Loot => Some("Supplies can be carried safely back to town.".to_owned()),
         TowerMapObjectKind::Stairs => Some("This route leads to the next floor.".to_owned()),
+        TowerMapObjectKind::Exit
+            if !run.boss_defeated
+                && data
+                    .tower_floor(run.current_floor)
+                    .is_some_and(|floor| floor.is_boss_floor) =>
+        {
+            Some("The guardian seals this threshold. Defeat it or tap RETREAT.".to_owned())
+        }
         TowerMapObjectKind::Exit => {
-            Some("This threshold returns the party and its cargo to town.".to_owned())
+            Some("The open threshold returns the party and its cargo to town.".to_owned())
         }
     }
 }
@@ -475,7 +491,15 @@ fn object_kind_label(object: &TowerMapObject) -> &'static str {
     }
 }
 
-fn draw_context_art(data: &GameData, object: &TowerMapObject, x: f32, y: f32, w: f32, h: f32) {
+fn draw_context_art(
+    data: &GameData,
+    run: &TowerRunState,
+    object: &TowerMapObject,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+) {
     match object.kind {
         TowerMapObjectKind::Loot => assets::draw_dungeon_feature(1, x, y, w, h),
         TowerMapObjectKind::Egg => assets::draw_egg_badge(&object.egg_type_id, x + 18.0, y, h),
@@ -494,8 +518,34 @@ fn draw_context_art(data: &GameData, object: &TowerMapObject, x: f32, y: f32, w:
                 assets::draw_tower_hazard(hazard.visual, x, y, w, h);
             }
         }
-        TowerMapObjectKind::Stairs => assets::draw_dungeon_feature(2, x, y, w, h),
-        TowerMapObjectKind::Exit => assets::draw_dungeon_feature(3, x, y, w, h),
+        TowerMapObjectKind::Stairs => assets::draw_escalation_landmark(
+            assets::DungeonBiome::for_floor(run.current_floor),
+            x,
+            y,
+            w,
+            h,
+        ),
+        TowerMapObjectKind::Exit
+            if !run.boss_defeated
+                && data
+                    .tower_floor(run.current_floor)
+                    .is_some_and(|floor| floor.is_boss_floor) =>
+        {
+            assets::draw_escalation_landmark(
+                assets::DungeonBiome::for_floor(run.current_floor),
+                x,
+                y,
+                w,
+                h,
+            )
+        }
+        TowerMapObjectKind::Exit => assets::draw_escape_cue(
+            assets::DungeonBiome::for_floor(run.current_floor),
+            x,
+            y,
+            w,
+            h,
+        ),
     }
 }
 

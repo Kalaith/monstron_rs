@@ -44,6 +44,8 @@ pub struct TowerRunState {
     pub stats: TowerRunStats,
     #[serde(default)]
     pub blessings: Vec<TowerBlessing>,
+    #[serde(default)]
+    pub boss_defeated: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -177,6 +179,7 @@ impl TowerRunState {
             contract_complete: false,
             stats: TowerRunStats::default(),
             blessings: Vec::new(),
+            boss_defeated: false,
         }
     }
 

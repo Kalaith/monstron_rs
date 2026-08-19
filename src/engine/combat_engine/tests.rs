@@ -1,6 +1,6 @@
 use super::*;
 use crate::data::GameDataLoader;
-use crate::state::CombatTurn;
+use crate::state::{CombatTurn, TowerRunGoal};
 
 #[test]
 fn victory_adds_fatigue_to_surviving_party_members() {
@@ -135,4 +135,30 @@ fn named_tower_encounter_preserves_the_map_enemy_identity() {
         .enemies
         .iter()
         .all(|enemy| enemy.source_id == "glass_leech"));
+}
+
+#[test]
+fn boss_victory_opens_the_live_crown_threshold() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    crate::engine::tower_engine::start_run(&mut state, &data, TowerRunGoal::PushDeeper);
+    state.tower_run.as_mut().unwrap().current_floor = 10;
+    start_named_encounter(&mut state, &data, 10, true, Some("verdant_crown"));
+    state.combat.as_mut().unwrap().outcome = Some(CombatOutcome::Victory);
+
+    finish_combat(&mut state, &data);
+
+    let run = state
+        .tower_run
+        .as_ref()
+        .expect("victory should return to tower");
+    assert!(run.boss_defeated);
+    assert!(run
+        .event_log
+        .iter()
+        .any(|event| event.contains("threshold opens")));
+    assert!(run
+        .found_eggs
+        .iter()
+        .any(|egg| egg.egg_type_id == "boss_egg"));
 }

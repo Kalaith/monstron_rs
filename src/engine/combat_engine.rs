@@ -302,6 +302,19 @@ fn finish_victory(state: &mut GameState, data: &GameData, combat: CombatState) -
         }
         if combat.is_boss {
             add_boss_egg(run, data, combat.floor);
+            run.boss_defeated = true;
+            let exits = run
+                .map
+                .objects
+                .iter()
+                .filter(|object| object.kind == crate::state::TowerMapObjectKind::Exit)
+                .map(|object| (object.x, object.y))
+                .collect::<Vec<_>>();
+            for (x, y) in exits {
+                run.map
+                    .set_visibility(x, y, crate::state::TowerTileVisibility::Visible);
+            }
+            run.add_event("The guardian falls; the crown threshold opens.".to_owned());
         }
         run.add_event(format!("Won combat on floor {}.", combat.floor));
     } else {

@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod blessing_tests;
+#[cfg(test)]
+mod boss_gate_tests;
 mod contracts;
 mod discovery;
 mod interactions;
@@ -420,8 +422,26 @@ fn resolve_map_object(
         TowerMapObjectKind::Hazard => resolve_hazard(state, data, &object.hazard_id),
         TowerMapObjectKind::SpecialLocation => resolve_special_location(state, data, object),
         TowerMapObjectKind::Stairs => advance_floor(state, data),
-        TowerMapObjectKind::Exit => return_to_town(state, data),
+        TowerMapObjectKind::Exit => resolve_exit(state, data, object),
     }
+}
+
+fn resolve_exit(state: &mut GameState, data: &GameData, object: TowerMapObject) -> TowerResult {
+    let sealed = state.tower_run.as_ref().is_some_and(|run| {
+        data.tower_floor(run.current_floor)
+            .is_some_and(|floor| floor.is_boss_floor)
+            && !run.boss_defeated
+    });
+    if sealed {
+        if let Some(run) = &mut state.tower_run {
+            run.map.objects.push(object);
+            let summary =
+                "The crown threshold is sealed. Defeat the floor guardian or tap RETREAT.";
+            run.add_event(summary.to_owned());
+            return result(summary);
+        }
+    }
+    return_to_town(state, data)
 }
 
 fn resolve_special_location(
@@ -524,6 +544,7 @@ fn advance_floor(state: &mut GameState, data: &GameData) -> TowerResult {
         run.current_floor = next_floor;
         run.stats.floors_descended += 1;
         run.pressure_limit = next_floor_data.pressure_limit;
+        run.boss_defeated = false;
         run.map = map;
         let summary = format!(
             "Descended to floor {}: {}. A fresh map unfolds.",
