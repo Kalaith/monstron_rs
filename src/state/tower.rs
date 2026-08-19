@@ -308,6 +308,18 @@ fn default_survey_charges() -> u32 {
 }
 
 impl TowerDiscoveryState {
+    pub fn record_count(&self) -> usize {
+        self.enemy_ids.len() + self.special_location_ids.len() + self.hazard_ids.len()
+    }
+
+    pub fn survey_bonus(&self) -> u32 {
+        match self.record_count() {
+            30.. => 2,
+            12.. => 1,
+            _ => 0,
+        }
+    }
+
     pub fn discover_enemy(&mut self, id: &str) -> bool {
         discover_id(&mut self.enemy_ids, id)
     }
@@ -320,6 +332,9 @@ impl TowerDiscoveryState {
         discover_id(&mut self.hazard_ids, id)
     }
 }
+
+#[cfg(test)]
+mod tests;
 
 fn discover_id(ids: &mut Vec<String>, id: &str) -> bool {
     if id.is_empty() || ids.iter().any(|known| known == id) {

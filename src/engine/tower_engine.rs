@@ -86,14 +86,22 @@ pub fn start_run(state: &mut GameState, data: &GameData, goal: TowerRunGoal) -> 
         .tower_anomaly(&anomaly_id)
         .map(|anomaly| anomaly.name.as_str())
         .unwrap_or("No anomaly");
+    let guide_bonus = state.tower_discoveries.survey_bonus();
     let mut run = TowerRunState::new(start_floor, floor.pressure_limit, goal).with_map(map);
+    run.survey_charges = run.survey_charges.saturating_add(guide_bonus).min(5);
     run.anomaly_id = anomaly_id;
     state.tower_run = Some(run);
     record_visible_discoveries(state, data, None);
+    let guide_note = if guide_bonus > 0 {
+        format!(" Field Guide expertise adds {guide_bonus} survey flare(s).")
+    } else {
+        String::new()
+    };
     let summary = format!(
         "The party enters floor {}: {} under {}. Move through the map to find stairs, eggs, caches, and enemies.",
         floor.floor, floor.name, anomaly_name
     );
+    let summary = format!("{summary}{guide_note}");
     state.activity_log.add(state.day, summary.clone());
 
     result(summary)
@@ -635,18 +643,26 @@ fn advance_floor(state: &mut GameState, data: &GameData) -> TowerResult {
         .tower_anomaly(&anomaly_id)
         .map(|anomaly| anomaly.name.as_str())
         .unwrap_or("No anomaly");
+    let guide_bonus = state.tower_discoveries.survey_bonus();
 
     if let Some(run) = &mut state.tower_run {
         run.current_floor = next_floor;
         run.stats.floors_descended += 1;
         run.pressure_limit = next_floor_data.pressure_limit;
         run.boss_defeated = false;
-        run.survey_charges = crate::state::survey_charges_for(run.goal);
+        run.survey_charges = crate::state::survey_charges_for(run.goal)
+            .saturating_add(guide_bonus)
+            .min(5);
         run.anomaly_id = anomaly_id;
         run.route_target = None;
         run.map = map;
+        let guide_note = if guide_bonus > 0 {
+            format!(" Field Guide expertise packs {guide_bonus} extra survey flare(s).")
+        } else {
+            String::new()
+        };
         let summary = format!(
-            "Descended to floor {}: {} under {}. A fresh map unfolds.",
+            "Descended to floor {}: {} under {}. A fresh map unfolds.{guide_note}",
             next_floor_data.floor, next_floor_data.name, anomaly_name
         );
         run.add_event(summary.clone());

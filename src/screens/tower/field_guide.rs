@@ -52,9 +52,10 @@ pub(super) fn draw(state: &GameState, data: &GameData, requested_page: usize) {
     let page = requested_page.min(page_count - 1);
     draw_ui_text_ex(
         &format!(
-            "Discovered {} / {} records     Page {} / {}",
+            "Discovered {} / {} records     {}     Page {} / {}",
             entries.len(),
             data.enemies.len() + data.tower_special_locations.len() + data.tower_hazards.len(),
+            preparation_label(state),
             page + 1,
             page_count
         ),
@@ -95,6 +96,15 @@ pub(super) fn draw(state: &GameState, data: &GameData, requested_page: usize) {
     ui::draw_button(previous_rect(), "PREVIOUS", page > 0);
     ui::draw_button(next_rect(), "NEXT", page + 1 < page_count);
     ui::draw_button(close_rect(), "CLOSE", true);
+}
+
+fn preparation_label(state: &GameState) -> String {
+    let records = state.tower_discoveries.record_count();
+    match records {
+        30.. => "Field prep +2 SURVEY".to_owned(),
+        12.. => format!("Field prep +1 SURVEY · rank 2 at {}/30", records.min(30)),
+        _ => format!("Field prep unlocks at {}/12", records.min(12)),
+    }
 }
 
 enum GuideEntry<'a> {
