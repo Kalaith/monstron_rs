@@ -3,6 +3,7 @@ use crate::data::{GameData, MonsterRole, PassiveSkill, TowerFloorDefinition};
 use crate::state::{
     GameState, TowerMapObject, TowerMapObjectKind, TowerMapRng, TowerMapState, TowerRunGoal,
 };
+use std::collections::VecDeque;
 
 pub(super) fn add_map_objects(
     map: &mut TowerMapState,
@@ -299,6 +300,98 @@ pub(super) fn spawn_pressure_enemy(
     (map.objects.len() > before).then(|| enemy.id.clone())
 }
 
+pub(super) enum WanderingAdvance {
+    Moved,
+    Encounter(TowerMapObject),
+}
+
+pub(super) fn advance_wandering_enemy(map: &mut TowerMapState) -> Option<WanderingAdvance> {
+    let hunter_indices = map
+        .objects
+        .iter()
+        .enumerate()
+        .filter_map(|(index, object)| object.wandering.then_some(index))
+        .collect::<Vec<_>>();
+    if hunter_indices.is_empty() {
+        return None;
+    }
+    let hunter_index =
+        hunter_indices[(map.seed as usize + map.player_x as usize + map.player_y as usize)
+            % hunter_indices.len()];
+    let hunter = &map.objects[hunter_index];
+    let (next_x, next_y) = chase_step(map, hunter_index, hunter.x, hunter.y)?;
+    if next_x == map.player_x && next_y == map.player_y {
+        return Some(WanderingAdvance::Encounter(
+            map.objects.remove(hunter_index),
+        ));
+    }
+    map.objects[hunter_index].x = next_x;
+    map.objects[hunter_index].y = next_y;
+    Some(WanderingAdvance::Moved)
+}
+
+fn chase_step(
+    map: &TowerMapState,
+    hunter_index: usize,
+    start_x: u32,
+    start_y: u32,
+) -> Option<(u32, u32)> {
+    let start = map_index(map, start_x, start_y)?;
+    let target = map_index(map, map.player_x, map.player_y)?;
+    let mut queue = VecDeque::from([start]);
+    let mut previous = vec![None; (map.width * map.height) as usize];
+    previous[start] = Some(start);
+
+    while let Some(index) = queue.pop_front() {
+        if index == target {
+            break;
+        }
+        let (x, y) = coordinates(map, index);
+        for (next_x, next_y) in chase_neighbors(map, x, y) {
+            let Some(next) = map_index(map, next_x, next_y) else {
+                continue;
+            };
+            let occupied = map.objects.iter().enumerate().any(|(index, object)| {
+                index != hunter_index && object.x == next_x && object.y == next_y
+            });
+            if previous[next].is_some()
+                || !map.is_passable(next_x, next_y)
+                || (occupied && next != target)
+            {
+                continue;
+            }
+            previous[next] = Some(index);
+            queue.push_back(next);
+        }
+    }
+    previous[target]?;
+    let mut step = target;
+    while previous[step]? != start {
+        step = previous[step]?;
+    }
+    Some(coordinates(map, step))
+}
+
+fn chase_neighbors(map: &TowerMapState, x: u32, y: u32) -> Vec<(u32, u32)> {
+    [
+        (x, y.saturating_sub(1)),
+        (x.saturating_sub(1), y),
+        (x.saturating_add(1), y),
+        (x, y.saturating_add(1)),
+    ]
+    .into_iter()
+    .filter(|(next_x, next_y)| *next_x < map.width && *next_y < map.height)
+    .collect()
+}
+
+fn map_index(map: &TowerMapState, x: u32, y: u32) -> Option<usize> {
+    (x < map.width && y < map.height).then_some((y * map.width + x) as usize)
+}
+
+fn coordinates(map: &TowerMapState, index: usize) -> (u32, u32) {
+    (index as u32 % map.width, index as u32 / map.width)
+}
+
 fn place_room_landmark(map: &mut TowerMapState, mut object: TowerMapObject, rng: &mut TowerMapRng) {
     if map.rooms.len() <= 1 {
         return;
@@ -385,3 +478,6 @@ impl TowerMapObject {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

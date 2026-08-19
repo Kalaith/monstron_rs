@@ -19,6 +19,7 @@ use contracts::refresh_contract;
 use discovery::record_visible_discoveries;
 use interactions::{apply_tower_event, resolve_hazard};
 use map_gen::{generate_map, reveal_current_area};
+use map_objects::{advance_wandering_enemy, WanderingAdvance};
 use navigation::explore_direction;
 use pressure::refresh_pressure;
 
@@ -125,7 +126,7 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
         return result("The tower is fully awake. Tap CAMP to recover or RETREAT with the cargo.");
     }
 
-    let object = {
+    let (object, hunter_moved) = {
         let Some(run) = &mut state.tower_run else {
             return result("No tower run is active. Tap Town to choose a run.");
         };
@@ -149,9 +150,20 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
             run.pressure = run.pressure.saturating_add(1).min(run.pressure_limit);
         }
         reveal_current_area(&mut run.map);
-        run.map
+        let object = run
+            .map
             .object_index_at(run.map.player_x, run.map.player_y)
-            .map(|index| run.map.objects.remove(index))
+            .map(|index| run.map.objects.remove(index));
+        let advance = if object.is_none() && run.rooms_explored.is_multiple_of(2) {
+            advance_wandering_enemy(&mut run.map)
+        } else {
+            None
+        };
+        match advance {
+            Some(WanderingAdvance::Encounter(hunter)) => (Some(hunter), false),
+            Some(WanderingAdvance::Moved) => (object, true),
+            None => (object, false),
+        }
     };
 
     record_visible_discoveries(state, data, object.as_ref());
@@ -168,9 +180,14 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
                 )
             })
             .unwrap_or_default();
+        let hunter_warning = if hunter_moved {
+            " A wandering hunter closes in."
+        } else {
+            ""
+        };
         return with_contract_refresh(
             result(format!(
-                "The party advances through the dungeon.{pressure_warning}"
+                "The party advances through the dungeon.{pressure_warning}{hunter_warning}"
             )),
             state,
             data,
@@ -362,8 +379,21 @@ fn resolve_map_object(
                 .as_ref()
                 .map(|run| run.current_floor)
                 .unwrap_or(1);
-            let label = if is_boss { "boss" } else { "enemy" };
-            let summary = format!("A {label} blocks the tile. Combat starts.");
+            let label = if is_boss {
+                "boss".to_owned()
+            } else if object.wandering {
+                data.enemy(&object.enemy_id)
+                    .map(|enemy| format!("wandering {}", enemy.name))
+                    .unwrap_or_else(|| "wandering enemy".to_owned())
+            } else {
+                "enemy".to_owned()
+            };
+            let verb = if object.wandering {
+                "catches the party"
+            } else {
+                "blocks the tile"
+            };
+            let summary = format!("A {label} {verb}. Combat starts.");
             if let Some(run) = &mut state.tower_run {
                 run.add_event(summary.clone());
             }
