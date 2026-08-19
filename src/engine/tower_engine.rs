@@ -20,6 +20,7 @@ pub struct TowerResult {
 pub struct TowerEncounterRequest {
     pub floor: u32,
     pub is_boss: bool,
+    pub enemy_id: Option<String>,
 }
 
 pub fn start_run(state: &mut GameState, data: &GameData, goal: TowerRunGoal) -> TowerResult {
@@ -273,12 +274,94 @@ fn resolve_map_object(
             }
             TowerResult {
                 summary,
-                encounter: Some(TowerEncounterRequest { floor, is_boss }),
+                encounter: Some(TowerEncounterRequest {
+                    floor,
+                    is_boss,
+                    enemy_id: (!object.enemy_id.is_empty()).then_some(object.enemy_id),
+                }),
                 returned_to_town: false,
             }
         }
+        TowerMapObjectKind::SpecialLocation => resolve_special_location(state, data, object),
         TowerMapObjectKind::Stairs => advance_floor(state, data),
         TowerMapObjectKind::Exit => return_to_town(state, data),
+    }
+}
+
+fn resolve_special_location(
+    state: &mut GameState,
+    data: &GameData,
+    object: TowerMapObject,
+) -> TowerResult {
+    let Some(location) = data.tower_special_location(&object.special_location_id) else {
+        return result("The party finds an unrecorded tower landmark.");
+    };
+    let Some(event) = data.tower_event(&object.event_id) else {
+        return result(format!("{} stands silent.", location.name));
+    };
+
+    let mut reward_labels = Vec::new();
+    if let Some(run) = &mut state.tower_run {
+        for reward in &event.rewards {
+            run.add_cargo(&reward.resource_id, reward.amount);
+            reward_labels.push(format!(
+                "{} {}",
+                reward.amount,
+                data.resource_name(&reward.resource_id)
+            ));
+        }
+        if event.pressure_delta < 0 {
+            run.pressure = run
+                .pressure
+                .saturating_sub(event.pressure_delta.unsigned_abs());
+        } else {
+            run.pressure = run
+                .pressure
+                .saturating_add(event.pressure_delta as u32)
+                .min(run.pressure_limit);
+        }
+    }
+
+    let party_ids: Vec<u64> = state
+        .monster_roster
+        .party_slots
+        .iter()
+        .flatten()
+        .copied()
+        .collect();
+    let mut total_healed = 0;
+    for monster_id in party_ids {
+        if let Some(monster) = state.monster_roster.monster_mut(monster_id) {
+            let before = monster.hp;
+            monster.hp = (monster.hp + event.party_healing).min(monster.max_hp);
+            total_healed += monster.hp - before;
+        }
+    }
+
+    let mut summary = format!("{} — {}", location.name, event.narrative);
+    if !reward_labels.is_empty() {
+        summary.push_str(&format!(" Recovered {}.", reward_labels.join(", ")));
+    }
+    if total_healed > 0 {
+        summary.push_str(&format!(" Restored {total_healed} total HP."));
+    }
+    if let Some(run) = &mut state.tower_run {
+        run.add_event(summary.clone());
+    }
+
+    let enemy_id = (!event.enemy_id.is_empty()).then_some(event.enemy_id.clone());
+    TowerResult {
+        summary,
+        encounter: enemy_id.map(|enemy_id| TowerEncounterRequest {
+            floor: state
+                .tower_run
+                .as_ref()
+                .map(|run| run.current_floor)
+                .unwrap_or(1),
+            is_boss: false,
+            enemy_id: Some(enemy_id),
+        }),
+        returned_to_town: false,
     }
 }
 

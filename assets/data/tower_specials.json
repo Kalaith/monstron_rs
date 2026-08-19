@@ -1,0 +1,139 @@
+{
+  "special_locations": [
+    {
+      "id": "mossbound_shrine",
+      "name": "Mossbound Shrine",
+      "description": "A keeper shrine still warm beneath curtains of moss.",
+      "min_floor": 1,
+      "max_floor": 3,
+      "visual": "Shrine",
+      "event_ids": ["keepers_blessing", "moss_mite_offering"]
+    },
+    {
+      "id": "lantern_well",
+      "name": "Lantern Well",
+      "description": "Pale fungal lanterns circle water untouched by the ruin.",
+      "min_floor": 2,
+      "max_floor": 6,
+      "visual": "RecoverySpring",
+      "event_ids": ["restorative_draught", "lamp_gnat_swarm"]
+    },
+    {
+      "id": "root_oracle",
+      "name": "Root Oracle",
+      "description": "Living roots have grown into a map of rooms yet unseen.",
+      "min_floor": 3,
+      "max_floor": 8,
+      "visual": "SecretClue",
+      "event_ids": ["roots_reveal_cache", "oracle_warning"]
+    },
+    {
+      "id": "cinder_engine",
+      "name": "Cinder Engine",
+      "description": "An ancient lift engine breathes sparks through cracked brass lungs.",
+      "min_floor": 4,
+      "max_floor": 9,
+      "visual": "AncientMachinery",
+      "event_ids": ["engine_salvage", "engine_backdraft"]
+    },
+    {
+      "id": "drowned_archive",
+      "name": "Drowned Archive",
+      "description": "Crystal tablets sleep beneath perfectly clear runoff.",
+      "min_floor": 5,
+      "max_floor": 9,
+      "visual": "RelicArchive",
+      "event_ids": ["archive_dividend", "glass_leech_nest"]
+    },
+    {
+      "id": "crown_thorn",
+      "name": "Crown Thorn",
+      "description": "A root from the tower crown pierces the floor and tests every trespasser.",
+      "min_floor": 7,
+      "max_floor": 10,
+      "visual": "Hazard",
+      "event_ids": ["thorn_cache", "crown_guardian"]
+    }
+  ],
+  "events": [
+    {
+      "id": "keepers_blessing",
+      "name": "Keeper's Blessing",
+      "narrative": "The shrine's old warmth settles over the party.",
+      "pressure_delta": -2,
+      "party_healing": 4
+    },
+    {
+      "id": "moss_mite_offering",
+      "name": "Living Offering",
+      "narrative": "The offering bowl erupts into a territorial moss mite.",
+      "enemy_id": "moss_mite"
+    },
+    {
+      "id": "restorative_draught",
+      "name": "Restorative Draught",
+      "narrative": "Cool light follows the water and closes the party's wounds.",
+      "pressure_delta": -1,
+      "party_healing": 7
+    },
+    {
+      "id": "lamp_gnat_swarm",
+      "name": "Lantern Swarm",
+      "narrative": "The nearest lights unfold into hungry wings.",
+      "enemy_id": "lamp_gnat"
+    },
+    {
+      "id": "roots_reveal_cache",
+      "name": "Buried Route",
+      "narrative": "The root-map points toward supplies sealed inside the wall.",
+      "rewards": [{ "resource_id": "wood", "amount": 5 }, { "resource_id": "herbs", "amount": 3 }]
+    },
+    {
+      "id": "oracle_warning",
+      "name": "Oracle's Warning",
+      "narrative": "A vision of the crown arrives with the weight of distant attention.",
+      "pressure_delta": 2,
+      "rewards": [{ "resource_id": "crystal", "amount": 2 }]
+    },
+    {
+      "id": "engine_salvage",
+      "name": "Engine Salvage",
+      "narrative": "The party coaxes intact ore and coins from the dormant mechanism.",
+      "rewards": [{ "resource_id": "ore", "amount": 4 }, { "resource_id": "coins", "amount": 6 }]
+    },
+    {
+      "id": "engine_backdraft",
+      "name": "Engine Backdraft",
+      "narrative": "The engine wakes violently, filling the chamber with heat and noise.",
+      "pressure_delta": 3,
+      "rewards": [{ "resource_id": "ore", "amount": 2 }]
+    },
+    {
+      "id": "archive_dividend",
+      "name": "Archive Dividend",
+      "narrative": "One tablet dissolves into a fistful of memory-bright crystal.",
+      "rewards": [{ "resource_id": "crystal", "amount": 5 }],
+      "pressure_delta": 1
+    },
+    {
+      "id": "glass_leech_nest",
+      "name": "Reflected Hunger",
+      "narrative": "The reflection moves first; glass leeches rise from the tablets.",
+      "enemy_id": "glass_leech"
+    },
+    {
+      "id": "thorn_cache",
+      "name": "Thorn-Held Cache",
+      "narrative": "Behind the crown thorn, old tribute waits for a steady hand.",
+      "rewards": [{ "resource_id": "coins", "amount": 10 }, { "resource_id": "crystal", "amount": 3 }],
+      "pressure_delta": 2
+    },
+    {
+      "id": "crown_guardian",
+      "name": "Crown's Notice",
+      "narrative": "The thorn rings like a bell and a guardian answers.",
+      "enemy_id": "iron_rook",
+      "pressure_delta": 1
+    }
+  ]
+}

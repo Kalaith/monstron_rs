@@ -119,6 +119,9 @@ fn tower_preparation_movement_return_and_rewards_form_one_flow() {
             egg_type_id: String::new(),
             hatch_days: 0,
             palette_seed: 0,
+            enemy_id: String::new(),
+            special_location_id: String::new(),
+            event_id: String::new(),
         });
     let moved = tower_engine::move_party(&mut state, &data, dx, dy);
     assert!(moved.summary.contains("Found 3"));

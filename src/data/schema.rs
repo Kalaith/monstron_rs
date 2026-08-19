@@ -167,6 +167,42 @@ pub struct TowerFloorDefinition {
     pub is_boss_floor: bool,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum TowerLocationVisual {
+    Shrine,
+    RecoverySpring,
+    AncientMachinery,
+    RelicArchive,
+    SecretClue,
+    Hazard,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TowerSpecialLocationDefinition {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub min_floor: u32,
+    pub max_floor: u32,
+    pub visual: TowerLocationVisual,
+    pub event_ids: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TowerEventDefinition {
+    pub id: String,
+    pub name: String,
+    pub narrative: String,
+    #[serde(default)]
+    pub rewards: Vec<ResourceAmount>,
+    #[serde(default)]
+    pub pressure_delta: i32,
+    #[serde(default)]
+    pub party_healing: i32,
+    #[serde(default)]
+    pub enemy_id: String,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct EnemyDefinition {
     pub id: String,

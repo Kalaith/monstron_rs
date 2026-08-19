@@ -3,6 +3,8 @@ use std::collections::HashMap;
 
 use macroquad::prelude::*;
 
+use crate::data::TowerLocationVisual;
+
 const MONSTERS: &str = "monsters";
 const EGGS: &str = "eggs";
 const ENEMIES: &str = "enemies";
@@ -16,6 +18,7 @@ const ROOM_MODULES: &str = "room_modules";
 const PARTY_PORTRAITS: &str = "party_portraits";
 const PURPOSE_ROOMS: &str = "purpose_rooms";
 const MOSS_GATE_WORLD: &str = "moss_gate_world";
+const SPECIAL_LOCATIONS: &str = "special_locations";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DungeonBiome {
@@ -172,6 +175,31 @@ pub fn draw_dungeon_feature(index: usize, x: f32, y: f32, width: f32, height: f3
 
 pub fn draw_dungeon_enemy(index: usize, x: f32, y: f32, width: f32, height: f32) {
     draw_atlas(DUNGEON_ENEMIES, 3, 2, index % 6, x, y, width, height);
+}
+
+pub fn draw_dungeon_enemy_by_id(enemy_id: &str, x: f32, y: f32, width: f32, height: f32) {
+    let index = match enemy_id {
+        "moss_mite" | "garden_shade" => 0,
+        "lamp_gnat" => 1,
+        "root_snapper" | "verdant_crown" => 2,
+        "ember_wisp" => 3,
+        "glass_leech" => 4,
+        "hushed_sentry" | "iron_rook" => 5,
+        _ => 0,
+    };
+    draw_dungeon_enemy(index, x, y, width, height);
+}
+
+pub fn draw_special_location(visual: TowerLocationVisual, x: f32, y: f32, width: f32, height: f32) {
+    let index = match visual {
+        TowerLocationVisual::Shrine => 0,
+        TowerLocationVisual::RecoverySpring => 1,
+        TowerLocationVisual::AncientMachinery => 2,
+        TowerLocationVisual::RelicArchive => 3,
+        TowerLocationVisual::SecretClue => 4,
+        TowerLocationVisual::Hazard => 5,
+    };
+    draw_atlas(SPECIAL_LOCATIONS, 3, 2, index, x, y, width, height);
 }
 
 /// Draws a large illustrated room module. The atlas is arranged as a 3x2
@@ -335,6 +363,9 @@ fn asset_bytes(asset: &str) -> &'static [u8] {
         MOSS_GATE_WORLD => {
             include_bytes!("../../assets/generated/dungeon/moss_gate_world_plate_v1.png")
         }
+        SPECIAL_LOCATIONS => include_bytes!(
+            "../../assets/generated/dungeon/dungeon_interaction_landmarks_v5_atlas.png"
+        ),
         _ => unreachable!("unknown visual asset"),
     }
 }

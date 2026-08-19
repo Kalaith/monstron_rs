@@ -45,15 +45,27 @@ pub(crate) fn build_allies(state: &GameState) -> Vec<Combatant> {
         .collect()
 }
 
-pub(crate) fn build_enemies(data: &GameData, floor: u32, is_boss: bool) -> Vec<Combatant> {
+pub(crate) fn build_named_enemies(
+    data: &GameData,
+    floor: u32,
+    is_boss: bool,
+    enemy_id: Option<&str>,
+) -> Vec<Combatant> {
     let eligible: Vec<&EnemyDefinition> = data
         .enemies
         .iter()
         .filter(|enemy| {
-            enemy.is_boss == is_boss && enemy.min_floor <= floor && enemy.max_floor >= floor
+            enemy.is_boss == is_boss
+                && enemy.min_floor <= floor
+                && enemy.max_floor >= floor
+                && enemy_id.is_none_or(|id| enemy.id == id)
         })
         .collect();
-    let count = if is_boss { 1 } else { (1 + floor / 4).min(3) };
+    let count = if is_boss || enemy_id.is_some() {
+        1
+    } else {
+        (1 + floor / 4).min(3)
+    };
 
     (0..count as usize)
         .filter_map(|slot| {

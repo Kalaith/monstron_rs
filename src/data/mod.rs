@@ -8,5 +8,6 @@ pub use schema::{
     BalanceData, BuildingDefinition, CombatCooldownDefinition, EggTypeDefinition, Element,
     EnemyDefinition, GameConfig, MonsterRole, MonsterSpeciesDefinition, MonsterStatCurveDefinition,
     NpcDefinition, PassiveSkill, ResourceAmount, ResourceDefinition, ShopTradeDefinition,
-    Temperament, TowerFloorDefinition, TowerRewardDefinition, TownSkill,
+    Temperament, TowerEventDefinition, TowerFloorDefinition, TowerLocationVisual,
+    TowerRewardDefinition, TowerSpecialLocationDefinition, TownSkill,
 };

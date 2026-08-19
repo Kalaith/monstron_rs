@@ -2,6 +2,7 @@ use macroquad::prelude::*;
 
 use super::TowerAction;
 use crate::assets::{self, DungeonBiome, DungeonRoomPurpose};
+use crate::data::GameData;
 use crate::state::{
     GameState, TowerMapObject, TowerMapObjectKind, TowerMapState, TowerRoom, TowerRunState,
     TowerTileVisibility,
@@ -16,7 +17,7 @@ struct WorldTransform {
     scale: Vec2,
 }
 
-pub(super) fn draw_map_world(state: &GameState, run: &TowerRunState) {
+pub(super) fn draw_map_world(state: &GameState, data: &GameData, run: &TowerRunState) {
     let map = &run.map;
     draw_world_backdrop(map.floor);
     if map.is_empty() {
@@ -37,7 +38,7 @@ pub(super) fn draw_map_world(state: &GameState, run: &TowerRunState) {
         draw_authoritative_ruin(map, transform);
         draw_rooms(map, transform);
     }
-    draw_objects(map, transform);
+    draw_objects(data, map, transform);
     draw_party(state, map, transform);
     draw_world_fog(map);
 }
@@ -310,6 +311,7 @@ fn room_purpose(map: &TowerMapState, room: TowerRoom, index: usize) -> DungeonRo
         Some(TowerMapObjectKind::Egg) => DungeonRoomPurpose::Nest,
         Some(TowerMapObjectKind::Loot) => DungeonRoomPurpose::Cache,
         Some(TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss) => DungeonRoomPurpose::Encounter,
+        Some(TowerMapObjectKind::SpecialLocation) => DungeonRoomPurpose::Shrine,
         Some(TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit) => {
             DungeonRoomPurpose::Traversal
         }
@@ -328,7 +330,7 @@ fn object_in_room(map: &TowerMapState, room: TowerRoom) -> Option<&TowerMapObjec
     })
 }
 
-fn draw_objects(map: &TowerMapState, transform: WorldTransform) {
+fn draw_objects(data: &GameData, map: &TowerMapState, transform: WorldTransform) {
     for object in &map.objects {
         if !map.is_visible(object.x, object.y) {
             continue;
@@ -338,6 +340,7 @@ fn draw_objects(map: &TowerMapState, transform: WorldTransform) {
         let y = position.y;
         let size = match object.kind {
             TowerMapObjectKind::Boss => 82.0,
+            TowerMapObjectKind::SpecialLocation => 76.0,
             TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => 70.0,
             _ => 58.0,
         };
@@ -352,15 +355,32 @@ fn draw_objects(map: &TowerMapState, transform: WorldTransform) {
                 y - size * 0.5,
                 size * 0.84,
             ),
-            TowerMapObjectKind::Enemy => assets::draw_dungeon_enemy(
-                (map.floor - 1) as usize,
+            TowerMapObjectKind::Enemy => assets::draw_dungeon_enemy_by_id(
+                &object.enemy_id,
                 x - size * 0.5,
                 y - size * 0.6,
                 size,
                 size,
             ),
-            TowerMapObjectKind::Boss => {
-                assets::draw_dungeon_enemy(5, x - size * 0.5, y - size * 0.64, size, size)
+            TowerMapObjectKind::Boss => assets::draw_dungeon_enemy_by_id(
+                &object.enemy_id,
+                x - size * 0.5,
+                y - size * 0.64,
+                size,
+                size,
+            ),
+            TowerMapObjectKind::SpecialLocation => {
+                if let Some(location) = data.tower_special_location(&object.special_location_id) {
+                    assets::draw_special_location(
+                        location.visual,
+                        x - size * 0.5,
+                        y - size * 0.62,
+                        size,
+                        size,
+                    );
+                } else {
+                    assets::draw_dungeon_feature(4, x - size * 0.5, y - size * 0.6, size, size);
+                }
             }
             TowerMapObjectKind::Stairs => {
                 assets::draw_dungeon_feature(2, x - size * 0.5, y - size * 0.58, size, size)
@@ -377,6 +397,7 @@ fn draw_object_glow(x: f32, y: f32, size: f32, kind: TowerMapObjectKind) {
         TowerMapObjectKind::Loot => (230, 171, 63),
         TowerMapObjectKind::Egg => (181, 120, 214),
         TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => (211, 73, 67),
+        TowerMapObjectKind::SpecialLocation => (99, 211, 168),
         TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => (88, 196, 206),
     };
     draw_circle(x, y, size * 0.62, color(rgb.0, rgb.1, rgb.2, 31));

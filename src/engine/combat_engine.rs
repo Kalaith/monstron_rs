@@ -1,7 +1,7 @@
 use crate::data::GameData;
 use crate::engine::combat_support::{
     add_boss_egg, advance_to_player_or_outcome, advance_turn, ally_attack, ally_skill, award_xp,
-    build_allies, build_enemies, combined_rewards, defend, encounter_xp, flee_chance,
+    build_allies, build_named_enemies, combined_rewards, defend, encounter_xp, flee_chance,
     flee_succeeds, rebuild_turn_order, record_floor_reached, reward_text, sync_allies,
     victory_rewards,
 };
@@ -40,6 +40,16 @@ pub fn start_encounter(
     floor: u32,
     is_boss: bool,
 ) -> CombatResult {
+    start_named_encounter(state, data, floor, is_boss, None)
+}
+
+pub fn start_named_encounter(
+    state: &mut GameState,
+    data: &GameData,
+    floor: u32,
+    is_boss: bool,
+    enemy_id: Option<&str>,
+) -> CombatResult {
     if state.combat.is_some() {
         return CombatResult {
             summary: "A combat encounter is already active. Tap the visible combat action."
@@ -55,7 +65,7 @@ pub fn start_encounter(
         };
     }
 
-    let enemies = build_enemies(data, floor, is_boss);
+    let enemies = build_named_enemies(data, floor, is_boss, enemy_id);
     if enemies.is_empty() {
         return CombatResult {
             summary: format!("No enemy data is available for floor {floor}. Tap Town to return."),

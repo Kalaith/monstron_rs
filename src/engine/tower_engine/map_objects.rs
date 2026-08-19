@@ -29,14 +29,69 @@ pub(super) fn add_map_objects(
     for object in egg_objects(floor, data, goal, rng) {
         place_object(map, object, rng);
     }
+    for object in special_location_objects(data, floor_number, goal, rng) {
+        place_room_landmark(map, object, rng);
+    }
 
     if floor.is_boss_floor {
-        place_object(map, TowerMapObject::boss(0, 0), rng);
+        if let Some(enemy) = eligible_enemies(data, floor_number, true).first() {
+            place_object(map, TowerMapObject::boss(&enemy.id), rng);
+        }
     } else {
+        let enemies = eligible_enemies(data, floor_number, false);
         for _ in 0..enemy_count(map, state, floor_number, goal) {
-            place_object(map, TowerMapObject::enemy(0, 0), rng);
+            if let Some(enemy) = enemies.get(rng.range(0, enemies.len() as u32) as usize) {
+                place_object(map, TowerMapObject::enemy(&enemy.id), rng);
+            }
         }
     }
+}
+
+fn eligible_enemies(
+    data: &GameData,
+    floor_number: u32,
+    is_boss: bool,
+) -> Vec<&crate::data::EnemyDefinition> {
+    data.enemies
+        .iter()
+        .filter(|enemy| {
+            enemy.is_boss == is_boss
+                && enemy.min_floor <= floor_number
+                && enemy.max_floor >= floor_number
+        })
+        .collect()
+}
+
+fn special_location_objects(
+    data: &GameData,
+    floor_number: u32,
+    goal: TowerRunGoal,
+    rng: &mut TowerMapRng,
+) -> Vec<TowerMapObject> {
+    let eligible: Vec<_> = data
+        .tower_special_locations
+        .iter()
+        .filter(|location| location.min_floor <= floor_number && location.max_floor >= floor_number)
+        .collect();
+    if eligible.is_empty() {
+        return Vec::new();
+    }
+
+    let count = if goal == TowerRunGoal::Scout || (eligible.len() > 1 && rng.chance(1, 3)) {
+        2
+    } else {
+        1
+    };
+    let start = rng.range(0, eligible.len() as u32) as usize;
+    (0..count.min(eligible.len()))
+        .filter_map(|offset| {
+            let location = eligible[(start + offset) % eligible.len()];
+            let event_id = location
+                .event_ids
+                .get(rng.range(0, location.event_ids.len() as u32) as usize)?;
+            Some(TowerMapObject::special_location(&location.id, event_id))
+        })
+        .collect()
 }
 
 fn loot_objects(
@@ -70,6 +125,9 @@ fn loot_objects(
                 egg_type_id: String::new(),
                 hatch_days: 0,
                 palette_seed: 0,
+                enemy_id: String::new(),
+                special_location_id: String::new(),
+                event_id: String::new(),
             })
         })
         .collect()
@@ -107,6 +165,9 @@ fn egg_objects(
                 egg_type_id: egg.id.clone(),
                 hatch_days: egg.hatch_days,
                 palette_seed: 0xE66_0000 ^ u64::from(floor.floor) << 24 ^ u64::from(rng.next_u32()),
+                enemy_id: String::new(),
+                special_location_id: String::new(),
+                event_id: String::new(),
             })
         })
         .collect()
@@ -183,56 +244,80 @@ fn place_object(map: &mut TowerMapState, mut object: TowerMapObject, rng: &mut T
     }
 }
 
+fn place_room_landmark(map: &mut TowerMapState, mut object: TowerMapObject, rng: &mut TowerMapRng) {
+    if map.rooms.len() <= 1 {
+        return;
+    }
+    for _ in 0..80 {
+        let room = map.rooms[rng.range(1, map.rooms.len() as u32) as usize];
+        if map.objects.iter().any(|existing| {
+            existing.x >= room.start_x
+                && existing.x < room.start_x + room.width
+                && existing.y >= room.start_y
+                && existing.y < room.start_y + room.height
+        }) {
+            continue;
+        }
+        let (x, y) = room.center();
+        object.x = x;
+        object.y = y;
+        map.objects.push(object);
+        return;
+    }
+}
+
 impl TowerMapObject {
-    fn stairs(x: u32, y: u32) -> Self {
+    fn empty(kind: TowerMapObjectKind) -> Self {
         Self {
-            kind: TowerMapObjectKind::Stairs,
-            x,
-            y,
+            kind,
+            x: 0,
+            y: 0,
             resource_id: String::new(),
             amount: 0,
             egg_type_id: String::new(),
             hatch_days: 0,
             palette_seed: 0,
+            enemy_id: String::new(),
+            special_location_id: String::new(),
+            event_id: String::new(),
+        }
+    }
+
+    fn stairs(x: u32, y: u32) -> Self {
+        Self {
+            x,
+            y,
+            ..Self::empty(TowerMapObjectKind::Stairs)
         }
     }
 
     fn exit(x: u32, y: u32) -> Self {
         Self {
-            kind: TowerMapObjectKind::Exit,
             x,
             y,
-            resource_id: String::new(),
-            amount: 0,
-            egg_type_id: String::new(),
-            hatch_days: 0,
-            palette_seed: 0,
+            ..Self::empty(TowerMapObjectKind::Exit)
         }
     }
 
-    fn enemy(x: u32, y: u32) -> Self {
+    fn enemy(enemy_id: &str) -> Self {
         Self {
-            kind: TowerMapObjectKind::Enemy,
-            x,
-            y,
-            resource_id: String::new(),
-            amount: 0,
-            egg_type_id: String::new(),
-            hatch_days: 0,
-            palette_seed: 0,
+            enemy_id: enemy_id.to_owned(),
+            ..Self::empty(TowerMapObjectKind::Enemy)
         }
     }
 
-    fn boss(x: u32, y: u32) -> Self {
+    fn boss(enemy_id: &str) -> Self {
         Self {
-            kind: TowerMapObjectKind::Boss,
-            x,
-            y,
-            resource_id: String::new(),
-            amount: 0,
-            egg_type_id: String::new(),
-            hatch_days: 0,
-            palette_seed: 0,
+            enemy_id: enemy_id.to_owned(),
+            ..Self::empty(TowerMapObjectKind::Boss)
+        }
+    }
+
+    fn special_location(location_id: &str, event_id: &str) -> Self {
+        Self {
+            special_location_id: location_id.to_owned(),
+            event_id: event_id.to_owned(),
+            ..Self::empty(TowerMapObjectKind::SpecialLocation)
         }
     }
 }

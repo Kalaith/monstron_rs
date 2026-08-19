@@ -17,6 +17,58 @@ fn generated_map_has_start_and_stairs() {
     assert!(map.rooms.len() >= 4);
     assert!(map.is_visible(map.player_x, map.player_y));
     assert!(map.visibility.contains(&TowerTileVisibility::Hidden));
+    assert!(map.objects.iter().any(|object| {
+        object.kind == TowerMapObjectKind::SpecialLocation
+            && !object.special_location_id.is_empty()
+            && !object.event_id.is_empty()
+    }));
+    assert!(map
+        .objects
+        .iter()
+        .filter(|object| object.kind == TowerMapObjectKind::Enemy)
+        .all(|object| data.enemy(&object.enemy_id).is_some()));
+}
+
+#[test]
+fn special_location_event_applies_its_data_driven_outcome() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Scout);
+
+    let result = resolve_map_object(
+        &mut state,
+        &data,
+        TowerMapObject {
+            kind: TowerMapObjectKind::SpecialLocation,
+            x: 0,
+            y: 0,
+            resource_id: String::new(),
+            amount: 0,
+            egg_type_id: String::new(),
+            hatch_days: 0,
+            palette_seed: 0,
+            enemy_id: String::new(),
+            special_location_id: "root_oracle".to_owned(),
+            event_id: "roots_reveal_cache".to_owned(),
+        },
+    );
+    let run = state.tower_run.as_ref().expect("tower run should remain");
+
+    assert!(result.summary.contains("Root Oracle"));
+    assert_eq!(
+        run.cargo
+            .iter()
+            .find(|stack| stack.resource_id == "wood")
+            .map(|stack| stack.amount),
+        Some(5)
+    );
+    assert_eq!(
+        run.cargo
+            .iter()
+            .find(|stack| stack.resource_id == "herbs")
+            .map(|stack| stack.amount),
+        Some(3)
+    );
 }
 
 #[test]
@@ -53,6 +105,9 @@ fn movement_collects_object_on_destination_tile() {
         egg_type_id: String::new(),
         hatch_days: 0,
         palette_seed: 0,
+        enemy_id: String::new(),
+        special_location_id: String::new(),
+        event_id: String::new(),
     });
 
     let result = move_party(&mut state, &data, dx, dy);

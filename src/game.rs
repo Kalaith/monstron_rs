@@ -425,11 +425,12 @@ impl Game {
                         self.screen = AppScreen::Town;
                     }
                     if let Some(encounter) = result.encounter {
-                        let combat_result = combat_engine::start_encounter(
+                        let combat_result = combat_engine::start_named_encounter(
                             state,
                             &self.data,
                             encounter.floor,
                             encounter.is_boss,
+                            encounter.enemy_id.as_deref(),
                         );
                         self.status_message = combat_result.summary;
                         if state.combat.is_some() {
@@ -441,7 +442,24 @@ impl Game {
             TowerAction::TapMove(dx, dy) => {
                 if let Some(state) = &mut self.state {
                     let result = tower_engine::move_party(state, &self.data, dx, dy);
+                    let returned_to_town = result.returned_to_town;
                     self.status_message = result.summary;
+                    if returned_to_town {
+                        self.screen = AppScreen::Town;
+                    }
+                    if let Some(encounter) = result.encounter {
+                        let combat_result = combat_engine::start_named_encounter(
+                            state,
+                            &self.data,
+                            encounter.floor,
+                            encounter.is_boss,
+                            encounter.enemy_id.as_deref(),
+                        );
+                        self.status_message = combat_result.summary;
+                        if state.combat.is_some() {
+                            self.screen = AppScreen::Combat;
+                        }
+                    }
                 }
             }
             TowerAction::ReturnToTown => {

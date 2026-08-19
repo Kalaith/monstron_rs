@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use crate::data::{
     BalanceData, BuildingDefinition, EggTypeDefinition, Element, EnemyDefinition, GameConfig,
     MonsterRole, MonsterSpeciesDefinition, NpcDefinition, PassiveSkill, ResourceDefinition,
-    ShopTradeDefinition, Temperament, TowerFloorDefinition, TowerRewardDefinition, TownSkill,
+    ShopTradeDefinition, Temperament, TowerEventDefinition, TowerFloorDefinition,
+    TowerRewardDefinition, TowerSpecialLocationDefinition, TownSkill,
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -18,6 +19,8 @@ pub struct GameData {
     pub egg_types: Vec<EggTypeDefinition>,
     pub tower_floors: Vec<TowerFloorDefinition>,
     pub enemies: Vec<EnemyDefinition>,
+    pub tower_special_locations: Vec<TowerSpecialLocationDefinition>,
+    pub tower_events: Vec<TowerEventDefinition>,
     pub npcs: Vec<NpcDefinition>,
     #[serde(skip)]
     resource_index: HashMap<String, usize>,
@@ -31,6 +34,10 @@ pub struct GameData {
     tower_floor_index: HashMap<u32, usize>,
     #[serde(skip)]
     enemy_index: HashMap<String, usize>,
+    #[serde(skip)]
+    tower_special_location_index: HashMap<String, usize>,
+    #[serde(skip)]
+    tower_event_index: HashMap<String, usize>,
     #[serde(skip)]
     npc_index: HashMap<String, usize>,
     #[serde(skip)]
@@ -53,6 +60,8 @@ impl GameData {
         egg_types: Vec<EggTypeDefinition>,
         tower_floors: Vec<TowerFloorDefinition>,
         enemies: Vec<EnemyDefinition>,
+        tower_special_locations: Vec<TowerSpecialLocationDefinition>,
+        tower_events: Vec<TowerEventDefinition>,
         npcs: Vec<NpcDefinition>,
     ) -> Result<Self, String> {
         let mut data = Self {
@@ -64,6 +73,8 @@ impl GameData {
             egg_types,
             tower_floors,
             enemies,
+            tower_special_locations,
+            tower_events,
             npcs,
             resource_index: HashMap::new(),
             building_index: HashMap::new(),
@@ -71,6 +82,8 @@ impl GameData {
             egg_index: HashMap::new(),
             tower_floor_index: HashMap::new(),
             enemy_index: HashMap::new(),
+            tower_special_location_index: HashMap::new(),
+            tower_event_index: HashMap::new(),
             npc_index: HashMap::new(),
             stat_curve_index: HashMap::new(),
             cooldown_index: HashMap::new(),
@@ -245,6 +258,8 @@ impl GameData {
                 }],
             }],
             Vec::new(),
+            Vec::new(),
+            Vec::new(),
         )
         .expect("fallback Hatchspire data must be valid")
     }
@@ -285,6 +300,18 @@ impl GameData {
         self.enemy_index
             .get(id)
             .and_then(|index| self.enemies.get(*index))
+    }
+
+    pub fn tower_special_location(&self, id: &str) -> Option<&TowerSpecialLocationDefinition> {
+        self.tower_special_location_index
+            .get(id)
+            .and_then(|index| self.tower_special_locations.get(*index))
+    }
+
+    pub fn tower_event(&self, id: &str) -> Option<&TowerEventDefinition> {
+        self.tower_event_index
+            .get(id)
+            .and_then(|index| self.tower_events.get(*index))
     }
 
     pub fn npc(&self, id: &str) -> Option<&NpcDefinition> {
@@ -359,6 +386,20 @@ impl GameData {
                 .enumerate()
                 .map(|(index, enemy)| (&enemy.id, index)),
             "enemy",
+        )?;
+        self.tower_special_location_index = build_unique_index(
+            self.tower_special_locations
+                .iter()
+                .enumerate()
+                .map(|(index, location)| (&location.id, index)),
+            "tower special location",
+        )?;
+        self.tower_event_index = build_unique_index(
+            self.tower_events
+                .iter()
+                .enumerate()
+                .map(|(index, event)| (&event.id, index)),
+            "tower event",
         )?;
         self.npc_index = build_unique_index(
             self.npcs
@@ -473,6 +514,38 @@ impl GameData {
                         enemy.id, reward.resource_id
                     ));
                 }
+            }
+        }
+
+        for location in &self.tower_special_locations {
+            if location.min_floor == 0 || location.max_floor < location.min_floor {
+                return Err(format!(
+                    "Tower special location '{}' has an invalid floor range",
+                    location.id
+                ));
+            }
+            if location.event_ids.is_empty() {
+                return Err(format!(
+                    "Tower special location '{}' needs at least one event",
+                    location.id
+                ));
+            }
+            for event_id in &location.event_ids {
+                if self.tower_event(event_id).is_none() {
+                    return Err(format!(
+                        "Tower special location '{}' references missing event '{}'",
+                        location.id, event_id
+                    ));
+                }
+            }
+        }
+        for event in &self.tower_events {
+            validate_resource_stacks(&resource_ids, &event.rewards, "tower event", &event.id)?;
+            if !event.enemy_id.is_empty() && self.enemy(&event.enemy_id).is_none() {
+                return Err(format!(
+                    "Tower event '{}' references missing enemy '{}'",
+                    event.id, event.enemy_id
+                ));
             }
         }
 

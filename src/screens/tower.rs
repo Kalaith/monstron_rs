@@ -5,7 +5,7 @@ mod map_view;
 use crate::assets;
 use crate::data::GameData;
 use crate::engine::town_engine;
-use crate::state::{GameState, TowerRunState};
+use crate::state::{GameState, TowerMapObject, TowerMapObjectKind, TowerRunState};
 use crate::ui;
 use macroquad_toolkit::ui::draw_ui_text_ex;
 
@@ -69,7 +69,7 @@ pub fn handle_input(state: &GameState) -> Option<TowerAction> {
 
 pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
     if let Some(run) = &state.tower_run {
-        map_view::draw_map_world(state, run);
+        map_view::draw_map_world(state, data, run);
         draw_run_overlay(state, data, run);
         draw_party_rail(state);
         draw_action_dock();
@@ -281,10 +281,14 @@ fn draw_party_rail(state: &GameState) {
 fn draw_context_drawer(data: &GameData, run: &TowerRunState) {
     let panel = Rect::new(1060.0, 104.0, 208.0, 366.0);
     draw_overlay_panel(panel);
-    let name = data
+    let focus = nearest_visible_object(run);
+    let floor_name = data
         .tower_floor(run.current_floor)
         .map(|floor| floor.name.as_str())
         .unwrap_or("Dungeon");
+    let name = focus
+        .and_then(|object| object_name(data, object))
+        .unwrap_or(floor_name);
     draw_ui_text_ex(
         name,
         panel.x + 16.0,
@@ -296,7 +300,9 @@ fn draw_context_drawer(data: &GameData, run: &TowerRunState) {
         },
     );
     draw_ui_text_ex(
-        "NEST  ·  EGG",
+        focus
+            .map(object_kind_label)
+            .unwrap_or("EXPEDITION  ·  ROUTE"),
         panel.x + 16.0,
         panel.y + 65.0,
         TextParams {
@@ -305,33 +311,27 @@ fn draw_context_drawer(data: &GameData, run: &TowerRunState) {
             ..Default::default()
         },
     );
-    assets::draw_dungeon_feature(0, panel.x + 20.0, panel.y + 78.0, 168.0, 150.0);
-    draw_rectangle_lines(
-        panel.x + 16.0,
-        panel.y + 238.0,
-        82.0,
-        82.0,
-        2.0,
-        gold_bright(),
-    );
-    assets::draw_egg_badge("glimmer_egg", panel.x + 29.0, panel.y + 248.0, 60.0);
-    draw_rectangle(
-        panel.x + 109.0,
-        panel.y + 238.0,
-        82.0,
-        82.0,
-        Color::from_rgba(8, 10, 11, 235),
-    );
-    draw_rectangle_lines(
-        panel.x + 109.0,
-        panel.y + 238.0,
-        82.0,
-        82.0,
-        1.0,
-        gold_dim(),
-    );
+    if let Some(object) = focus {
+        draw_context_art(data, object, panel.x + 20.0, panel.y + 78.0, 168.0, 150.0);
+    } else {
+        assets::draw_room_vignette(
+            run.current_floor,
+            panel.x + 20.0,
+            panel.y + 78.0,
+            168.0,
+            150.0,
+        );
+    }
+    let detail = focus
+        .and_then(|object| object_detail(data, object))
+        .unwrap_or("Move through lit rooms to reveal what the tower is hiding.");
+    draw_wrapped_line(detail, panel.x + 16.0, panel.y + 258.0, 27, ui::TEXT_DIM);
     draw_ui_text_ex(
-        "Choose an egg",
+        if focus.is_some() {
+            "Approach to interact"
+        } else {
+            "Explore the map"
+        },
         panel.x + 48.0,
         panel.y + 348.0,
         TextParams {
@@ -340,6 +340,77 @@ fn draw_context_drawer(data: &GameData, run: &TowerRunState) {
             ..Default::default()
         },
     );
+}
+
+fn nearest_visible_object(run: &TowerRunState) -> Option<&TowerMapObject> {
+    run.map
+        .objects
+        .iter()
+        .filter(|object| run.map.is_visible(object.x, object.y))
+        .min_by_key(|object| {
+            run.map.player_x.abs_diff(object.x) + run.map.player_y.abs_diff(object.y)
+        })
+}
+
+fn object_name<'a>(data: &'a GameData, object: &'a TowerMapObject) -> Option<&'a str> {
+    match object.kind {
+        TowerMapObjectKind::Loot => Some(data.resource_name(&object.resource_id)),
+        TowerMapObjectKind::Egg => data
+            .egg_type(&object.egg_type_id)
+            .map(|egg| egg.name.as_str()),
+        TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => data
+            .enemy(&object.enemy_id)
+            .map(|enemy| enemy.name.as_str()),
+        TowerMapObjectKind::SpecialLocation => data
+            .tower_special_location(&object.special_location_id)
+            .map(|location| location.name.as_str()),
+        TowerMapObjectKind::Stairs => Some("Deeper Stair"),
+        TowerMapObjectKind::Exit => Some("Return Threshold"),
+    }
+}
+
+fn object_detail<'a>(data: &'a GameData, object: &'a TowerMapObject) -> Option<&'a str> {
+    match object.kind {
+        TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => data
+            .enemy(&object.enemy_id)
+            .map(|enemy| enemy.description.as_str()),
+        TowerMapObjectKind::SpecialLocation => data
+            .tower_special_location(&object.special_location_id)
+            .map(|location| location.description.as_str()),
+        TowerMapObjectKind::Egg => Some("A living egg waits in a tower nest."),
+        TowerMapObjectKind::Loot => Some("Supplies can be carried safely back to town."),
+        TowerMapObjectKind::Stairs => Some("This route leads to the next floor."),
+        TowerMapObjectKind::Exit => Some("This threshold returns the party and its cargo to town."),
+    }
+}
+
+fn object_kind_label(object: &TowerMapObject) -> &'static str {
+    match object.kind {
+        TowerMapObjectKind::Loot => "CACHE  ·  SUPPLIES",
+        TowerMapObjectKind::Egg => "NEST  ·  EGG",
+        TowerMapObjectKind::Enemy => "ENCOUNTER  ·  WANDERING",
+        TowerMapObjectKind::Boss => "ENCOUNTER  ·  BOSS",
+        TowerMapObjectKind::SpecialLocation => "LANDMARK  ·  EVENT",
+        TowerMapObjectKind::Stairs => "ROUTE  ·  DESCENT",
+        TowerMapObjectKind::Exit => "ROUTE  ·  RETURN",
+    }
+}
+
+fn draw_context_art(data: &GameData, object: &TowerMapObject, x: f32, y: f32, w: f32, h: f32) {
+    match object.kind {
+        TowerMapObjectKind::Loot => assets::draw_dungeon_feature(1, x, y, w, h),
+        TowerMapObjectKind::Egg => assets::draw_egg_badge(&object.egg_type_id, x + 18.0, y, h),
+        TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => {
+            assets::draw_dungeon_enemy_by_id(&object.enemy_id, x, y, w, h)
+        }
+        TowerMapObjectKind::SpecialLocation => {
+            if let Some(location) = data.tower_special_location(&object.special_location_id) {
+                assets::draw_special_location(location.visual, x, y, w, h);
+            }
+        }
+        TowerMapObjectKind::Stairs => assets::draw_dungeon_feature(2, x, y, w, h),
+        TowerMapObjectKind::Exit => assets::draw_dungeon_feature(3, x, y, w, h),
+    }
 }
 
 fn draw_action_dock() {
