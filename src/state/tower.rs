@@ -9,6 +9,8 @@ pub struct TowerDiscoveryState {
     pub enemy_ids: Vec<String>,
     pub special_location_ids: Vec<String>,
     pub hazard_ids: Vec<String>,
+    #[serde(default)]
+    pub event_ids: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -330,6 +332,10 @@ impl TowerDiscoveryState {
 
     pub fn discover_hazard(&mut self, id: &str) -> bool {
         discover_id(&mut self.hazard_ids, id)
+    }
+
+    pub fn discover_event(&mut self, id: &str) -> bool {
+        discover_id(&mut self.event_ids, id)
     }
 }
 

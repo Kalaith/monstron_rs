@@ -16,8 +16,22 @@ fn guide_contains_only_persistently_discovered_records() {
 
     assert_eq!(records.len(), 3);
     assert!(matches!(records[0], GuideEntry::Enemy(_)));
-    assert!(matches!(records[1], GuideEntry::Location(_)));
+    assert!(matches!(records[1], GuideEntry::Location(_, 0)));
     assert!(matches!(records[2], GuideEntry::Hazard(_)));
+}
+
+#[test]
+fn landmark_records_count_only_the_approaches_the_party_has_tried() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    state
+        .tower_discoveries
+        .discover_special_location("mossbound_shrine");
+    state.tower_discoveries.discover_event("keepers_blessing");
+
+    let records = entries(&state, &data);
+
+    assert!(matches!(records[0], GuideEntry::Location(_, 1)));
 }
 
 #[test]

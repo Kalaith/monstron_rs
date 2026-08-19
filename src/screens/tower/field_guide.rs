@@ -109,7 +109,7 @@ fn preparation_label(state: &GameState) -> String {
 
 enum GuideEntry<'a> {
     Enemy(&'a crate::data::EnemyDefinition),
-    Location(&'a crate::data::TowerSpecialLocationDefinition),
+    Location(&'a crate::data::TowerSpecialLocationDefinition, usize),
     Hazard(&'a TowerHazardDefinition),
 }
 
@@ -126,7 +126,12 @@ fn entries<'a>(state: &GameState, data: &'a GameData) -> Vec<GuideEntry<'a>> {
             .special_location_ids
             .contains(&location.id)
         {
-            entries.push(GuideEntry::Location(location));
+            let tried = location
+                .event_ids
+                .iter()
+                .filter(|event_id| state.tower_discoveries.event_ids.contains(event_id))
+                .count();
+            entries.push(GuideEntry::Location(location, tried));
         }
     }
     for hazard in &data.tower_hazards {
@@ -163,14 +168,15 @@ fn draw_card(entry: &GuideEntry<'_>, card: Rect) {
                 enemy.min_floor, enemy.max_floor, enemy.pack_size
             ),
         ),
-        GuideEntry::Location(location) => (
+        GuideEntry::Location(location, tried) => (
             "LANDMARK · EVENT".to_owned(),
             location.name.as_str(),
             location.description.as_str(),
             format!(
-                "Floors {}–{} · {} approaches",
+                "Floors {}–{} · Approaches tried {}/{}",
                 location.min_floor,
                 location.max_floor,
+                tried,
                 location.event_ids.len()
             ),
         ),
@@ -220,7 +226,7 @@ fn draw_entry_art(entry: &GuideEntry<'_>, x: f32, y: f32, size: f32) {
         GuideEntry::Enemy(enemy) => {
             assets::draw_dungeon_enemy_visual(enemy.visual, x, y, size, size)
         }
-        GuideEntry::Location(location) => {
+        GuideEntry::Location(location, _) => {
             assets::draw_special_location(location.visual, x, y, size, size)
         }
         GuideEntry::Hazard(hazard) => assets::draw_tower_hazard(hazard.visual, x, y, size, size),

@@ -65,6 +65,7 @@ pub fn choose_special_event(state: &mut GameState, data: &GameData, event_id: &s
         run.pending_event = None;
         run.stats.landmarks_resolved += 1;
     }
+    state.tower_discoveries.discover_event(event_id);
     let outcome = apply_tower_event(state, data, &pending.special_location_id, event_id);
     with_contract_refresh(outcome, state, data)
 }
@@ -141,3 +142,6 @@ pub fn leave_special_event(state: &mut GameState, data: &GameData) -> TowerResul
     }
     result(summary)
 }
+
+#[cfg(test)]
+mod tests;

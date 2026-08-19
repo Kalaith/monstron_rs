@@ -23,4 +23,8 @@ fn field_guide_records_unlock_two_survey_preparation_ranks() {
 
     assert!(!discoveries.discover_enemy("enemy_0"));
     assert_eq!(discoveries.record_count(), 30);
+
+    assert!(discoveries.discover_event("keepers_blessing"));
+    assert!(!discoveries.discover_event("keepers_blessing"));
+    assert_eq!(discoveries.record_count(), 30);
 }
