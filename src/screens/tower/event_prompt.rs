@@ -136,8 +136,12 @@ fn draw_choice(
             78,
             ui::TEXT_DIM,
         );
+        let mut effects = effect_summary(data, event);
+        if !tried {
+            effects.push_str("  ·  NEW: +1 survey (max 5)");
+        }
         draw_ui_text_ex(
-            &effect_summary(data, event),
+            &effects,
             rect.x + 438.0,
             rect.y + 32.0,
             TextParams {
@@ -250,7 +254,7 @@ fn choice_label(index: usize, event: Option<&TowerEventDefinition>, tried: bool)
     if tried {
         format!("{}  {}  ·  TRIED", index + 1, name)
     } else {
-        format!("{}  {}", index + 1, name)
+        format!("{}  {}  ·  NEW", index + 1, name)
     }
 }
 

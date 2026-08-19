@@ -12,6 +12,10 @@ fn event_preview_marks_tried_choices_and_names_advanced_effects() {
         choice_label(0, Some(event), true),
         "1  Buried Route  ·  TRIED"
     );
+    assert_eq!(
+        choice_label(0, Some(event), false),
+        "1  Buried Route  ·  NEW"
+    );
     let preview = effect_summary(&data, event);
     assert!(preview.contains("Reveal 1 secret"));
     assert!(preview.contains("Gain Cache Sense"));

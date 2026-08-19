@@ -65,8 +65,24 @@ pub fn choose_special_event(state: &mut GameState, data: &GameData, event_id: &s
         run.pending_event = None;
         run.stats.landmarks_resolved += 1;
     }
-    state.tower_discoveries.discover_event(event_id);
-    let outcome = apply_tower_event(state, data, &pending.special_location_id, event_id);
+    let first_record = state.tower_discoveries.discover_event(event_id);
+    let mut outcome = apply_tower_event(state, data, &pending.special_location_id, event_id);
+    if first_record {
+        let flare_added = state.tower_run.as_mut().is_some_and(|run| {
+            let before = run.survey_charges;
+            run.survey_charges = run.survey_charges.saturating_add(1).min(5);
+            run.survey_charges > before
+        });
+        let note = if flare_added {
+            " First approach recorded: prepared 1 bonus survey flare."
+        } else {
+            " First approach recorded in the Field Guide."
+        };
+        outcome.summary.push_str(note);
+        if let Some(run) = &mut state.tower_run {
+            run.add_event(note.trim().to_owned());
+        }
+    }
     with_contract_refresh(outcome, state, data)
 }
 

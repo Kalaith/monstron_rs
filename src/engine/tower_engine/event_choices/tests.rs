@@ -24,7 +24,24 @@ fn only_successfully_resolved_landmark_approaches_enter_the_guide() {
         special_location_id: "mossbound_shrine".to_owned(),
         event_ids: vec!["moss_mite_offering".to_owned()],
     });
-    choose_special_event(&mut state, &data, "moss_mite_offering");
+    let survey_before = state.tower_run.as_ref().unwrap().survey_charges;
+    let first = choose_special_event(&mut state, &data, "moss_mite_offering");
 
     assert_eq!(state.tower_discoveries.event_ids, ["moss_mite_offering"]);
+    assert!(first.summary.contains("1 bonus survey flare"));
+    assert_eq!(
+        state.tower_run.as_ref().unwrap().survey_charges,
+        survey_before + 1
+    );
+
+    state.tower_run.as_mut().unwrap().pending_event = Some(TowerPendingEvent {
+        special_location_id: "mossbound_shrine".to_owned(),
+        event_ids: vec!["moss_mite_offering".to_owned()],
+    });
+    let repeat = choose_special_event(&mut state, &data, "moss_mite_offering");
+    assert!(!repeat.summary.contains("bonus survey flare"));
+    assert_eq!(
+        state.tower_run.as_ref().unwrap().survey_charges,
+        survey_before + 1
+    );
 }
