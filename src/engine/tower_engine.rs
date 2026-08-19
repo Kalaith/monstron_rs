@@ -8,7 +8,7 @@ use crate::data::GameData;
 use crate::engine::{monster_engine, town_engine};
 use crate::state::{
     DailyCommitment, GameState, ResourceStack, TowerFoundEgg, TowerMapObject, TowerMapObjectKind,
-    TowerRunGoal, TowerRunState,
+    TowerPendingEvent, TowerRunGoal, TowerRunState,
 };
 use map_gen::{generate_map, reveal_current_area};
 use navigation::explore_direction;
@@ -372,7 +372,75 @@ fn resolve_special_location(
     let Some(location) = data.tower_special_location(&object.special_location_id) else {
         return result("The party finds an unrecorded tower landmark.");
     };
-    let Some(event) = data.tower_event(&object.event_id) else {
+    let mut event_ids = location.event_ids.clone();
+    if let Some(index) = event_ids.iter().position(|id| id == &object.event_id) {
+        event_ids.rotate_left(index);
+    }
+    if let Some(run) = &mut state.tower_run {
+        run.pending_event = Some(TowerPendingEvent {
+            special_location_id: location.id.clone(),
+            event_ids,
+        });
+        let summary = format!(
+            "Discovered {}. Choose a visible approach or tap LEAVE.",
+            location.name
+        );
+        run.add_event(summary.clone());
+        return result(summary);
+    }
+    result("No tower run is active. Tap Town to choose a run.")
+}
+
+pub fn choose_special_event(state: &mut GameState, data: &GameData, event_id: &str) -> TowerResult {
+    let Some(pending) = state
+        .tower_run
+        .as_ref()
+        .and_then(|run| run.pending_event.clone())
+    else {
+        return result("No landmark decision is waiting. Tap EXPLORE.");
+    };
+    if !pending
+        .event_ids
+        .iter()
+        .any(|candidate| candidate == event_id)
+    {
+        return result("That landmark approach is unavailable. Tap a visible choice.");
+    }
+    if let Some(run) = &mut state.tower_run {
+        run.pending_event = None;
+    }
+    apply_tower_event(state, data, &pending.special_location_id, event_id)
+}
+
+pub fn leave_special_event(state: &mut GameState, data: &GameData) -> TowerResult {
+    let Some(pending) = state
+        .tower_run
+        .as_mut()
+        .and_then(|run| run.pending_event.take())
+    else {
+        return result("No landmark decision is waiting. Tap EXPLORE.");
+    };
+    let location_name = data
+        .tower_special_location(&pending.special_location_id)
+        .map(|location| location.name.as_str())
+        .unwrap_or("the landmark");
+    let summary = format!("The party leaves {location_name} undisturbed.");
+    if let Some(run) = &mut state.tower_run {
+        run.add_event(summary.clone());
+    }
+    result(summary)
+}
+
+fn apply_tower_event(
+    state: &mut GameState,
+    data: &GameData,
+    location_id: &str,
+    event_id: &str,
+) -> TowerResult {
+    let Some(location) = data.tower_special_location(location_id) else {
+        return result("The party finds an unrecorded tower landmark.");
+    };
+    let Some(event) = data.tower_event(event_id) else {
         return result(format!("{} stands silent.", location.name));
     };
 
@@ -414,7 +482,7 @@ fn resolve_special_location(
         }
     }
 
-    let mut summary = format!("{} — {}", location.name, event.narrative);
+    let mut summary = format!("{} — {}: {}", location.name, event.name, event.narrative);
     if !reward_labels.is_empty() {
         summary.push_str(&format!(" Recovered {}.", reward_labels.join(", ")));
     }

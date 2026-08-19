@@ -24,6 +24,8 @@ pub struct TowerRunState {
     pub cargo: Vec<ResourceStack>,
     pub found_eggs: Vec<TowerFoundEgg>,
     pub event_log: Vec<String>,
+    #[serde(default)]
+    pub pending_event: Option<TowerPendingEvent>,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -120,6 +122,12 @@ pub struct TowerFoundEgg {
     pub palette_seed: u64,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TowerPendingEvent {
+    pub special_location_id: String,
+    pub event_ids: Vec<String>,
+}
+
 impl TowerRunState {
     pub fn new(current_floor: u32, pressure_limit: u32, goal: TowerRunGoal) -> Self {
         Self {
@@ -133,6 +141,7 @@ impl TowerRunState {
             cargo: Vec::new(),
             found_eggs: Vec::new(),
             event_log: vec![format!("Entered floor {current_floor} on a {goal} run.")],
+            pending_event: None,
         }
     }
 

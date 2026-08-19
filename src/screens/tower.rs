@@ -1,5 +1,6 @@
 use macroquad::prelude::*;
 
+mod event_prompt;
 mod map_view;
 
 use crate::assets;
@@ -15,6 +16,8 @@ pub enum TowerAction {
     TapMove(i32, i32),
     Explore,
     Camp,
+    ChooseEvent(String),
+    LeaveEvent,
     ReturnToTown,
     ToTown,
 }
@@ -29,6 +32,13 @@ pub fn handle_input(state: &GameState) -> Option<TowerAction> {
     }
 
     if state.tower_run.is_some() {
+        if state
+            .tower_run
+            .as_ref()
+            .is_some_and(|run| run.pending_event.is_some())
+        {
+            return event_prompt::handle_input(state.tower_run.as_ref().unwrap());
+        }
         if is_key_pressed(KeyCode::W) || is_key_pressed(KeyCode::Up) {
             return Some(TowerAction::Move(0, -1));
         }
@@ -83,6 +93,7 @@ pub fn draw(state: &GameState, data: &GameData, status_message: &str) {
         draw_action_dock(run);
         draw_context_drawer(data, run);
         draw_journal(run);
+        event_prompt::draw(data, run);
         ui::draw_status_at(status_message, Rect::new(250.0, 60.0, 780.0, 28.0));
     } else {
         draw_backdrop();

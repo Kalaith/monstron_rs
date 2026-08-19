@@ -490,6 +490,31 @@ impl Game {
                     self.status_message = tower_engine::camp_party(state).summary;
                 }
             }
+            TowerAction::ChooseEvent(event_id) => {
+                if let Some(state) = &mut self.state {
+                    let result = tower_engine::choose_special_event(state, &self.data, &event_id);
+                    self.status_message = result.summary;
+                    if let Some(encounter) = result.encounter {
+                        let combat_result = combat_engine::start_named_encounter(
+                            state,
+                            &self.data,
+                            encounter.floor,
+                            encounter.is_boss,
+                            encounter.enemy_id.as_deref(),
+                        );
+                        self.status_message = combat_result.summary;
+                        if state.combat.is_some() {
+                            self.screen = AppScreen::Combat;
+                        }
+                    }
+                }
+            }
+            TowerAction::LeaveEvent => {
+                if let Some(state) = &mut self.state {
+                    self.status_message =
+                        tower_engine::leave_special_event(state, &self.data).summary;
+                }
+            }
             TowerAction::ReturnToTown => {
                 if let Some(state) = &mut self.state {
                     self.status_message = tower_engine::return_to_town(state, &self.data).summary;

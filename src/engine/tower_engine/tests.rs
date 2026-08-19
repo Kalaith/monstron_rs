@@ -53,9 +53,14 @@ fn special_location_event_applies_its_data_driven_outcome() {
             event_id: "roots_reveal_cache".to_owned(),
         },
     );
-    let run = state.tower_run.as_ref().expect("tower run should remain");
-
     assert!(result.summary.contains("Root Oracle"));
+    assert!(state.tower_run.as_ref().unwrap().pending_event.is_some());
+    assert_eq!(state.tower_run.as_ref().unwrap().cargo_amount(), 0);
+
+    let result = choose_special_event(&mut state, &data, "roots_reveal_cache");
+    let run = state.tower_run.as_ref().expect("tower run should remain");
+    assert!(result.summary.contains("Buried Route"));
+    assert!(run.pending_event.is_none());
     assert_eq!(
         run.cargo
             .iter()
@@ -70,6 +75,44 @@ fn special_location_event_applies_its_data_driven_outcome() {
             .map(|stack| stack.amount),
         Some(3)
     );
+}
+
+#[test]
+fn landmark_ambush_waits_for_the_players_visible_choice() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Scout);
+    state.tower_run.as_mut().unwrap().pending_event = Some(TowerPendingEvent {
+        special_location_id: "mossbound_shrine".to_owned(),
+        event_ids: vec![
+            "keepers_blessing".to_owned(),
+            "moss_mite_offering".to_owned(),
+        ],
+    });
+
+    let result = choose_special_event(&mut state, &data, "moss_mite_offering");
+
+    assert_eq!(
+        result.encounter.unwrap().enemy_id.as_deref(),
+        Some("moss_mite")
+    );
+    assert!(state.tower_run.as_ref().unwrap().pending_event.is_none());
+}
+
+#[test]
+fn party_can_leave_a_landmark_without_triggering_an_outcome() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Scout);
+    state.tower_run.as_mut().unwrap().pending_event = Some(TowerPendingEvent {
+        special_location_id: "mossbound_shrine".to_owned(),
+        event_ids: vec!["keepers_blessing".to_owned()],
+    });
+
+    let result = leave_special_event(&mut state, &data);
+
+    assert!(result.summary.contains("undisturbed"));
+    assert!(state.tower_run.as_ref().unwrap().pending_event.is_none());
 }
 
 #[test]
