@@ -34,3 +34,44 @@ fn hexer_attack_drains_morale_and_speed() {
     assert_eq!(combat.allies[0].speed, (speed - 1).max(1));
     assert!(combat.log.iter().any(|line| line.contains("courage")));
 }
+
+#[test]
+fn ambusher_opens_on_the_weakest_companion() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_named_encounter(&mut state, &data, 2, false, Some("archway_pouncer"));
+    let combat = state.combat.as_mut().expect("combat should start");
+    let mut weak_ally = combat.allies[0].clone();
+    weak_ally.name = "Weak Test Ally".to_owned();
+    weak_ally.slot = 1;
+    weak_ally.hp = 6;
+    weak_ally.max_hp = 20;
+    combat.allies.push(weak_ally);
+    combat.round = 1;
+    let front_hp = combat.allies[0].hp;
+
+    enemy_action(combat, 0);
+
+    assert_eq!(combat.allies[0].hp, front_hp);
+    assert!(combat.allies[1].hp < 6);
+    assert!(combat
+        .log
+        .iter()
+        .any(|line| line.contains("Weak Test Ally")));
+}
+
+#[test]
+fn regenerator_mends_itself_before_attacking() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_named_encounter(&mut state, &data, 6, false, Some("rime_marrow"));
+    let combat = state.combat.as_mut().expect("combat should start");
+    combat.round = 2;
+    combat.enemies[0].hp -= 12;
+    let wounded_hp = combat.enemies[0].hp;
+
+    enemy_action(combat, 0);
+
+    assert!(combat.enemies[0].hp > wounded_hp);
+    assert!(combat.log.iter().any(|line| line.contains("tower matter")));
+}

@@ -141,6 +141,90 @@
       "rewards": [{"resource_id": "wood", "amount": 6}, {"resource_id": "crystal", "amount": 4}]
     },
     {
+      "id": "archway_pouncer", "name": "Archway Pouncer",
+      "description": "A slate-backed hunter that folds into ruined doorframes before it springs.",
+      "min_floor": 1, "max_floor": 3, "max_hp": 15, "attack": 5, "defense": 1, "speed": 10,
+      "xp_reward": 6, "behavior": "Ambusher", "visual": "Crawler", "pack_size": 1,
+      "rewards": [{"resource_id": "coins", "amount": 4}, {"resource_id": "stone", "amount": 1}]
+    },
+    {
+      "id": "murmur_cap", "name": "Murmur Cap",
+      "description": "A colony of whispering caps that regrows from every severed thread.",
+      "min_floor": 1, "max_floor": 3, "max_hp": 18, "attack": 3, "defense": 2, "speed": 4,
+      "xp_reward": 7, "behavior": "Regenerator", "visual": "Rooted", "pack_size": 2,
+      "rewards": [{"resource_id": "herbs", "amount": 3}, {"resource_id": "wood", "amount": 1}]
+    },
+    {
+      "id": "vault_jackal", "name": "Vault Jackal",
+      "description": "A long-legged masonry beast that waits above unopened cache doors.",
+      "min_floor": 3, "max_floor": 5, "max_hp": 22, "attack": 7, "defense": 2, "speed": 9,
+      "xp_reward": 10, "behavior": "Ambusher", "visual": "Crawler", "pack_size": 1,
+      "rewards": [{"resource_id": "coins", "amount": 6}, {"resource_id": "stone", "amount": 2}]
+    },
+    {
+      "id": "sap_drinker", "name": "Sap Drinker",
+      "description": "A root-bellied feeder that seals its wounds with stolen amber sap.",
+      "min_floor": 3, "max_floor": 5, "max_hp": 28, "attack": 5, "defense": 4, "speed": 3,
+      "xp_reward": 11, "behavior": "Regenerator", "visual": "Rooted", "pack_size": 1,
+      "rewards": [{"resource_id": "wood", "amount": 4}, {"resource_id": "herbs", "amount": 2}]
+    },
+    {
+      "id": "furnace_skink", "name": "Furnace Skink",
+      "description": "A soot-slick lizard that drops from warm flues onto the frailest light below.",
+      "min_floor": 4, "max_floor": 6, "max_hp": 21, "attack": 9, "defense": 2, "speed": 10,
+      "xp_reward": 13, "behavior": "Ambusher", "visual": "Wisp", "pack_size": 1,
+      "rewards": [{"resource_id": "ore", "amount": 3}, {"resource_id": "coins", "amount": 5}]
+    },
+    {
+      "id": "crystal_anemone", "name": "Crystal Anemone",
+      "description": "A many-armed pool dweller that rebuilds translucent flesh around a crystal seed.",
+      "min_floor": 5, "max_floor": 7, "max_hp": 31, "attack": 6, "defense": 5, "speed": 3,
+      "xp_reward": 15, "behavior": "Regenerator", "visual": "Aquatic", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 4}, {"resource_id": "herbs", "amount": 2}]
+    },
+    {
+      "id": "sluice_pouncer", "name": "Sluice Pouncer",
+      "description": "A blue-black predator that flattens beneath floodwater before striking upward.",
+      "min_floor": 5, "max_floor": 7, "max_hp": 24, "attack": 9, "defense": 3, "speed": 9,
+      "xp_reward": 15, "behavior": "Ambusher", "visual": "Aquatic", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 3}, {"resource_id": "coins", "amount": 6}]
+    },
+    {
+      "id": "rime_marrow", "name": "Rime Marrow",
+      "description": "A walking ice reliquary whose frozen seams close whenever the tower exhales.",
+      "min_floor": 6, "max_floor": 8, "max_hp": 34, "attack": 7, "defense": 7, "speed": 3,
+      "xp_reward": 18, "behavior": "Regenerator", "visual": "Armored", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 4}, {"resource_id": "ore", "amount": 3}]
+    },
+    {
+      "id": "canopy_mimic", "name": "Canopy Mimic",
+      "description": "A vine puppet that hangs like a dead trellis until wounded prey walks beneath it.",
+      "min_floor": 7, "max_floor": 9, "max_hp": 29, "attack": 11, "defense": 4, "speed": 10,
+      "xp_reward": 20, "behavior": "Ambusher", "visual": "Rooted", "pack_size": 1,
+      "rewards": [{"resource_id": "herbs", "amount": 5}, {"resource_id": "wood", "amount": 4}]
+    },
+    {
+      "id": "wellheart_ooze", "name": "Wellheart Ooze",
+      "description": "A mineral-rich ooze that pulls every spilled drop back into its glowing core.",
+      "min_floor": 7, "max_floor": 9, "max_hp": 38, "attack": 8, "defense": 5, "speed": 4,
+      "xp_reward": 21, "behavior": "Regenerator", "visual": "Aquatic", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 5}, {"resource_id": "coins", "amount": 7}]
+    },
+    {
+      "id": "crown_lurker", "name": "Crown Lurker",
+      "description": "A violet silhouette that waits inside another creature's shadow before unfolding.",
+      "min_floor": 8, "max_floor": 10, "max_hp": 32, "attack": 13, "defense": 4, "speed": 11,
+      "xp_reward": 25, "behavior": "Ambusher", "visual": "Wisp", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 6}, {"resource_id": "coins", "amount": 9}]
+    },
+    {
+      "id": "bellroot_colossus", "name": "Bellroot Colossus",
+      "description": "A plated root giant that replaces shattered armor with ore drawn from the walls.",
+      "min_floor": 8, "max_floor": 10, "max_hp": 46, "attack": 10, "defense": 8, "speed": 2,
+      "xp_reward": 27, "behavior": "Regenerator", "visual": "Armored", "pack_size": 1,
+      "rewards": [{"resource_id": "ore", "amount": 7}, {"resource_id": "crystal", "amount": 4}]
+    },
+    {
       "id": "verdant_crown", "name": "Verdant Crown",
       "description": "The first living crown rooted through the tower cap.",
       "min_floor": 10, "max_floor": 10, "is_boss": true,

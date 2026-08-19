@@ -289,6 +289,8 @@ pub enum EnemyBehavior {
     Harrier,
     Hexer,
     Swarm,
+    Ambusher,
+    Regenerator,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]

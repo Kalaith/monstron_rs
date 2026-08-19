@@ -462,6 +462,18 @@ fn enemy_action(combat: &mut CombatState, slot: usize) {
         ));
         return;
     }
+    if behavior == EnemyBehavior::Regenerator
+        && combat.round.is_multiple_of(2)
+        && combat.enemies[slot].hp < combat.enemies[slot].max_hp
+    {
+        let healing = (5 + combat.floor as i32 / 3)
+            .min(combat.enemies[slot].max_hp - combat.enemies[slot].hp);
+        combat.enemies[slot].hp += healing;
+        combat.add_log(format!(
+            "{} knits tower matter into {} HP.",
+            combat.enemies[slot].name, healing
+        ));
+    }
     let Some((target, guarded_by)) = enemy_target(combat, slot) else {
         combat.outcome = Some(CombatOutcome::Defeat);
         return;
@@ -478,6 +490,7 @@ fn enemy_action(combat: &mut CombatState, slot: usize) {
                 .count() as i32
                 - 1
         }
+        EnemyBehavior::Ambusher if combat.round == 1 => 5,
         _ => 0,
     };
     let damage = attack_damage(&actor, &combat.allies[target], behavior_bonus.max(0));
@@ -513,6 +526,21 @@ fn enemy_target(combat: &CombatState, enemy_slot: usize) -> Option<(usize, Optio
     let behavior = combat.enemies[enemy_slot]
         .enemy_behavior
         .unwrap_or(EnemyBehavior::Standard);
+    if behavior == EnemyBehavior::Ambusher && combat.round == 1 {
+        let target = combat
+            .allies
+            .iter()
+            .enumerate()
+            .filter(|(_, ally)| ally.is_alive())
+            .min_by_key(|(_, ally)| (ally.hp, ally.defense, ally.slot))
+            .map(|(index, _)| index)?;
+        if combat.allies[target].slot >= 3 {
+            if let Some(guard) = guarding_front_tank(&combat.allies) {
+                return Some((guard, Some(guard)));
+            }
+        }
+        return Some((target, None));
+    }
     let back_targeted = if behavior == EnemyBehavior::Harrier {
         (combat.round + enemy_slot as u32).is_multiple_of(2)
     } else {
