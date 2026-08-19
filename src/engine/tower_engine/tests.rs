@@ -202,6 +202,50 @@ fn party_can_leave_a_landmark_without_triggering_an_outcome() {
 }
 
 #[test]
+fn landmark_events_can_grant_eggs_and_refresh_camp() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::EggHunt);
+    state.tower_run.as_mut().unwrap().camp_cooldown = 6;
+    state.tower_run.as_mut().unwrap().pending_event = Some(TowerPendingEvent {
+        special_location_id: "echo_nursery".to_owned(),
+        event_ids: vec!["cradle_resonance".to_owned()],
+    });
+
+    choose_special_event(&mut state, &data, "cradle_resonance");
+    assert_eq!(state.tower_run.as_ref().unwrap().found_eggs.len(), 1);
+    assert_eq!(
+        state.tower_run.as_ref().unwrap().found_eggs[0].egg_type_id,
+        "glimmer_egg"
+    );
+
+    state.tower_run.as_mut().unwrap().pending_event = Some(TowerPendingEvent {
+        special_location_id: "waykeeper_camp".to_owned(),
+        event_ids: vec!["rekindle_camp".to_owned()],
+    });
+    choose_special_event(&mut state, &data, "rekindle_camp");
+    assert_eq!(state.tower_run.as_ref().unwrap().camp_cooldown, 0);
+}
+
+#[test]
+fn charting_event_reveals_every_passable_route() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Scout);
+    state.tower_run.as_mut().unwrap().pending_event = Some(TowerPendingEvent {
+        special_location_id: "moonwell_chartroom".to_owned(),
+        event_ids: vec!["moonwell_chart".to_owned()],
+    });
+
+    choose_special_event(&mut state, &data, "moonwell_chart");
+    let map = &state.tower_run.as_ref().unwrap().map;
+
+    assert!(map.tiles.iter().enumerate().all(|(index, tile)| {
+        !tile.is_passable() || map.visibility[index] != TowerTileVisibility::Hidden
+    }));
+}
+
+#[test]
 fn movement_collects_object_on_destination_tile() {
     let data = GameDataLoader::load_embedded().expect("embedded data should load");
     let mut state = GameState::new(&data);

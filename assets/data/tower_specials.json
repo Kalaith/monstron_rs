@@ -53,6 +53,60 @@
       "max_floor": 10,
       "visual": "Hazard",
       "event_ids": ["thorn_cache", "crown_guardian"]
+    },
+    {
+      "id": "echo_nursery",
+      "name": "Echo Nursery",
+      "description": "Empty stone cradles hum with the memory of tower-born eggs.",
+      "min_floor": 1,
+      "max_floor": 4,
+      "visual": "Shrine",
+      "event_ids": ["cradle_resonance", "nesting_chorus"]
+    },
+    {
+      "id": "waykeeper_camp",
+      "name": "Waykeeper Camp",
+      "description": "A forgotten expedition camp waits behind a still-burning ward.",
+      "min_floor": 1,
+      "max_floor": 5,
+      "visual": "RecoverySpring",
+      "event_ids": ["rekindle_camp", "abandoned_pack"]
+    },
+    {
+      "id": "bellwright_forge",
+      "name": "Bellwright Forge",
+      "description": "Tiny hammers hover above an anvil tuned to the tower's heartbeat.",
+      "min_floor": 4,
+      "max_floor": 9,
+      "visual": "AncientMachinery",
+      "event_ids": ["tune_bell", "silence_bell"]
+    },
+    {
+      "id": "moonwell_chartroom",
+      "name": "Moonwell Chartroom",
+      "description": "Silver water reflects corridors that do not appear on the walls.",
+      "min_floor": 5,
+      "max_floor": 9,
+      "visual": "SecretClue",
+      "event_ids": ["moonwell_egg", "moonwell_chart"]
+    },
+    {
+      "id": "broken_observatory",
+      "name": "Broken Observatory",
+      "description": "A root-pierced lens still tracks the crown through ten floors of stone.",
+      "min_floor": 7,
+      "max_floor": 10,
+      "visual": "RelicArchive",
+      "event_ids": ["crown_chart", "star_cache"]
+    },
+    {
+      "id": "crown_antechamber",
+      "name": "Crown Antechamber",
+      "description": "Tribute bowls line the final threshold beneath a listening canopy.",
+      "min_floor": 9,
+      "max_floor": 10,
+      "visual": "Hazard",
+      "event_ids": ["crown_tribute", "crown_echo"]
     }
   ],
   "events": [
@@ -134,6 +188,87 @@
       "narrative": "The thorn rings like a bell and a guardian answers.",
       "enemy_id": "iron_rook",
       "pressure_delta": 1
+    },
+    {
+      "id": "cradle_resonance",
+      "name": "Wake a Cradle",
+      "narrative": "One stone cradle answers with a pulse of violet light.",
+      "egg_type_id": "glimmer_egg",
+      "pressure_delta": 1
+    },
+    {
+      "id": "nesting_chorus",
+      "name": "Join the Chorus",
+      "narrative": "The party matches the nursery's low song until the stone grows warm.",
+      "party_healing": 3,
+      "pressure_delta": -1
+    },
+    {
+      "id": "rekindle_camp",
+      "name": "Rekindle the Ward",
+      "narrative": "The old ward circles the party in a quiet amber ring.",
+      "party_healing": 4,
+      "refresh_camp": true
+    },
+    {
+      "id": "abandoned_pack",
+      "name": "Search the Packs",
+      "narrative": "The waykeepers left dry supplies beneath an oilskin map.",
+      "rewards": [{ "resource_id": "wood", "amount": 4 }, { "resource_id": "herbs", "amount": 3 }]
+    },
+    {
+      "id": "tune_bell",
+      "name": "Tune the Bell",
+      "narrative": "The forge yields ore as its suspended hammers find the lost note.",
+      "rewards": [{ "resource_id": "ore", "amount": 5 }, { "resource_id": "crystal", "amount": 2 }],
+      "pressure_delta": 2
+    },
+    {
+      "id": "silence_bell",
+      "name": "Muffle the Anvil",
+      "narrative": "Wrapped in moss and cloth, the anvil's heartbeat fades from the tower.",
+      "pressure_delta": -3,
+      "refresh_camp": true
+    },
+    {
+      "id": "moonwell_egg",
+      "name": "Reach Into the Reflection",
+      "narrative": "The reflected hand returns holding an egg cold with moonlight.",
+      "egg_type_id": "moonlit_egg",
+      "pressure_delta": 1
+    },
+    {
+      "id": "moonwell_chart",
+      "name": "Trace the Reflected Routes",
+      "narrative": "Silver corridors settle into the expedition map before the water stills.",
+      "reveal_map": true
+    },
+    {
+      "id": "crown_chart",
+      "name": "Align the Crown Lens",
+      "narrative": "The lens sketches every passable route in a single green flare.",
+      "reveal_map": true,
+      "pressure_delta": 2
+    },
+    {
+      "id": "star_cache",
+      "name": "Gather Fallen Light",
+      "narrative": "Fragments caught beneath the lens cool into usable crystal.",
+      "rewards": [{ "resource_id": "crystal", "amount": 6 }, { "resource_id": "coins", "amount": 5 }]
+    },
+    {
+      "id": "crown_tribute",
+      "name": "Accept the Old Tribute",
+      "narrative": "The deepest bowl opens around an egg marked with the living crown.",
+      "egg_type_id": "boss_egg",
+      "pressure_delta": 3
+    },
+    {
+      "id": "crown_echo",
+      "name": "Answer the Canopy",
+      "narrative": "The party's answer returns in the footfall of a crown hand.",
+      "enemy_id": "crown_hand",
+      "rewards": [{ "resource_id": "coins", "amount": 8 }]
     }
   ]
 }

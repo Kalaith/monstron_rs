@@ -429,6 +429,12 @@ impl GameData {
                     event.id, event.enemy_id
                 ));
             }
+            if !event.egg_type_id.is_empty() && self.egg_type(&event.egg_type_id).is_none() {
+                return Err(format!(
+                    "Tower event '{}' references missing egg type '{}'",
+                    event.id, event.egg_type_id
+                ));
+            }
         }
         for hazard in &self.tower_hazards {
             if hazard.min_floor == 0 || hazard.max_floor < hazard.min_floor || hazard.damage < 0 {

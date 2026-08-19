@@ -132,6 +132,19 @@ fn effect_summary(data: &GameData, event: &TowerEventDefinition) -> String {
     if !event.enemy_id.is_empty() {
         effects.push("Ambush".to_owned());
     }
+    if !event.egg_type_id.is_empty() {
+        let egg_name = data
+            .egg_type(&event.egg_type_id)
+            .map(|egg| egg.name.as_str())
+            .unwrap_or(&event.egg_type_id);
+        effects.push(format!("Gain {egg_name}"));
+    }
+    if event.reveal_map {
+        effects.push("Reveal routes".to_owned());
+    }
+    if event.refresh_camp {
+        effects.push("Camp ready".to_owned());
+    }
     if effects.is_empty() {
         "Unknown consequence".to_owned()
     } else {

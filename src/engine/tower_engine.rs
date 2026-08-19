@@ -538,6 +538,7 @@ fn apply_tower_event(
     };
 
     let mut reward_labels = Vec::new();
+    let mut found_egg_name = None;
     if let Some(run) = &mut state.tower_run {
         for reward in &event.rewards {
             run.add_cargo(&reward.resource_id, reward.amount);
@@ -556,6 +557,26 @@ fn apply_tower_event(
                 .pressure
                 .saturating_add(event.pressure_delta as u32)
                 .min(run.pressure_limit);
+        }
+        if event.refresh_camp {
+            run.camp_cooldown = 0;
+        }
+        if event.reveal_map {
+            run.map.ensure_visibility();
+            for (tile, visibility) in run.map.tiles.iter().zip(run.map.visibility.iter_mut()) {
+                if tile.is_passable() && *visibility == crate::state::TowerTileVisibility::Hidden {
+                    *visibility = crate::state::TowerTileVisibility::Explored;
+                }
+            }
+        }
+        if let Some(egg) = data.egg_type(&event.egg_type_id) {
+            run.found_eggs.push(TowerFoundEgg {
+                egg_type_id: egg.id.clone(),
+                hatch_days: egg.hatch_days,
+                origin_floor: run.current_floor,
+                palette_seed: event_seed(run.map.seed, &event.id),
+            });
+            found_egg_name = Some(egg.name.clone());
         }
     }
 
@@ -581,6 +602,15 @@ fn apply_tower_event(
     }
     if total_healed > 0 {
         summary.push_str(&format!(" Restored {total_healed} total HP."));
+    }
+    if let Some(egg_name) = found_egg_name {
+        summary.push_str(&format!(" Recovered a {egg_name}."));
+    }
+    if event.reveal_map {
+        summary.push_str(" The floor's passable routes are now charted.");
+    }
+    if event.refresh_camp {
+        summary.push_str(" The party can CAMP again immediately.");
     }
     if let Some(run) = &mut state.tower_run {
         run.add_event(summary.clone());
@@ -684,6 +714,12 @@ fn tower_seed(state: &GameState, floor: u32, goal: TowerRunGoal, salt: u32) -> u
         ^ u64::from(salt).wrapping_mul(389)
         ^ state.egg_inventory.next_id.wrapping_mul(53)
         ^ (goal as u64).wrapping_mul(577)
+}
+
+fn event_seed(map_seed: u64, event_id: &str) -> u64 {
+    event_id.bytes().fold(map_seed ^ 0xE7E7_5EED, |seed, byte| {
+        seed.rotate_left(7) ^ u64::from(byte)
+    })
 }
 
 fn max_floor(data: &GameData) -> u32 {

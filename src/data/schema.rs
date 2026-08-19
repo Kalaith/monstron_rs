@@ -201,6 +201,12 @@ pub struct TowerEventDefinition {
     pub party_healing: i32,
     #[serde(default)]
     pub enemy_id: String,
+    #[serde(default)]
+    pub egg_type_id: String,
+    #[serde(default)]
+    pub reveal_map: bool,
+    #[serde(default)]
+    pub refresh_camp: bool,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
