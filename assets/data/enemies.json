@@ -407,6 +407,90 @@
       "rewards": [{"resource_id": "ore", "amount": 7}, {"resource_id": "crystal", "amount": 4}]
     },
     {
+      "id": "gutter_nibbler", "name": "Gutter Nibbler",
+      "description": "A quick-jawed tunnel pest that darts behind larger denizens after every bite.",
+      "min_floor": 1, "max_floor": 2, "max_hp": 12, "attack": 4, "defense": 1, "speed": 10,
+      "xp_reward": 5, "behavior": "Harrier", "visual": "Crawler", "pack_size": 3,
+      "rewards": [{"resource_id": "herbs", "amount": 2}, {"resource_id": "coins", "amount": 2}]
+    },
+    {
+      "id": "spore_bailiff", "name": "Spore Bailiff",
+      "description": "A squat fungal marshal spreads its cap across wounded mites like a living shield.",
+      "min_floor": 1, "max_floor": 3, "max_hp": 21, "attack": 4, "defense": 5, "speed": 3,
+      "xp_reward": 8, "behavior": "Warden", "visual": "Rooted", "pack_size": 2,
+      "rewards": [{"resource_id": "herbs", "amount": 3}, {"resource_id": "wood", "amount": 2}]
+    },
+    {
+      "id": "tangle_tollkeeper", "name": "Tangle Tollkeeper",
+      "description": "A thorn-knotted root demands warmth from every creature crossing its archway.",
+      "min_floor": 2, "max_floor": 4, "max_hp": 22, "attack": 7, "defense": 3, "speed": 5,
+      "xp_reward": 10, "behavior": "Leech", "visual": "Rooted", "pack_size": 1,
+      "rewards": [{"resource_id": "wood", "amount": 4}, {"resource_id": "coins", "amount": 4}]
+    },
+    {
+      "id": "soot_jester", "name": "Soot Jester",
+      "description": "A cackling cinder imp cracks armor seams with bells of cooling slag.",
+      "min_floor": 3, "max_floor": 5, "max_hp": 20, "attack": 8, "defense": 2, "speed": 8,
+      "xp_reward": 11, "behavior": "Sapper", "visual": "Wisp", "pack_size": 1,
+      "rewards": [{"resource_id": "ore", "amount": 3}, {"resource_id": "coins", "amount": 5}]
+    },
+    {
+      "id": "boiler_chorus", "name": "Boiler Chorus",
+      "description": "Three ember throats share one iron shell and chant nearby hunters into a frenzy.",
+      "min_floor": 4, "max_floor": 6, "max_hp": 29, "attack": 8, "defense": 5, "speed": 5,
+      "xp_reward": 15, "behavior": "Packleader", "visual": "Armored", "pack_size": 2,
+      "rewards": [{"resource_id": "ore", "amount": 4}, {"resource_id": "crystal", "amount": 2}]
+    },
+    {
+      "id": "mirror_flea", "name": "Mirror Flea",
+      "description": "A glassy speck vanishes inside reflections before springing at an exposed flank.",
+      "min_floor": 4, "max_floor": 6, "max_hp": 19, "attack": 10, "defense": 2, "speed": 11,
+      "xp_reward": 14, "behavior": "Ambusher", "visual": "Crawler", "pack_size": 2,
+      "rewards": [{"resource_id": "crystal", "amount": 3}, {"resource_id": "coins", "amount": 5}]
+    },
+    {
+      "id": "canal_revenant", "name": "Canal Revenant",
+      "description": "A drowned keeper rebuilds its waterlogged body from every stream it crosses.",
+      "min_floor": 5, "max_floor": 8, "max_hp": 33, "attack": 9, "defense": 5, "speed": 5,
+      "xp_reward": 19, "behavior": "Regenerator", "visual": "Aquatic", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 4}, {"resource_id": "herbs", "amount": 4}]
+    },
+    {
+      "id": "frost_taxonomist", "name": "Frost Taxonomist",
+      "description": "A pale owl names each intruder aloud, freezing the strength attached to the name.",
+      "min_floor": 6, "max_floor": 8, "max_hp": 26, "attack": 10, "defense": 4, "speed": 9,
+      "xp_reward": 20, "behavior": "Hexer", "visual": "Winged", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 5}, {"resource_id": "coins", "amount": 7}]
+    },
+    {
+      "id": "thorn_auditor", "name": "Thorn Auditor",
+      "description": "A plated clerk of the garden records every wound and shields the debtors still standing.",
+      "min_floor": 7, "max_floor": 9, "max_hp": 41, "attack": 9, "defense": 9, "speed": 3,
+      "xp_reward": 24, "behavior": "Warden", "visual": "Armored", "pack_size": 2,
+      "rewards": [{"resource_id": "ore", "amount": 5}, {"resource_id": "herbs", "amount": 5}]
+    },
+    {
+      "id": "bellows_manticore", "name": "Bellows Manticore",
+      "description": "A furnace-bellied predator exhales sparks before crushing the nearest defender.",
+      "min_floor": 7, "max_floor": 9, "max_hp": 44, "attack": 13, "defense": 6, "speed": 5,
+      "xp_reward": 26, "behavior": "Bruiser", "visual": "Armored", "pack_size": 1,
+      "rewards": [{"resource_id": "ore", "amount": 6}, {"resource_id": "coins", "amount": 9}]
+    },
+    {
+      "id": "crown_usher", "name": "Crown Usher",
+      "description": "A veiled bloom conducts the final-floor procession with a hooked silver branch.",
+      "min_floor": 9, "max_floor": 10, "max_hp": 38, "attack": 12, "defense": 6, "speed": 8,
+      "xp_reward": 29, "behavior": "Packleader", "visual": "Wisp", "pack_size": 2,
+      "rewards": [{"resource_id": "crystal", "amount": 7}, {"resource_id": "coins", "amount": 10}]
+    },
+    {
+      "id": "verdigris_maw", "name": "Verdigris Maw",
+      "description": "A corroded crown-serpent drinks vigor through teeth green with ancient copper.",
+      "min_floor": 9, "max_floor": 10, "max_hp": 40, "attack": 14, "defense": 5, "speed": 8,
+      "xp_reward": 30, "behavior": "Leech", "visual": "Rooted", "pack_size": 1,
+      "rewards": [{"resource_id": "ore", "amount": 7}, {"resource_id": "crystal", "amount": 6}]
+    },
+    {
       "id": "mirror_matriarch", "name": "Mirror Matriarch",
       "description": "The first runoff guardian, grown around a flawless crystal shell and a choir of reflected claws.",
       "min_floor": 5, "max_floor": 5, "is_boss": true,
