@@ -1,3 +1,5 @@
+#[cfg(test)]
+mod blessing_tests;
 mod contracts;
 mod discovery;
 mod interactions;
@@ -8,7 +10,7 @@ mod pressure;
 #[cfg(test)]
 mod tests;
 
-use crate::data::GameData;
+use crate::data::{GameData, TowerBlessing};
 use crate::engine::{monster_engine, town_engine};
 use crate::state::{
     DailyCommitment, GameState, ResourceStack, TowerFoundEgg, TowerMapObject, TowerMapObjectKind,
@@ -146,7 +148,12 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
         run.map.player_y = next_y as u32;
         run.rooms_explored += 1;
         run.camp_cooldown = run.camp_cooldown.saturating_sub(1);
-        if run.rooms_explored.is_multiple_of(4) {
+        let pressure_interval = if run.has_blessing(TowerBlessing::QuietSteps) {
+            6
+        } else {
+            4
+        };
+        if run.rooms_explored.is_multiple_of(pressure_interval) {
             run.pressure = run.pressure.saturating_add(1).min(run.pressure_limit);
         }
         reveal_current_area(&mut run.map);
@@ -341,11 +348,14 @@ fn resolve_map_object(
         TowerMapObjectKind::Loot => {
             let resource_name = data.resource_name(&object.resource_id).to_owned();
             if let Some(run) = &mut state.tower_run {
-                run.add_cargo(&object.resource_id, object.amount);
-                let summary = format!(
-                    "Found {} {} in a tower cache.",
-                    object.amount, resource_name
-                );
+                let blessing_bonus = if run.has_blessing(TowerBlessing::CacheSense) {
+                    2
+                } else {
+                    0
+                };
+                let amount = object.amount + blessing_bonus;
+                run.add_cargo(&object.resource_id, amount);
+                let summary = format!("Found {} {} in a tower cache.", amount, resource_name);
                 run.add_event(summary.clone());
                 result(summary)
             } else {

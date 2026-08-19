@@ -207,6 +207,25 @@ pub struct TowerEventDefinition {
     pub reveal_map: bool,
     #[serde(default)]
     pub refresh_camp: bool,
+    #[serde(default)]
+    pub blessing: Option<TowerBlessing>,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum TowerBlessing {
+    QuietSteps,
+    Wardstone,
+    CacheSense,
+}
+
+impl TowerBlessing {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::QuietSteps => "Quiet Steps",
+            Self::Wardstone => "Wardstone",
+            Self::CacheSense => "Cache Sense",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]

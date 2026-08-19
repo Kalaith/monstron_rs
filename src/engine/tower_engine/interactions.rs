@@ -1,6 +1,6 @@
 use super::discovery::record_enemy_discovery;
 use super::{result, TowerEncounterRequest, TowerResult};
-use crate::data::GameData;
+use crate::data::{GameData, TowerBlessing};
 use crate::state::{GameState, TowerFoundEgg, TowerTileVisibility};
 
 pub(super) fn resolve_hazard(
@@ -26,6 +26,11 @@ pub(super) fn resolve_hazard(
                     .is_some_and(|element| element == monster.element)
         })
         .map(|monster| monster.name.clone());
+    let warded = countering_monster.is_none()
+        && state
+            .tower_run
+            .as_mut()
+            .is_some_and(|run| run.consume_blessing(TowerBlessing::Wardstone));
 
     let summary = if let Some(monster_name) = countering_monster {
         let mut rewards = Vec::new();
@@ -47,6 +52,14 @@ pub(super) fn resolve_hazard(
         };
         format!(
             "{monster_name} counters {} before it closes on the party.{reward_text}",
+            hazard.name
+        )
+    } else if warded {
+        if let Some(run) = &mut state.tower_run {
+            run.stats.hazards_countered += 1;
+        }
+        format!(
+            "The Wardstone shatters and seals {} before it reaches the party.",
             hazard.name
         )
     } else {
@@ -97,6 +110,7 @@ pub(super) fn apply_tower_event(
 
     let mut reward_labels = Vec::new();
     let mut found_egg_name = None;
+    let mut granted_blessing = None;
     if let Some(run) = &mut state.tower_run {
         for reward in &event.rewards {
             run.add_cargo(&reward.resource_id, reward.amount);
@@ -118,6 +132,11 @@ pub(super) fn apply_tower_event(
         }
         if event.refresh_camp {
             run.camp_cooldown = 0;
+        }
+        if let Some(blessing) = event.blessing {
+            if run.add_blessing(blessing) {
+                granted_blessing = Some(blessing);
+            }
         }
         if event.reveal_map {
             run.map.ensure_visibility();
@@ -170,6 +189,9 @@ pub(super) fn apply_tower_event(
     if event.refresh_camp {
         summary.push_str(" The party can CAMP again immediately.");
     }
+    if let Some(blessing) = granted_blessing {
+        summary.push_str(&format!(" Gained {}.", blessing.label()));
+    }
     if let Some(run) = &mut state.tower_run {
         run.add_event(summary.clone());
     }
@@ -198,3 +220,6 @@ fn event_seed(map_seed: u64, event_id: &str) -> u64 {
         seed.rotate_left(7) ^ u64::from(byte)
     })
 }
+
+#[cfg(test)]
+mod tests;

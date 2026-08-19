@@ -553,11 +553,29 @@ fn draw_journal(data: &GameData, run: &TowerRunState) {
             },
         );
     }
+    if !run.blessings.is_empty() {
+        let labels = run
+            .blessings
+            .iter()
+            .map(|blessing| blessing.label())
+            .collect::<Vec<_>>()
+            .join(" · ");
+        draw_ui_text_ex(
+            &format!("Blessings: {labels}"),
+            panel.x + 16.0,
+            panel.y + 69.0,
+            TextParams {
+                font_size: 11,
+                color: gold_bright(),
+                ..Default::default()
+            },
+        );
+    }
     for (index, message) in run.event_log.iter().rev().take(2).enumerate() {
         draw_ui_text_ex(
             &format!("• {}", message),
             panel.x + 16.0,
-            panel.y + 76.0 + index as f32 * 24.0,
+            panel.y + 88.0 + index as f32 * 22.0,
             TextParams {
                 font_size: 12,
                 color: ui::TEXT_DIM,

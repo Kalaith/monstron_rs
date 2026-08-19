@@ -115,7 +115,8 @@
       "name": "Keeper's Blessing",
       "narrative": "The shrine's old warmth settles over the party.",
       "pressure_delta": -2,
-      "party_healing": 4
+      "party_healing": 4,
+      "blessing": "QuietSteps"
     },
     {
       "id": "moss_mite_offering",
@@ -140,7 +141,8 @@
       "id": "roots_reveal_cache",
       "name": "Buried Route",
       "narrative": "The root-map points toward supplies sealed inside the wall.",
-      "rewards": [{ "resource_id": "wood", "amount": 5 }, { "resource_id": "herbs", "amount": 3 }]
+      "rewards": [{ "resource_id": "wood", "amount": 5 }, { "resource_id": "herbs", "amount": 3 }],
+      "blessing": "CacheSense"
     },
     {
       "id": "oracle_warning",
@@ -208,7 +210,8 @@
       "name": "Rekindle the Ward",
       "narrative": "The old ward circles the party in a quiet amber ring.",
       "party_healing": 4,
-      "refresh_camp": true
+      "refresh_camp": true,
+      "blessing": "Wardstone"
     },
     {
       "id": "abandoned_pack",
@@ -228,7 +231,8 @@
       "name": "Muffle the Anvil",
       "narrative": "Wrapped in moss and cloth, the anvil's heartbeat fades from the tower.",
       "pressure_delta": -3,
-      "refresh_camp": true
+      "refresh_camp": true,
+      "blessing": "QuietSteps"
     },
     {
       "id": "moonwell_egg",
@@ -241,7 +245,8 @@
       "id": "moonwell_chart",
       "name": "Trace the Reflected Routes",
       "narrative": "Silver corridors settle into the expedition map before the water stills.",
-      "reveal_map": true
+      "reveal_map": true,
+      "blessing": "CacheSense"
     },
     {
       "id": "crown_chart",
@@ -261,7 +266,8 @@
       "name": "Accept the Old Tribute",
       "narrative": "The deepest bowl opens around an egg marked with the living crown.",
       "egg_type_id": "boss_egg",
-      "pressure_delta": 3
+      "pressure_delta": 3,
+      "blessing": "Wardstone"
     },
     {
       "id": "crown_echo",

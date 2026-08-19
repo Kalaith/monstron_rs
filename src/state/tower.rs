@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+use crate::data::TowerBlessing;
 use crate::state::ResourceStack;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -41,6 +42,8 @@ pub struct TowerRunState {
     pub contract_complete: bool,
     #[serde(default)]
     pub stats: TowerRunStats,
+    #[serde(default)]
+    pub blessings: Vec<TowerBlessing>,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -173,6 +176,7 @@ impl TowerRunState {
             contract_id: goal.contract_id().to_owned(),
             contract_complete: false,
             stats: TowerRunStats::default(),
+            blessings: Vec::new(),
         }
     }
 
@@ -207,6 +211,27 @@ impl TowerRunState {
             let overflow = self.event_log.len() - 7;
             self.event_log.drain(0..overflow);
         }
+    }
+
+    pub fn has_blessing(&self, blessing: TowerBlessing) -> bool {
+        self.blessings.contains(&blessing)
+    }
+
+    pub fn add_blessing(&mut self, blessing: TowerBlessing) -> bool {
+        if self.has_blessing(blessing) {
+            false
+        } else {
+            self.blessings.push(blessing);
+            true
+        }
+    }
+
+    pub fn consume_blessing(&mut self, blessing: TowerBlessing) -> bool {
+        let Some(index) = self.blessings.iter().position(|active| *active == blessing) else {
+            return false;
+        };
+        self.blessings.remove(index);
+        true
     }
 }
 
