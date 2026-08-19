@@ -441,6 +441,8 @@ fn role_label(combatant: &Combatant, is_ally: bool) -> &'static str {
             EnemyBehavior::Swarm => "Swarm",
             EnemyBehavior::Ambusher => "Ambusher",
             EnemyBehavior::Regenerator => "Regenerator",
+            EnemyBehavior::Packleader => "Packleader",
+            EnemyBehavior::Sapper => "Sapper",
         };
     }
     match combatant.role {

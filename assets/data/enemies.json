@@ -225,6 +225,104 @@
       "rewards": [{"resource_id": "ore", "amount": 7}, {"resource_id": "crystal", "amount": 4}]
     },
     {
+      "id": "spore_herald", "name": "Spore Herald",
+      "description": "A tall cap beats warning pulses through a carpet of lesser fungi.",
+      "min_floor": 1, "max_floor": 3, "max_hp": 16, "attack": 3, "defense": 2, "speed": 5,
+      "xp_reward": 7, "behavior": "Packleader", "visual": "Rooted", "pack_size": 2,
+      "rewards": [{"resource_id": "herbs", "amount": 3}, {"resource_id": "wood", "amount": 1}]
+    },
+    {
+      "id": "mortar_termite", "name": "Mortar Termite",
+      "description": "Stone-dusted mandibles worry shield rims and tower joints alike.",
+      "min_floor": 1, "max_floor": 3, "max_hp": 17, "attack": 5, "defense": 3, "speed": 4,
+      "xp_reward": 7, "behavior": "Sapper", "visual": "Crawler", "pack_size": 1,
+      "rewards": [{"resource_id": "stone", "amount": 3}, {"resource_id": "coins", "amount": 2}]
+    },
+    {
+      "id": "root_drummer", "name": "Root Drummer",
+      "description": "Its hollow trunk calls burrowers into a single furious rhythm.",
+      "min_floor": 3, "max_floor": 5, "max_hp": 24, "attack": 5, "defense": 4, "speed": 4,
+      "xp_reward": 11, "behavior": "Packleader", "visual": "Rooted", "pack_size": 2,
+      "rewards": [{"resource_id": "wood", "amount": 4}, {"resource_id": "herbs", "amount": 2}]
+    },
+    {
+      "id": "brass_borer", "name": "Brass Borer",
+      "description": "A drill-snouted grub that finds the weak seam in any guard.",
+      "min_floor": 3, "max_floor": 5, "max_hp": 23, "attack": 7, "defense": 4, "speed": 5,
+      "xp_reward": 11, "behavior": "Sapper", "visual": "Armored", "pack_size": 1,
+      "rewards": [{"resource_id": "ore", "amount": 3}, {"resource_id": "coins", "amount": 4}]
+    },
+    {
+      "id": "ember_cantor", "name": "Ember Cantor",
+      "description": "A coal-bright spirit sings furnace vermin into reckless motion.",
+      "min_floor": 4, "max_floor": 6, "max_hp": 22, "attack": 7, "defense": 3, "speed": 7,
+      "xp_reward": 13, "behavior": "Packleader", "visual": "Wisp", "pack_size": 2,
+      "rewards": [{"resource_id": "ore", "amount": 3}, {"resource_id": "coins", "amount": 5}]
+    },
+    {
+      "id": "clinker_mole", "name": "Clinker Mole",
+      "description": "Its ceramic claws pry armor apart with a kiln-worker's precision.",
+      "min_floor": 4, "max_floor": 6, "max_hp": 27, "attack": 9, "defense": 4, "speed": 4,
+      "xp_reward": 14, "behavior": "Sapper", "visual": "Armored", "pack_size": 1,
+      "rewards": [{"resource_id": "ore", "amount": 4}, {"resource_id": "stone", "amount": 2}]
+    },
+    {
+      "id": "prism_chorister", "name": "Prism Chorister",
+      "description": "A glass-finned caller bends poollight into signals for its shoal.",
+      "min_floor": 5, "max_floor": 7, "max_hp": 27, "attack": 7, "defense": 4, "speed": 7,
+      "xp_reward": 16, "behavior": "Packleader", "visual": "Aquatic", "pack_size": 2,
+      "rewards": [{"resource_id": "crystal", "amount": 4}, {"resource_id": "coins", "amount": 5}]
+    },
+    {
+      "id": "sluice_ram", "name": "Sluice Ram",
+      "description": "A plated flood-beast drives a wedge of crystal horn through braced ranks.",
+      "min_floor": 5, "max_floor": 7, "max_hp": 33, "attack": 9, "defense": 6, "speed": 3,
+      "xp_reward": 17, "behavior": "Sapper", "visual": "Aquatic", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 4}, {"resource_id": "stone", "amount": 3}]
+    },
+    {
+      "id": "moon_choir_owl", "name": "Moon Choir Owl",
+      "description": "Its layered call orders pale hunters through the drowned galleries.",
+      "min_floor": 6, "max_floor": 8, "max_hp": 25, "attack": 8, "defense": 4, "speed": 9,
+      "xp_reward": 18, "behavior": "Packleader", "visual": "Winged", "pack_size": 2,
+      "rewards": [{"resource_id": "crystal", "amount": 4}, {"resource_id": "herbs", "amount": 3}]
+    },
+    {
+      "id": "rime_auger", "name": "Rime Auger",
+      "description": "A spiral-shelled crawler that grinds warm defenses into brittle frost.",
+      "min_floor": 6, "max_floor": 8, "max_hp": 34, "attack": 9, "defense": 7, "speed": 3,
+      "xp_reward": 19, "behavior": "Sapper", "visual": "Armored", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 4}, {"resource_id": "ore", "amount": 3}]
+    },
+    {
+      "id": "garden_standard", "name": "Garden Standard",
+      "description": "A walking banner of leaves snaps flooded predators into formation.",
+      "min_floor": 7, "max_floor": 9, "max_hp": 31, "attack": 9, "defense": 5, "speed": 6,
+      "xp_reward": 21, "behavior": "Packleader", "visual": "Rooted", "pack_size": 2,
+      "rewards": [{"resource_id": "herbs", "amount": 5}, {"resource_id": "wood", "amount": 4}]
+    },
+    {
+      "id": "gallery_breaker", "name": "Gallery Breaker",
+      "description": "A bronze-backed brute carries pruning hooks made to peel guards open.",
+      "min_floor": 7, "max_floor": 9, "max_hp": 38, "attack": 11, "defense": 6, "speed": 4,
+      "xp_reward": 22, "behavior": "Sapper", "visual": "Armored", "pack_size": 1,
+      "rewards": [{"resource_id": "ore", "amount": 5}, {"resource_id": "coins", "amount": 7}]
+    },
+    {
+      "id": "crown_chorister", "name": "Crown Chorister",
+      "description": "A many-throated bloom conducts every crown-born shadow nearby.",
+      "min_floor": 8, "max_floor": 10, "max_hp": 35, "attack": 10, "defense": 5, "speed": 8,
+      "xp_reward": 25, "behavior": "Packleader", "visual": "Wisp", "pack_size": 2,
+      "rewards": [{"resource_id": "crystal", "amount": 6}, {"resource_id": "coins", "amount": 8}]
+    },
+    {
+      "id": "lockjaw_mason", "name": "Lockjaw Mason",
+      "description": "A crown-plated constructor dismantles intruders as if they were faulty walls.",
+      "min_floor": 8, "max_floor": 10, "max_hp": 43, "attack": 12, "defense": 8, "speed": 3,
+      "xp_reward": 27, "behavior": "Sapper", "visual": "Armored", "pack_size": 1,
+      "rewards": [{"resource_id": "ore", "amount": 7}, {"resource_id": "crystal", "amount": 4}]
+    },
+    {
       "id": "verdant_crown", "name": "Verdant Crown",
       "description": "The first living crown rooted through the tower cap.",
       "min_floor": 10, "max_floor": 10, "is_boss": true,

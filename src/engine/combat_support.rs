@@ -474,11 +474,38 @@ fn enemy_action(combat: &mut CombatState, slot: usize) {
             combat.enemies[slot].name, healing
         ));
     }
+    if behavior == EnemyBehavior::Packleader && slot == 0 && combat.round.is_multiple_of(2) {
+        if let Some(target) = combat
+            .enemies
+            .iter()
+            .enumerate()
+            .filter(|(index, enemy)| *index != slot && enemy.is_alive())
+            .min_by_key(|(_, enemy)| (enemy.attack, enemy.slot))
+            .map(|(index, _)| index)
+        {
+            combat.enemies[target].attack += 2;
+            combat.enemies[target].morale += 6;
+            combat.add_log(format!(
+                "{} rallies {} to attack harder.",
+                combat.enemies[slot].name, combat.enemies[target].name
+            ));
+            return;
+        }
+    }
     let Some((target, guarded_by)) = enemy_target(combat, slot) else {
         combat.outcome = Some(CombatOutcome::Defeat);
         return;
     };
     let actor = combat.enemies[slot].clone();
+    if behavior == EnemyBehavior::Sapper && combat.round.is_multiple_of(2) {
+        let defense_lost = combat.allies[target].defense.min(2);
+        combat.allies[target].defense -= defense_lost;
+        combat.allies[target].is_defending = false;
+        combat.add_log(format!(
+            "{} breaks {}'s stance and strips {} defense.",
+            actor.name, combat.allies[target].name, defense_lost
+        ));
+    }
     let defending = combat.allies[target].is_defending || guarded_by.is_some();
     let behavior_bonus = match behavior {
         EnemyBehavior::Bruiser if combat.round.is_multiple_of(3) => 4,
