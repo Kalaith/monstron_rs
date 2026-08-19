@@ -170,6 +170,9 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
 
         run.map.player_x = next_x as u32;
         run.map.player_y = next_y as u32;
+        if run.route_target == Some((run.map.player_x, run.map.player_y)) {
+            run.route_target = None;
+        }
         run.rooms_explored += 1;
         run.camp_cooldown = run.camp_cooldown.saturating_sub(1);
         let anomaly = anomaly_effect(run, data);
@@ -242,6 +245,16 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
 
 pub fn explore_party(state: &mut GameState, data: &GameData) -> TowerResult {
     ensure_map(state, data);
+    let focused_direction = state.tower_run.as_ref().and_then(|run| {
+        run.route_target
+            .and_then(|target| route_direction(&run.map, run.goal, target.0, target.1))
+    });
+    if let Some(direction) = focused_direction {
+        return move_party(state, data, direction.0, direction.1);
+    }
+    if let Some(run) = &mut state.tower_run {
+        run.route_target = None;
+    }
     let Some(direction) = state
         .tower_run
         .as_ref()
@@ -250,6 +263,42 @@ pub fn explore_party(state: &mut GameState, data: &GameData) -> TowerResult {
         return result("No unexplored route is reachable. Tap RETREAT or choose a visible room.");
     };
     move_party(state, data, direction.0, direction.1)
+}
+
+pub fn route_party_to(state: &mut GameState, data: &GameData, target: (u32, u32)) -> TowerResult {
+    ensure_map(state, data);
+    let Some(run) = &mut state.tower_run else {
+        return result("No tower run is active. Tap Town to choose a run.");
+    };
+    if !run.map.is_passable(target.0, target.1) {
+        return result("That room is not reachable. Tap a visible chamber.");
+    }
+    let Some(direction) = route_direction(&run.map, run.goal, target.0, target.1) else {
+        run.route_target = None;
+        return result("No route reaches that room. Tap another chamber or SURVEY.");
+    };
+    run.route_target = Some(target);
+    let mut outcome = move_party(state, data, direction.0, direction.1);
+    if state.tower_run.is_none() {
+        return outcome;
+    }
+    if state
+        .tower_run
+        .as_ref()
+        .is_some_and(|run| (run.map.player_x, run.map.player_y) == target)
+    {
+        if let Some(run) = &mut state.tower_run {
+            run.route_target = None;
+        }
+        outcome
+            .summary
+            .push_str(" The party reaches the focused room.");
+    } else {
+        outcome
+            .summary
+            .push_str(" The room remains marked; tap EXPLORE to continue the route.");
+    }
+    outcome
 }
 
 pub fn room_tap_direction(run: &TowerRunState, target: (u32, u32)) -> Option<(i32, i32)> {
@@ -538,6 +587,7 @@ fn advance_floor(state: &mut GameState, data: &GameData) -> TowerResult {
         run.boss_defeated = false;
         run.survey_charges = crate::state::survey_charges_for(run.goal);
         run.anomaly_id = anomaly_id;
+        run.route_target = None;
         run.map = map;
         let summary = format!(
             "Descended to floor {}: {} under {}. A fresh map unfolds.",

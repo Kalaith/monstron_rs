@@ -50,6 +50,8 @@ pub struct TowerRunState {
     pub boss_defeated: bool,
     #[serde(default)]
     pub anomaly_id: String,
+    #[serde(default)]
+    pub route_target: Option<(u32, u32)>,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -201,6 +203,7 @@ impl TowerRunState {
             blessings: Vec::new(),
             boss_defeated: false,
             anomaly_id: String::new(),
+            route_target: None,
         }
     }
 

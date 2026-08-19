@@ -16,7 +16,7 @@ use macroquad_toolkit::ui::draw_ui_text_ex;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum TowerAction {
     Move(i32, i32),
-    TapMove(i32, i32),
+    RouteTo(u32, u32),
     Explore,
     Survey,
     Camp,

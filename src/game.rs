@@ -454,9 +454,9 @@ impl Game {
                     }
                 }
             }
-            TowerAction::TapMove(dx, dy) => {
+            TowerAction::RouteTo(x, y) => {
                 if let Some(state) = &mut self.state {
-                    let result = tower_engine::move_party(state, &self.data, dx, dy);
+                    let result = tower_engine::route_party_to(state, &self.data, (x, y));
                     let returned_to_town = result.returned_to_town;
                     self.status_message = result.summary;
                     if returned_to_town {

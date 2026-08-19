@@ -39,6 +39,7 @@ pub(super) fn draw_map_world(state: &GameState, data: &GameData, run: &TowerRunS
         draw_authoritative_ruin(map, transform);
         draw_rooms(map, transform);
     }
+    draw_route_target(map, transform, run.route_target);
     draw_objects(data, map, transform, run.boss_defeated);
     draw_party(state, map, transform);
     draw_world_fog(map);
@@ -65,7 +66,8 @@ pub(super) fn world_tap_action(run: &TowerRunState) -> Option<TowerAction> {
             map.player_x.abs_diff(center.0) + map.player_y.abs_diff(center.1)
         })?;
     let target = selected.center();
-    tower_engine::room_tap_direction(run, target).map(|(dx, dy)| TowerAction::TapMove(dx, dy))
+    tower_engine::room_tap_direction(run, target)?;
+    Some(TowerAction::RouteTo(target.0, target.1))
 }
 
 fn draw_world_backdrop(floor: u32) {
@@ -120,6 +122,30 @@ fn room_rect(room: TowerRoom, transform: WorldTransform) -> Rect {
         width,
         height,
     )
+}
+
+fn draw_route_target(map: &TowerMapState, transform: WorldTransform, target: Option<(u32, u32)>) {
+    let Some(target) = target else {
+        return;
+    };
+    let Some(room) = map.rooms.iter().find(|room| {
+        target.0 >= room.start_x
+            && target.0 < room.start_x + room.width
+            && target.1 >= room.start_y
+            && target.1 < room.start_y + room.height
+    }) else {
+        return;
+    };
+    let rect = room_rect(*room, transform);
+    draw_ellipse_lines(
+        rect.x + rect.w * 0.5,
+        rect.y + rect.h * 0.6,
+        rect.w * 0.38,
+        rect.h * 0.28,
+        0.0,
+        4.0,
+        color(232, 173, 82, 220),
+    );
 }
 
 fn draw_authoritative_ruin(map: &TowerMapState, transform: WorldTransform) {

@@ -536,6 +536,33 @@ fn room_tap_path_turns_away_from_a_wall_to_reach_its_target() {
     assert_eq!(room_tap_direction(&run, (5, 2)), Some((0, -1)));
 }
 
+#[test]
+fn room_route_focus_persists_for_followup_explore_taps() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Scout);
+    let run = state.tower_run.as_ref().unwrap();
+    let target = run
+        .map
+        .rooms
+        .iter()
+        .map(|room| room.center())
+        .max_by_key(|center| {
+            run.map.player_x.abs_diff(center.0) + run.map.player_y.abs_diff(center.1)
+        })
+        .expect("generated map should contain rooms");
+    let start = (run.map.player_x, run.map.player_y);
+
+    let result = route_party_to(&mut state, &data, target);
+    let run = state.tower_run.as_ref().unwrap();
+
+    assert_ne!((run.map.player_x, run.map.player_y), start);
+    if (run.map.player_x, run.map.player_y) != target {
+        assert_eq!(run.route_target, Some(target));
+        assert!(result.summary.contains("remains marked"));
+    }
+}
+
 fn test_map_object(kind: TowerMapObjectKind, x: u32, y: u32) -> TowerMapObject {
     TowerMapObject {
         kind,
