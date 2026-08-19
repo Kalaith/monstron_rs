@@ -201,6 +201,7 @@
       "cargo_costs": [{ "resource_id": "crystal", "amount": 1 }],
       "required_passive": "Finds small loot",
       "rewards": [{ "resource_id": "wood", "amount": 5 }, { "resource_id": "herbs", "amount": 3 }],
+      "reveal_secrets": 1,
       "blessing": "CacheSense"
     },
     {
@@ -315,6 +316,7 @@
       "narrative": "Silver corridors settle into the expedition map before the water stills.",
       "required_passive": "Detects eggs",
       "reveal_map": true,
+      "reveal_secrets": 1,
       "blessing": "CacheSense"
     },
     {
@@ -322,6 +324,7 @@
       "name": "Align the Crown Lens",
       "narrative": "The lens sketches every passable route in a single green flare.",
       "reveal_map": true,
+      "reveal_secrets": 2,
       "pressure_delta": 2
     },
     {
@@ -363,6 +366,7 @@
       "name": "Take the Living Map",
       "narrative": "The bark-map shrieks as it is torn free, calling a vault hunter.",
       "reveal_map": true,
+      "reveal_secrets": 1,
       "pressure_delta": 2,
       "enemy_id": "vault_jackal"
     },
@@ -418,7 +422,8 @@
       "cargo_costs": [{ "resource_id": "crystal", "amount": 3 }],
       "required_element": "Fire",
       "survey_charges": 3,
-      "reveal_map": true
+      "reveal_map": true,
+      "reveal_secrets": 1
     },
     {
       "id": "ring_drowned_beacon",

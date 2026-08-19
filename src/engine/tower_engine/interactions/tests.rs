@@ -59,6 +59,34 @@ fn authored_event_restocks_survey_and_repels_only_wandering_enemies() {
 }
 
 #[test]
+fn root_oracle_event_charts_the_authored_secret_cache_room() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Balanced);
+    let secret_position = state
+        .tower_run
+        .as_ref()
+        .unwrap()
+        .map
+        .objects
+        .iter()
+        .find(|object| object.kind == crate::state::TowerMapObjectKind::SecretCache)
+        .map(|object| (object.x, object.y))
+        .expect("floor should contain a concealed cache");
+
+    let result = apply_tower_event(&mut state, &data, "root_oracle", "roots_reveal_cache");
+    let run = state.tower_run.as_ref().unwrap();
+    let secret = run
+        .map
+        .object_at(secret_position.0, secret_position.1)
+        .unwrap();
+
+    assert!(result.summary.contains("Charted 1 concealed cache room"));
+    assert!(secret.revealed);
+    assert!(run.map.is_visible(secret.x, secret.y));
+}
+
+#[test]
 fn wardstone_is_consumed_to_cancel_an_uncountered_hazard() {
     let data = GameDataLoader::load_embedded().expect("embedded data should load");
     let mut state = GameState::new(&data);

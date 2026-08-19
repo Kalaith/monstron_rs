@@ -1,4 +1,5 @@
 use super::discovery::record_enemy_discovery;
+use super::exploration_talents::chart_nearest_secret_rooms;
 use super::{result, TowerEncounterRequest, TowerResult};
 use crate::data::{GameData, TowerBlessing};
 use crate::state::{GameState, TowerFoundEgg, TowerTileVisibility};
@@ -113,6 +114,7 @@ pub(super) fn apply_tower_event(
     let mut granted_blessing = None;
     let mut survey_charges_added = 0;
     let mut hunters_repelled = 0;
+    let mut secrets_revealed = 0;
     if let Some(run) = &mut state.tower_run {
         for reward in &event.rewards {
             run.add_cargo(&reward.resource_id, reward.amount);
@@ -161,6 +163,9 @@ pub(super) fn apply_tower_event(
                 }
             }
         }
+        if event.reveal_secrets > 0 {
+            secrets_revealed = chart_nearest_secret_rooms(&mut run.map, event.reveal_secrets);
+        }
         if let Some(egg) = data.egg_type(&event.egg_type_id) {
             run.found_eggs.push(TowerFoundEgg {
                 egg_type_id: egg.id.clone(),
@@ -200,6 +205,11 @@ pub(super) fn apply_tower_event(
     }
     if event.reveal_map {
         summary.push_str(" The floor's passable routes are now charted.");
+    }
+    if event.reveal_secrets > 0 {
+        summary.push_str(&format!(
+            " Charted {secrets_revealed} concealed cache room(s)."
+        ));
     }
     if event.refresh_camp {
         summary.push_str(" The party can CAMP again immediately.");

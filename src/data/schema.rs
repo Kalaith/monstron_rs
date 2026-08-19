@@ -216,6 +216,8 @@ pub struct TowerEventDefinition {
     #[serde(default)]
     pub reveal_map: bool,
     #[serde(default)]
+    pub reveal_secrets: u32,
+    #[serde(default)]
     pub refresh_camp: bool,
     #[serde(default)]
     pub survey_charges: u32,
