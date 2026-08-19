@@ -1,4 +1,5 @@
-use std::collections::VecDeque;
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
 
 use crate::state::{TowerMapObjectKind, TowerMapState, TowerRunGoal, TowerTileVisibility};
 
@@ -8,28 +9,46 @@ pub(super) fn explore_direction(map: &TowerMapState, goal: TowerRunGoal) -> Opti
     }
 
     let start = map_index(map, map.player_x, map.player_y)?;
-    let mut queue = VecDeque::from([start]);
+    let mut queue = BinaryHeap::from([Reverse((0_u32, start))]);
     let mut distances = vec![None; (map.width * map.height) as usize];
     let mut previous = vec![None; distances.len()];
     distances[start] = Some(0_u32);
 
-    while let Some(index) = queue.pop_front() {
+    while let Some(Reverse((distance, index))) = queue.pop() {
+        if distances[index].is_some_and(|best| distance > best) {
+            continue;
+        }
         let (x, y) = coordinates(map, index);
         for (next_x, next_y) in neighbors(map, x, y) {
             let Some(next) = map_index(map, next_x, next_y) else {
                 continue;
             };
-            if distances[next].is_some() || !map.is_passable(next_x, next_y) {
+            if !map.is_passable(next_x, next_y) {
                 continue;
             }
-            distances[next] = Some(distances[index]? + 1);
+            let next_distance = distance + traversal_cost(map, goal, next_x, next_y);
+            if distances[next].is_some_and(|best| next_distance >= best) {
+                continue;
+            }
+            distances[next] = Some(next_distance);
             previous[next] = Some(index);
-            queue.push_back(next);
+            queue.push(Reverse((next_distance, next)));
         }
     }
 
     let target = best_target(map, goal, start, &distances)?;
     first_step(map, start, target, &previous)
+}
+
+fn traversal_cost(map: &TowerMapState, goal: TowerRunGoal, x: u32, y: u32) -> u32 {
+    if goal != TowerRunGoal::SafeRun || !map.is_discovered(x, y) {
+        return 1;
+    }
+    match map.object_at(x, y).map(|object| object.kind) {
+        Some(TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss) => 15,
+        Some(TowerMapObjectKind::Hazard) => 18,
+        _ => 1,
+    }
 }
 
 fn best_target(

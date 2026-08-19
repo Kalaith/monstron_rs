@@ -371,6 +371,33 @@ fn explore_routes_toward_the_selected_run_goal() {
     );
 }
 
+#[test]
+fn safe_explore_routes_around_a_known_hazard() {
+    let mut map = TowerMapState::new(7, 5, 1, 23);
+    for x in 1..6 {
+        map.set_tile(x, 1, TowerTileKind::Corridor);
+        map.set_tile(x, 2, TowerTileKind::Corridor);
+        map.set_visibility(x, 1, TowerTileVisibility::Visible);
+        map.set_visibility(x, 2, TowerTileVisibility::Visible);
+    }
+    map.player_x = 1;
+    map.player_y = 2;
+    let mut hazard = test_map_object(TowerMapObjectKind::Hazard, 3, 2);
+    hazard.hazard_id = "falling_wardstones".to_owned();
+    let mut loot = test_map_object(TowerMapObjectKind::Loot, 5, 2);
+    loot.resource_id = "stone".to_owned();
+    map.objects = vec![hazard, loot];
+
+    assert_eq!(
+        explore_direction(&map, TowerRunGoal::Balanced),
+        Some((1, 0))
+    );
+    assert_eq!(
+        explore_direction(&map, TowerRunGoal::SafeRun),
+        Some((0, -1))
+    );
+}
+
 fn test_map_object(kind: TowerMapObjectKind, x: u32, y: u32) -> TowerMapObject {
     TowerMapObject {
         kind,
