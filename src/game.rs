@@ -502,7 +502,7 @@ impl Game {
             }
             TowerAction::Camp => {
                 if let Some(state) = &mut self.state {
-                    self.status_message = tower_engine::camp_party(state).summary;
+                    self.status_message = tower_engine::camp_party(state, &self.data).summary;
                 }
             }
             TowerAction::ChooseEvent(event_id) => {

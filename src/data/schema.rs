@@ -276,6 +276,27 @@ pub struct TowerContractDefinition {
     pub rewards: Vec<ResourceAmount>,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum TowerAnomalyEffect {
+    QuietVeil,
+    EchoingRain,
+    CacheBloom,
+    MendingLights,
+    NestingPulse,
+    HunterTracks,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TowerAnomalyDefinition {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub min_floor: u32,
+    pub max_floor: u32,
+    pub visual_index: usize,
+    pub effect: TowerAnomalyEffect,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct EnemyDefinition {
     pub id: String,

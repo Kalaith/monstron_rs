@@ -2,6 +2,7 @@ use macroquad::prelude::*;
 use macroquad_toolkit::ui::draw_ui_text_ex;
 
 use super::{draw_overlay_panel, gold_bright};
+use crate::assets;
 use crate::data::GameData;
 use crate::engine::tower_engine;
 use crate::state::TowerRunState;
@@ -77,4 +78,75 @@ pub(super) fn draw(data: &GameData, run: &TowerRunState) {
             },
         );
     }
+}
+
+pub(super) fn draw_anomaly(data: &GameData, run: &TowerRunState) {
+    let Some(anomaly) = data.tower_anomaly(&run.anomaly_id) else {
+        return;
+    };
+    let panel = Rect::new(18.0, 408.0, 218.0, 116.0);
+    draw_overlay_panel(panel);
+    assets::draw_tower_anomaly(
+        anomaly.visual_index,
+        panel.x + 7.0,
+        panel.y + 22.0,
+        82.0,
+        82.0,
+    );
+    draw_ui_text_ex(
+        "FLOOR ANOMALY",
+        panel.x + 88.0,
+        panel.y + 25.0,
+        TextParams {
+            font_size: 11,
+            color: ui::ACCENT,
+            ..Default::default()
+        },
+    );
+    draw_ui_text_ex(
+        &anomaly.name,
+        panel.x + 88.0,
+        panel.y + 48.0,
+        TextParams {
+            font_size: 17,
+            color: gold_bright(),
+            ..Default::default()
+        },
+    );
+    draw_anomaly_detail(&anomaly.description, panel.x + 88.0, panel.y + 68.0);
+}
+
+fn draw_anomaly_detail(text: &str, x: f32, y: f32) {
+    let mut line = String::new();
+    let mut row = 0;
+    for word in text.split_whitespace() {
+        if !line.is_empty() && line.len() + word.len() + 1 > 21 {
+            draw_ui_text_ex(
+                &line,
+                x,
+                y + row as f32 * 14.0,
+                TextParams {
+                    font_size: 10,
+                    color: ui::TEXT_DIM,
+                    ..Default::default()
+                },
+            );
+            line.clear();
+            row += 1;
+        }
+        if !line.is_empty() {
+            line.push(' ');
+        }
+        line.push_str(word);
+    }
+    draw_ui_text_ex(
+        &line,
+        x,
+        y + row as f32 * 14.0,
+        TextParams {
+            font_size: 10,
+            color: ui::TEXT_DIM,
+            ..Default::default()
+        },
+    );
 }

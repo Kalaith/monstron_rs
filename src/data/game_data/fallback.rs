@@ -170,6 +170,7 @@ pub(super) fn build() -> GameData {
         Vec::new(),
         Vec::new(),
         Vec::new(),
+        Vec::new(),
     )
     .expect("fallback Hatchspire data must be valid")
 }

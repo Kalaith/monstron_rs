@@ -1,3 +1,6 @@
+mod anomalies;
+#[cfg(test)]
+mod anomaly_runtime_tests;
 #[cfg(test)]
 mod blessing_tests;
 #[cfg(test)]
@@ -18,6 +21,7 @@ use crate::state::{
     DailyCommitment, GameState, ResourceStack, TowerFoundEgg, TowerMapObject, TowerMapObjectKind,
     TowerPendingEvent, TowerRunGoal, TowerRunState,
 };
+use anomalies::{anomaly_effect, select_anomaly_id};
 pub use contracts::contract_progress;
 use contracts::refresh_contract;
 use discovery::record_visible_discoveries;
@@ -68,12 +72,18 @@ pub fn start_run(state: &mut GameState, data: &GameData, goal: TowerRunGoal) -> 
 
     let seed = tower_seed(state, start_floor, goal, 0);
     let map = generate_map(state, data, start_floor, goal, seed);
-    state.tower_run =
-        Some(TowerRunState::new(start_floor, floor.pressure_limit, goal).with_map(map));
+    let anomaly_id = select_anomaly_id(data, start_floor, seed);
+    let anomaly_name = data
+        .tower_anomaly(&anomaly_id)
+        .map(|anomaly| anomaly.name.as_str())
+        .unwrap_or("No anomaly");
+    let mut run = TowerRunState::new(start_floor, floor.pressure_limit, goal).with_map(map);
+    run.anomaly_id = anomaly_id;
+    state.tower_run = Some(run);
     record_visible_discoveries(state, data, None);
     let summary = format!(
-        "The party enters floor {}: {}. Move through the map to find stairs, eggs, caches, and enemies.",
-        floor.floor, floor.name
+        "The party enters floor {}: {} under {}. Move through the map to find stairs, eggs, caches, and enemies.",
+        floor.floor, floor.name, anomaly_name
     );
     state.activity_log.add(state.day, summary.clone());
 
@@ -94,6 +104,9 @@ pub fn ensure_map(state: &mut GameState, data: &GameData) {
         if let Some(run) = &mut state.tower_run {
             run.current_floor = floor;
             run.map = map;
+            if run.anomaly_id.is_empty() {
+                run.anomaly_id = select_anomaly_id(data, floor, seed);
+            }
             run.add_event(format!("Generated a map for floor {floor}."));
         }
         record_visible_discoveries(state, data, None);
@@ -101,6 +114,9 @@ pub fn ensure_map(state: &mut GameState, data: &GameData) {
     }
 
     if let Some(run) = &mut state.tower_run {
+        if run.anomaly_id.is_empty() {
+            run.anomaly_id = select_anomaly_id(data, run.current_floor, run.map.seed);
+        }
         let restored_visibility = run.map.ensure_visibility();
         if restored_visibility || !run.map.is_visible(run.map.player_x, run.map.player_y) {
             reveal_current_area(&mut run.map);
@@ -150,10 +166,16 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
         run.map.player_y = next_y as u32;
         run.rooms_explored += 1;
         run.camp_cooldown = run.camp_cooldown.saturating_sub(1);
+        let anomaly = anomaly_effect(run, data);
+        let base_pressure_interval: u32 = match anomaly {
+            Some(crate::data::TowerAnomalyEffect::QuietVeil) => 6,
+            Some(crate::data::TowerAnomalyEffect::EchoingRain) => 3,
+            _ => 4,
+        };
         let pressure_interval = if run.has_blessing(TowerBlessing::QuietSteps) {
-            6
+            base_pressure_interval.saturating_add(2).min(7)
         } else {
-            4
+            base_pressure_interval
         };
         if run.rooms_explored.is_multiple_of(pressure_interval) {
             run.pressure = run.pressure.saturating_add(1).min(run.pressure_limit);
@@ -163,7 +185,12 @@ pub fn move_party(state: &mut GameState, data: &GameData, dx: i32, dy: i32) -> T
             .map
             .object_index_at(run.map.player_x, run.map.player_y)
             .map(|index| run.map.objects.remove(index));
-        let advance = if object.is_none() && run.rooms_explored.is_multiple_of(2) {
+        let hunter_interval = if anomaly == Some(crate::data::TowerAnomalyEffect::HunterTracks) {
+            1
+        } else {
+            2
+        };
+        let advance = if object.is_none() && run.rooms_explored.is_multiple_of(hunter_interval) {
             advance_wandering_enemy(&mut run.map)
         } else {
             None
@@ -219,7 +246,7 @@ pub fn explore_party(state: &mut GameState, data: &GameData) -> TowerResult {
     move_party(state, data, direction.0, direction.1)
 }
 
-pub fn camp_party(state: &mut GameState) -> TowerResult {
+pub fn camp_party(state: &mut GameState, data: &GameData) -> TowerResult {
     let Some(run) = &state.tower_run else {
         return result("No tower run is active. Tap Town to choose a run.");
     };
@@ -230,6 +257,10 @@ pub fn camp_party(state: &mut GameState) -> TowerResult {
         ));
     }
 
+    let mending_lights = state.tower_run.as_ref().is_some_and(|run| {
+        anomaly_effect(run, data) == Some(crate::data::TowerAnomalyEffect::MendingLights)
+    });
+    let healing = if mending_lights { 5 } else { 3 };
     let party_ids: Vec<u64> = state
         .monster_roster
         .party_slots
@@ -241,14 +272,14 @@ pub fn camp_party(state: &mut GameState) -> TowerResult {
     for monster_id in party_ids {
         if let Some(monster) = state.monster_roster.monster_mut(monster_id) {
             let before = monster.hp;
-            monster.hp = (monster.hp + 3).min(monster.max_hp);
+            monster.hp = (monster.hp + healing).min(monster.max_hp);
             total_healed += monster.hp - before;
         }
     }
     let run = state.tower_run.as_mut().expect("tower run checked above");
     let pressure_reduced = run.pressure.min(2);
     run.pressure -= pressure_reduced;
-    run.camp_cooldown = 8;
+    run.camp_cooldown = if mending_lights { 6 } else { 8 };
     let summary = format!(
         "The party makes a brief camp: {total_healed} total HP restored and pressure reduced by {pressure_reduced}."
     );
@@ -355,7 +386,14 @@ fn resolve_map_object(
                 } else {
                     0
                 };
-                let amount = object.amount + blessing_bonus;
+                let anomaly_bonus = if anomaly_effect(run, data)
+                    == Some(crate::data::TowerAnomalyEffect::CacheBloom)
+                {
+                    2
+                } else {
+                    0
+                };
+                let amount = object.amount + blessing_bonus + anomaly_bonus;
                 run.add_cargo(&object.resource_id, amount);
                 let summary = format!("Found {} {} in a tower cache.", amount, resource_name);
                 run.add_event(summary.clone());
@@ -371,9 +409,16 @@ fn resolve_map_object(
                 .unwrap_or(object.egg_type_id.as_str())
                 .to_owned();
             if let Some(run) = &mut state.tower_run {
+                let hatch_bonus = if anomaly_effect(run, data)
+                    == Some(crate::data::TowerAnomalyEffect::NestingPulse)
+                {
+                    1
+                } else {
+                    0
+                };
                 run.found_eggs.push(TowerFoundEgg {
                     egg_type_id: object.egg_type_id,
-                    hatch_days: object.hatch_days,
+                    hatch_days: object.hatch_days.saturating_sub(hatch_bonus),
                     origin_floor: run.current_floor,
                     palette_seed: object.palette_seed,
                 });
@@ -539,16 +584,22 @@ fn advance_floor(state: &mut GameState, data: &GameData) -> TowerResult {
         .unwrap_or(0);
     let seed = tower_seed(state, next_floor, goal, step_count);
     let map = generate_map(state, data, next_floor, goal, seed);
+    let anomaly_id = select_anomaly_id(data, next_floor, seed);
+    let anomaly_name = data
+        .tower_anomaly(&anomaly_id)
+        .map(|anomaly| anomaly.name.as_str())
+        .unwrap_or("No anomaly");
 
     if let Some(run) = &mut state.tower_run {
         run.current_floor = next_floor;
         run.stats.floors_descended += 1;
         run.pressure_limit = next_floor_data.pressure_limit;
         run.boss_defeated = false;
+        run.anomaly_id = anomaly_id;
         run.map = map;
         let summary = format!(
-            "Descended to floor {}: {}. A fresh map unfolds.",
-            next_floor_data.floor, next_floor_data.name
+            "Descended to floor {}: {} under {}. A fresh map unfolds.",
+            next_floor_data.floor, next_floor_data.name, anomaly_name
         );
         run.add_event(summary.clone());
         return result(summary);

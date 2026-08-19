@@ -117,6 +117,7 @@ pub fn draw(
         draw_action_dock(run);
         context_drawer::draw(data, run);
         journal::draw(data, run);
+        journal::draw_anomaly(data, run);
         event_prompt::draw(data, run);
         ui::draw_button(guide_button_rect(true), "FIELD GUIDE", true);
         ui::draw_status_at(status_message, Rect::new(250.0, 60.0, 780.0, 28.0));

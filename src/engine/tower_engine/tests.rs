@@ -302,6 +302,7 @@ fn movement_builds_pressure_at_a_readable_pace() {
     let data = GameDataLoader::load_embedded().expect("embedded data should load");
     let mut state = GameState::new(&data);
     start_run(&mut state, &data, TowerRunGoal::Balanced);
+    state.tower_run.as_mut().unwrap().anomaly_id = "crystal_bloom".to_owned();
     let run = state.tower_run.as_ref().expect("tower run should start");
     let (dx, dy) = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         .into_iter()
@@ -323,12 +324,13 @@ fn camp_recovers_the_party_but_has_a_travel_cooldown() {
     let data = GameDataLoader::load_embedded().expect("embedded data should load");
     let mut state = GameState::new(&data);
     start_run(&mut state, &data, TowerRunGoal::SafeRun);
+    state.tower_run.as_mut().unwrap().anomaly_id = "crystal_bloom".to_owned();
     state.monster_roster.monsters[0].hp -= 8;
     state.tower_run.as_mut().unwrap().pressure = 4;
 
-    let first = camp_party(&mut state);
+    let first = camp_party(&mut state, &data);
     let hp_after_first = state.monster_roster.monsters[0].hp;
-    let second = camp_party(&mut state);
+    let second = camp_party(&mut state, &data);
 
     assert!(first.summary.contains("3 total HP"));
     assert_eq!(state.tower_run.as_ref().unwrap().pressure, 2);

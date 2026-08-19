@@ -1,0 +1,58 @@
+{
+  "anomalies": [
+    {
+      "id": "veil_mist",
+      "name": "Veil Mist",
+      "description": "Blue-green mist swallows the sound of careful footsteps.",
+      "min_floor": 1,
+      "max_floor": 6,
+      "visual_index": 0,
+      "effect": "QuietVeil"
+    },
+    {
+      "id": "echo_rain",
+      "name": "Echo Rain",
+      "description": "Each drop repeats through distant rooms and wakes the masonry.",
+      "min_floor": 2,
+      "max_floor": 9,
+      "visual_index": 1,
+      "effect": "EchoingRain"
+    },
+    {
+      "id": "nesting_pollen",
+      "name": "Nesting Pollen",
+      "description": "Warm golden pollen quickens every egg carried through the floor.",
+      "min_floor": 3,
+      "max_floor": 10,
+      "visual_index": 2,
+      "effect": "NestingPulse"
+    },
+    {
+      "id": "mending_lights",
+      "name": "Mending Lights",
+      "description": "Patient lantern motes gather wherever the expedition makes camp.",
+      "min_floor": 1,
+      "max_floor": 8,
+      "visual_index": 3,
+      "effect": "MendingLights"
+    },
+    {
+      "id": "crystal_bloom",
+      "name": "Crystal Bloom",
+      "description": "Violet seams push forgotten material out of sealed caches.",
+      "min_floor": 4,
+      "max_floor": 10,
+      "visual_index": 4,
+      "effect": "CacheBloom"
+    },
+    {
+      "id": "hunter_tracks",
+      "name": "Hunter Tracks",
+      "description": "Fresh golden prints circle the party even when the corridors are empty.",
+      "min_floor": 5,
+      "max_floor": 10,
+      "visual_index": 5,
+      "effect": "HunterTracks"
+    }
+  ]
+}

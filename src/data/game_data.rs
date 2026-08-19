@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use crate::data::{
     BalanceData, BuildingDefinition, EggTypeDefinition, Element, EnemyDefinition, GameConfig,
     MonsterRole, MonsterSpeciesDefinition, NpcDefinition, PassiveSkill, ResourceDefinition,
-    ShopTradeDefinition, Temperament, TowerContractDefinition, TowerEventDefinition,
-    TowerFloorDefinition, TowerHazardDefinition, TowerRewardDefinition,
+    ShopTradeDefinition, Temperament, TowerAnomalyDefinition, TowerContractDefinition,
+    TowerEventDefinition, TowerFloorDefinition, TowerHazardDefinition, TowerRewardDefinition,
     TowerSpecialLocationDefinition, TownSkill,
 };
 
@@ -26,6 +26,7 @@ pub struct GameData {
     pub tower_events: Vec<TowerEventDefinition>,
     pub tower_hazards: Vec<TowerHazardDefinition>,
     pub tower_contracts: Vec<TowerContractDefinition>,
+    pub tower_anomalies: Vec<TowerAnomalyDefinition>,
     pub npcs: Vec<NpcDefinition>,
     #[serde(skip)]
     resource_index: HashMap<String, usize>,
@@ -47,6 +48,7 @@ pub struct GameData {
     tower_hazard_index: HashMap<String, usize>,
     #[serde(skip)]
     tower_contract_index: HashMap<String, usize>,
+    tower_anomaly_index: HashMap<String, usize>,
     #[serde(skip)]
     npc_index: HashMap<String, usize>,
     #[serde(skip)]
@@ -73,6 +75,7 @@ impl GameData {
         tower_events: Vec<TowerEventDefinition>,
         tower_hazards: Vec<TowerHazardDefinition>,
         tower_contracts: Vec<TowerContractDefinition>,
+        tower_anomalies: Vec<TowerAnomalyDefinition>,
         npcs: Vec<NpcDefinition>,
     ) -> Result<Self, String> {
         let mut data = Self {
@@ -88,6 +91,7 @@ impl GameData {
             tower_events,
             tower_hazards,
             tower_contracts,
+            tower_anomalies,
             npcs,
             resource_index: HashMap::new(),
             building_index: HashMap::new(),
@@ -99,6 +103,7 @@ impl GameData {
             tower_event_index: HashMap::new(),
             tower_hazard_index: HashMap::new(),
             tower_contract_index: HashMap::new(),
+            tower_anomaly_index: HashMap::new(),
             npc_index: HashMap::new(),
             stat_curve_index: HashMap::new(),
             cooldown_index: HashMap::new(),
@@ -174,6 +179,12 @@ impl GameData {
         self.tower_contract_index
             .get(id)
             .and_then(|index| self.tower_contracts.get(*index))
+    }
+
+    pub fn tower_anomaly(&self, id: &str) -> Option<&TowerAnomalyDefinition> {
+        self.tower_anomaly_index
+            .get(id)
+            .and_then(|index| self.tower_anomalies.get(*index))
     }
 
     pub fn npc(&self, id: &str) -> Option<&NpcDefinition> {
@@ -277,6 +288,13 @@ impl GameData {
                 .map(|(index, contract)| (&contract.id, index)),
             "tower contract",
         )?;
+        self.tower_anomaly_index = build_unique_index(
+            self.tower_anomalies
+                .iter()
+                .enumerate()
+                .map(|(index, anomaly)| (&anomaly.id, index)),
+            "tower anomaly",
+        )?;
         self.npc_index = build_unique_index(
             self.npcs
                 .iter()
@@ -373,6 +391,18 @@ impl GameData {
                         floor.floor, egg_type_id
                     ));
                 }
+            }
+        }
+
+        for anomaly in &self.tower_anomalies {
+            if anomaly.min_floor == 0
+                || anomaly.max_floor < anomaly.min_floor
+                || anomaly.visual_index >= 6
+            {
+                return Err(format!(
+                    "Tower anomaly '{}' has an invalid floor range or visual index",
+                    anomaly.id
+                ));
             }
         }
 

@@ -186,6 +186,7 @@ fn balance_data_is_typed_and_every_reference_is_integrity_checked() {
     assert!(data.enemies.len() >= 33);
     assert_eq!(data.tower_hazards.len(), 6);
     assert_eq!(data.tower_contracts.len(), 6);
+    assert_eq!(data.tower_anomalies.len(), 6);
     assert_eq!(data.tower_special_locations.len(), 12);
     assert_eq!(data.tower_events.len(), 24);
     for behavior in [
@@ -198,6 +199,19 @@ fn balance_data_is_typed_and_every_reference_is_integrity_checked() {
         hatchspire::data::EnemyBehavior::Regenerator,
     ] {
         assert!(data.enemies.iter().any(|enemy| enemy.behavior == behavior));
+    }
+    for effect in [
+        hatchspire::data::TowerAnomalyEffect::QuietVeil,
+        hatchspire::data::TowerAnomalyEffect::EchoingRain,
+        hatchspire::data::TowerAnomalyEffect::CacheBloom,
+        hatchspire::data::TowerAnomalyEffect::MendingLights,
+        hatchspire::data::TowerAnomalyEffect::NestingPulse,
+        hatchspire::data::TowerAnomalyEffect::HunterTracks,
+    ] {
+        assert!(data
+            .tower_anomalies
+            .iter()
+            .any(|anomaly| anomaly.effect == effect));
     }
 }
 

@@ -46,6 +46,8 @@ pub struct TowerRunState {
     pub blessings: Vec<TowerBlessing>,
     #[serde(default)]
     pub boss_defeated: bool,
+    #[serde(default)]
+    pub anomaly_id: String,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -180,6 +182,7 @@ impl TowerRunState {
             stats: TowerRunStats::default(),
             blessings: Vec::new(),
             boss_defeated: false,
+            anomaly_id: String::new(),
         }
     }
 
