@@ -302,7 +302,46 @@ fn explore_finds_a_step_toward_hidden_passable_space() {
     map.set_visibility(1, 1, TowerTileVisibility::Visible);
     map.set_visibility(2, 1, TowerTileVisibility::Explored);
 
-    assert_eq!(explore_direction(&map), Some((1, 0)));
+    assert_eq!(explore_direction(&map, TowerRunGoal::Scout), Some((1, 0)));
+}
+
+#[test]
+fn explore_routes_toward_the_selected_run_goal() {
+    let mut map = TowerMapState::new(7, 3, 1, 17);
+    for x in 1..6 {
+        map.set_tile(x, 1, TowerTileKind::Corridor);
+        map.set_visibility(x, 1, TowerTileVisibility::Visible);
+    }
+    map.player_x = 3;
+    map.player_y = 1;
+    let mut loot = test_map_object(TowerMapObjectKind::Loot, 2, 1);
+    loot.resource_id = "wood".to_owned();
+    let mut egg = test_map_object(TowerMapObjectKind::Egg, 5, 1);
+    egg.egg_type_id = "mossy_egg".to_owned();
+    map.objects = vec![loot, egg];
+
+    assert_eq!(explore_direction(&map, TowerRunGoal::EggHunt), Some((1, 0)));
+    assert_eq!(
+        explore_direction(&map, TowerRunGoal::Salvage),
+        Some((-1, 0))
+    );
+}
+
+fn test_map_object(kind: TowerMapObjectKind, x: u32, y: u32) -> TowerMapObject {
+    TowerMapObject {
+        kind,
+        x,
+        y,
+        resource_id: String::new(),
+        amount: 0,
+        egg_type_id: String::new(),
+        hatch_days: 0,
+        palette_seed: 0,
+        enemy_id: String::new(),
+        special_location_id: String::new(),
+        event_id: String::new(),
+        hazard_id: String::new(),
+    }
 }
 
 #[test]

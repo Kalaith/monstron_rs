@@ -182,7 +182,7 @@ pub fn explore_party(state: &mut GameState, data: &GameData) -> TowerResult {
     let Some(direction) = state
         .tower_run
         .as_ref()
-        .and_then(|run| explore_direction(&run.map))
+        .and_then(|run| explore_direction(&run.map, run.goal))
     else {
         return result("No unexplored route is reachable. Tap RETREAT or choose a visible room.");
     };

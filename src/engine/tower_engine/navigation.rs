@@ -1,42 +1,89 @@
 use std::collections::VecDeque;
 
-use crate::state::{TowerMapState, TowerTileVisibility};
+use crate::state::{TowerMapObjectKind, TowerMapState, TowerRunGoal, TowerTileVisibility};
 
-pub(super) fn explore_direction(map: &TowerMapState) -> Option<(i32, i32)> {
+pub(super) fn explore_direction(map: &TowerMapState, goal: TowerRunGoal) -> Option<(i32, i32)> {
     if map.is_empty() {
         return None;
     }
 
     let start = map_index(map, map.player_x, map.player_y)?;
     let mut queue = VecDeque::from([start]);
-    let mut visited = vec![false; (map.width * map.height) as usize];
-    let mut previous = vec![None; visited.len()];
-    visited[start] = true;
+    let mut distances = vec![None; (map.width * map.height) as usize];
+    let mut previous = vec![None; distances.len()];
+    distances[start] = Some(0_u32);
 
     while let Some(index) = queue.pop_front() {
         let (x, y) = coordinates(map, index);
-        if index != start && is_explore_target(map, x, y) {
-            return first_step(map, start, index, &previous);
-        }
-
         for (next_x, next_y) in neighbors(map, x, y) {
             let Some(next) = map_index(map, next_x, next_y) else {
                 continue;
             };
-            if visited[next] || !map.is_passable(next_x, next_y) {
+            if distances[next].is_some() || !map.is_passable(next_x, next_y) {
                 continue;
             }
-            visited[next] = true;
+            distances[next] = Some(distances[index]? + 1);
             previous[next] = Some(index);
             queue.push_back(next);
         }
     }
-    None
+
+    let target = best_target(map, goal, start, &distances)?;
+    first_step(map, start, target, &previous)
 }
 
-fn is_explore_target(map: &TowerMapState, x: u32, y: u32) -> bool {
-    (map.is_discovered(x, y) && map.object_at(x, y).is_some())
-        || map.visibility_at(x, y) == TowerTileVisibility::Hidden
+fn best_target(
+    map: &TowerMapState,
+    goal: TowerRunGoal,
+    start: usize,
+    distances: &[Option<u32>],
+) -> Option<usize> {
+    distances
+        .iter()
+        .enumerate()
+        .filter_map(|(index, distance)| {
+            let distance = (*distance)?;
+            if index == start {
+                return None;
+            }
+            let (x, y) = coordinates(map, index);
+            let bias = if map.is_discovered(x, y) {
+                map.object_at(x, y)
+                    .map(|object| object_bias(goal, object.kind))
+            } else if map.visibility_at(x, y) == TowerTileVisibility::Hidden {
+                Some(frontier_bias(goal))
+            } else {
+                None
+            }?;
+            Some((distance as i32 * 10 + bias, index))
+        })
+        .min_by_key(|candidate| *candidate)
+        .map(|(_, index)| index)
+}
+
+fn object_bias(goal: TowerRunGoal, kind: TowerMapObjectKind) -> i32 {
+    match (goal, kind) {
+        (TowerRunGoal::EggHunt, TowerMapObjectKind::Egg) => -90,
+        (TowerRunGoal::Salvage, TowerMapObjectKind::Loot) => -80,
+        (TowerRunGoal::Scout, TowerMapObjectKind::SpecialLocation) => -80,
+        (TowerRunGoal::PushDeeper, TowerMapObjectKind::Stairs) => -100,
+        (TowerRunGoal::SafeRun, TowerMapObjectKind::Exit) => -50,
+        (TowerRunGoal::SafeRun, TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss) => 140,
+        (TowerRunGoal::SafeRun, TowerMapObjectKind::Hazard) => 170,
+        (_, TowerMapObjectKind::SpecialLocation) => -20,
+        (_, TowerMapObjectKind::Egg | TowerMapObjectKind::Loot) => -10,
+        (_, TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit) => 0,
+        (_, TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss) => 30,
+        (_, TowerMapObjectKind::Hazard) => 50,
+    }
+}
+
+fn frontier_bias(goal: TowerRunGoal) -> i32 {
+    match goal {
+        TowerRunGoal::Scout => -30,
+        TowerRunGoal::SafeRun => 10,
+        _ => 0,
+    }
 }
 
 fn first_step(
