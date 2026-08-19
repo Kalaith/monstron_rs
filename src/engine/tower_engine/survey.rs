@@ -1,7 +1,7 @@
 use super::discovery::record_visible_discoveries;
 use super::{ensure_map, result, with_contract_refresh, TowerResult};
 use crate::data::GameData;
-use crate::state::{GameState, TowerMapState, TowerTileVisibility};
+use crate::state::{GameState, TowerMapState, TowerRoomKind, TowerRunGoal, TowerTileVisibility};
 
 pub(super) struct SurveyReveal {
     pub center: (u32, u32),
@@ -24,7 +24,7 @@ pub fn survey_floor(state: &mut GameState, data: &GameData) -> TowerResult {
 
     let reveal = {
         let run = state.tower_run.as_mut().expect("tower run checked above");
-        let Some(reveal) = reveal_nearest_hidden_room(&mut run.map) else {
+        let Some(reveal) = reveal_hidden_room_for_goal(&mut run.map, run.goal) else {
             return result("Every room on this floor is already charted. Tap EXPLORE or RETREAT.");
         };
         run.survey_charges -= 1;
@@ -49,20 +49,28 @@ pub fn survey_floor(state: &mut GameState, data: &GameData) -> TowerResult {
     with_contract_refresh(result(summary), state, data)
 }
 
-pub(super) fn reveal_nearest_hidden_room(map: &mut TowerMapState) -> Option<SurveyReveal> {
+pub(super) fn reveal_hidden_room_for_goal(
+    map: &mut TowerMapState,
+    goal: TowerRunGoal,
+) -> Option<SurveyReveal> {
     map.ensure_visibility();
     let room = map
         .rooms
         .iter()
-        .copied()
-        .filter(|room| {
+        .enumerate()
+        .filter(|(_, room)| {
             let center = room.center();
             map.visibility_at(center.0, center.1) == TowerTileVisibility::Hidden
         })
-        .min_by_key(|room| {
+        .min_by_key(|(index, room)| {
             let center = room.center();
-            map.player_x.abs_diff(center.0) + map.player_y.abs_diff(center.1)
-        })?;
+            (
+                survey_priority(goal, map.room_kind(*index)),
+                map.player_x.abs_diff(center.0) + map.player_y.abs_diff(center.1),
+            )
+        })?
+        .1
+        .to_owned();
 
     let max_x = (room.start_x + room.width).min(map.width);
     let max_y = (room.start_y + room.height).min(map.height);
@@ -87,6 +95,31 @@ pub(super) fn reveal_nearest_hidden_room(map: &mut TowerMapState) -> Option<Surv
         center: room.center(),
         signatures,
     })
+}
+
+fn survey_priority(goal: TowerRunGoal, kind: TowerRoomKind) -> u8 {
+    match goal {
+        TowerRunGoal::EggHunt if kind == TowerRoomKind::Nest => 0,
+        TowerRunGoal::Salvage if kind == TowerRoomKind::Cache => 0,
+        TowerRunGoal::PushDeeper if kind == TowerRoomKind::Traversal => 0,
+        TowerRunGoal::SafeRun
+            if matches!(
+                kind,
+                TowerRoomKind::Camp
+                    | TowerRoomKind::Cache
+                    | TowerRoomKind::Nest
+                    | TowerRoomKind::Landmark
+            ) =>
+        {
+            0
+        }
+        TowerRunGoal::SafeRun
+            if matches!(kind, TowerRoomKind::Encounter | TowerRoomKind::Hazard) =>
+        {
+            2
+        }
+        _ => 1,
+    }
 }
 
 #[cfg(test)]

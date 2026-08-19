@@ -269,7 +269,7 @@ fn draw_rooms(map: &TowerMapState, transform: WorldTransform) {
             continue;
         }
         let visibility = map.visibility_at(room.center().0, room.center().1);
-        let purpose = room_purpose(map, room, index);
+        let purpose = room_purpose(map, room, index, visibility);
         let tint = match visibility {
             TowerTileVisibility::Visible => WHITE,
             TowerTileVisibility::Explored => color(120, 133, 119, 220),
@@ -286,6 +286,9 @@ fn draw_rooms(map: &TowerMapState, transform: WorldTransform) {
                 rect.w * 0.38,
                 purpose,
             );
+        }
+        if visibility != TowerTileVisibility::Hidden {
+            draw_room_purpose_label(rect, purpose);
         }
     }
 }
@@ -319,7 +322,19 @@ fn draw_light_pool(x: f32, y: f32, radius: f32, purpose: DungeonRoomPurpose) {
     }
 }
 
-fn room_purpose(map: &TowerMapState, room: TowerRoom, index: usize) -> DungeonRoomPurpose {
+fn room_purpose(
+    map: &TowerMapState,
+    room: TowerRoom,
+    index: usize,
+    visibility: TowerTileVisibility,
+) -> DungeonRoomPurpose {
+    if visibility == TowerTileVisibility::Hidden {
+        return if index == 0 {
+            DungeonRoomPurpose::Camp
+        } else {
+            DungeonRoomPurpose::Traversal
+        };
+    }
     let stored = match map.room_kind(index) {
         TowerRoomKind::Camp => Some(DungeonRoomPurpose::Camp),
         TowerRoomKind::Nest => Some(DungeonRoomPurpose::Nest),
@@ -345,6 +360,22 @@ fn room_purpose(map: &TowerMapState, room: TowerRoom, index: usize) -> DungeonRo
         None if index % 4 == 0 => DungeonRoomPurpose::Shrine,
         None => DungeonRoomPurpose::Traversal,
     }
+}
+
+fn draw_room_purpose_label(rect: Rect, purpose: DungeonRoomPurpose) {
+    let label = match purpose {
+        DungeonRoomPurpose::Camp => "CAMP",
+        DungeonRoomPurpose::Nest => "NEST",
+        DungeonRoomPurpose::Cache => "CACHE",
+        DungeonRoomPurpose::Encounter => "DEN",
+        DungeonRoomPurpose::Shrine => "LANDMARK",
+        DungeonRoomPurpose::Traversal => "ROUTE",
+    };
+    let width = label.len() as f32 * 8.0 + 16.0;
+    let x = rect.x + rect.w * 0.5 - width * 0.5;
+    let y = rect.y + rect.h - 22.0;
+    draw_rectangle(x, y, width, 20.0, color(5, 12, 13, 210));
+    draw_text(label, x + 8.0, y + 15.0, 16.0, color(232, 196, 139, 240));
 }
 
 fn object_in_room(map: &TowerMapState, room: TowerRoom) -> Option<&TowerMapObject> {
