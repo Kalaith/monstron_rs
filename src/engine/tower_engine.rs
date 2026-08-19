@@ -28,7 +28,7 @@ use discovery::record_visible_discoveries;
 use interactions::{apply_tower_event, resolve_hazard};
 use map_gen::{generate_map, reveal_current_area};
 use map_objects::{advance_wandering_enemy, WanderingAdvance};
-use navigation::explore_direction;
+use navigation::{explore_direction, route_direction};
 use pressure::refresh_pressure;
 
 pub struct TowerResult {
@@ -244,6 +244,10 @@ pub fn explore_party(state: &mut GameState, data: &GameData) -> TowerResult {
         return result("No unexplored route is reachable. Tap RETREAT or choose a visible room.");
     };
     move_party(state, data, direction.0, direction.1)
+}
+
+pub fn room_tap_direction(run: &TowerRunState, target: (u32, u32)) -> Option<(i32, i32)> {
+    route_direction(&run.map, run.goal, target.0, target.1)
 }
 
 pub fn camp_party(state: &mut GameState, data: &GameData) -> TowerResult {

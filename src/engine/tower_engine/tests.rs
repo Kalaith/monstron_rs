@@ -402,6 +402,21 @@ fn safe_explore_routes_around_a_known_hazard() {
     );
 }
 
+#[test]
+fn room_tap_path_turns_away_from_a_wall_to_reach_its_target() {
+    let mut map = TowerMapState::new(7, 5, 1, 29);
+    for x in 1..6 {
+        map.set_tile(x, 1, TowerTileKind::Corridor);
+    }
+    map.set_tile(1, 2, TowerTileKind::Corridor);
+    map.set_tile(5, 2, TowerTileKind::Corridor);
+    map.player_x = 1;
+    map.player_y = 2;
+    let run = TowerRunState::new(1, 9, TowerRunGoal::Balanced).with_map(map);
+
+    assert_eq!(room_tap_direction(&run, (5, 2)), Some((0, -1)));
+}
+
 fn test_map_object(kind: TowerMapObjectKind, x: u32, y: u32) -> TowerMapObject {
     TowerMapObject {
         kind,

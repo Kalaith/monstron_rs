@@ -3,6 +3,7 @@ use macroquad::prelude::*;
 use super::TowerAction;
 use crate::assets::{self, DungeonBiome, DungeonRoomPurpose};
 use crate::data::GameData;
+use crate::engine::tower_engine;
 use crate::state::{
     GameState, TowerMapObject, TowerMapObjectKind, TowerMapState, TowerRoom, TowerRunState,
     TowerTileVisibility,
@@ -64,21 +65,7 @@ pub(super) fn world_tap_action(run: &TowerRunState) -> Option<TowerAction> {
             map.player_x.abs_diff(center.0) + map.player_y.abs_diff(center.1)
         })?;
     let target = selected.center();
-    let dx = axis_step(target.0 as i32 - map.player_x as i32);
-    let dy = axis_step(target.1 as i32 - map.player_y as i32);
-    if dx == 0 && dy == 0 {
-        None
-    } else if (target.0 as i32 - map.player_x as i32).abs()
-        >= (target.1 as i32 - map.player_y as i32).abs()
-    {
-        Some(TowerAction::TapMove(dx, 0))
-    } else {
-        Some(TowerAction::TapMove(0, dy))
-    }
-}
-
-fn axis_step(value: i32) -> i32 {
-    value.signum()
+    tower_engine::room_tap_direction(run, target).map(|(dx, dy)| TowerAction::TapMove(dx, dy))
 }
 
 fn draw_world_backdrop(floor: u32) {

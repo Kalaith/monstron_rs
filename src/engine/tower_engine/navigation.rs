@@ -9,6 +9,35 @@ pub(super) fn explore_direction(map: &TowerMapState, goal: TowerRunGoal) -> Opti
     }
 
     let start = map_index(map, map.player_x, map.player_y)?;
+    let (distances, previous) = path_tree(map, goal, start);
+    let target = best_target(map, goal, start, &distances)?;
+    first_step(map, start, target, &previous)
+}
+
+pub(super) fn route_direction(
+    map: &TowerMapState,
+    goal: TowerRunGoal,
+    target_x: u32,
+    target_y: u32,
+) -> Option<(i32, i32)> {
+    if map.is_empty() || !map.is_passable(target_x, target_y) {
+        return None;
+    }
+    let start = map_index(map, map.player_x, map.player_y)?;
+    let target = map_index(map, target_x, target_y)?;
+    if start == target {
+        return None;
+    }
+    let (distances, previous) = path_tree(map, goal, start);
+    distances[target]?;
+    first_step(map, start, target, &previous)
+}
+
+fn path_tree(
+    map: &TowerMapState,
+    goal: TowerRunGoal,
+    start: usize,
+) -> (Vec<Option<u32>>, Vec<Option<usize>>) {
     let mut queue = BinaryHeap::from([Reverse((0_u32, start))]);
     let mut distances = vec![None; (map.width * map.height) as usize];
     let mut previous = vec![None; distances.len()];
@@ -36,8 +65,7 @@ pub(super) fn explore_direction(map: &TowerMapState, goal: TowerRunGoal) -> Opti
         }
     }
 
-    let target = best_target(map, goal, start, &distances)?;
-    first_step(map, start, target, &previous)
+    (distances, previous)
 }
 
 fn traversal_cost(map: &TowerMapState, goal: TowerRunGoal, x: u32, y: u32) -> u32 {
