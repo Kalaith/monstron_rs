@@ -8,7 +8,7 @@ mod map_view;
 
 use crate::assets;
 use crate::data::GameData;
-use crate::engine::town_engine;
+use crate::engine::{tower_engine, town_engine};
 use crate::state::{GameState, TowerRunState};
 use crate::ui;
 use macroquad_toolkit::ui::draw_ui_text_ex;
@@ -396,6 +396,17 @@ fn draw_action_dock(run: &TowerRunState) {
             TextParams {
                 font_size: 13,
                 color: ui::TEXT_DIM,
+                ..Default::default()
+            },
+        );
+    } else if tower_engine::camp_sheltered(run) {
+        draw_ui_text_ex(
+            "SHELTER BONUS",
+            camp_button_rect().x + 26.0,
+            camp_button_rect().y - 8.0,
+            TextParams {
+                font_size: 13,
+                color: Color::from_rgba(135, 211, 151, 255),
                 ..Default::default()
             },
         );

@@ -53,3 +53,35 @@ fn corridor_camp_retains_the_weaker_fallback() {
     assert_eq!(run.pressure, 3);
     assert_eq!(run.camp_cooldown, 8);
 }
+
+#[test]
+fn pressured_safe_run_explore_routes_back_to_the_touch_ready_shelter() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    let mut map = TowerMapState::new(8, 5, 1, 15);
+    for x in 1..7 {
+        map.set_tile(x, 2, crate::state::TowerTileKind::Corridor);
+    }
+    map.rooms.push(TowerRoom {
+        start_x: 1,
+        start_y: 1,
+        width: 3,
+        height: 3,
+    });
+    map.ensure_room_kinds();
+    map.set_room_kind(0, TowerRoomKind::Camp);
+    map.player_x = 6;
+    map.player_y = 2;
+    let mut run = TowerRunState::new(1, 10, TowerRunGoal::SafeRun).with_map(map);
+    run.pressure = 8;
+    state.tower_run = Some(run);
+
+    let routing = super::super::explore_party(&mut state, &data);
+    assert!(routing.summary.contains("routing back"));
+    assert_eq!(state.tower_run.as_ref().unwrap().map.player_x, 5);
+
+    state.tower_run.as_mut().unwrap().map.player_x = 2;
+    let arrived = super::super::explore_party(&mut state, &data);
+    assert!(arrived.summary.contains("Tap CAMP"));
+    assert_eq!(state.tower_run.as_ref().unwrap().map.player_x, 2);
+}

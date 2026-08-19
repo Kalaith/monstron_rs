@@ -15,7 +15,7 @@ pub fn camp_party(state: &mut GameState, data: &GameData) -> TowerResult {
     }
 
     let mending_lights = anomaly_effect(run, data) == Some(TowerAnomalyEffect::MendingLights);
-    let sheltered = in_camp_room(run);
+    let sheltered = camp_sheltered(run);
     let healing = 3 + if mending_lights { 2 } else { 0 } + if sheltered { 2 } else { 0 };
     let party_ids = state
         .monster_roster
@@ -54,17 +54,30 @@ pub fn camp_party(state: &mut GameState, data: &GameData) -> TowerResult {
     result(summary)
 }
 
-fn in_camp_room(run: &TowerRunState) -> bool {
+pub fn camp_sheltered(run: &TowerRunState) -> bool {
+    current_room_index(run)
+        .is_some_and(|index| index == 0 || run.map.room_kind(index) == TowerRoomKind::Camp)
+}
+
+pub(super) fn camp_room_center(run: &TowerRunState) -> Option<(u32, u32)> {
     run.map
         .rooms
         .iter()
-        .position(|room| {
-            run.map.player_x >= room.start_x
-                && run.map.player_x < room.start_x + room.width
-                && run.map.player_y >= room.start_y
-                && run.map.player_y < room.start_y + room.height
+        .enumerate()
+        .filter(|(index, _)| *index == 0 || run.map.room_kind(*index) == TowerRoomKind::Camp)
+        .map(|(_, room)| room.center())
+        .min_by_key(|center| {
+            run.map.player_x.abs_diff(center.0) + run.map.player_y.abs_diff(center.1)
         })
-        .is_some_and(|index| index == 0 || run.map.room_kind(index) == TowerRoomKind::Camp)
+}
+
+fn current_room_index(run: &TowerRunState) -> Option<usize> {
+    run.map.rooms.iter().position(|room| {
+        run.map.player_x >= room.start_x
+            && run.map.player_x < room.start_x + room.width
+            && run.map.player_y >= room.start_y
+            && run.map.player_y < room.start_y + room.height
+    })
 }
 
 #[cfg(test)]

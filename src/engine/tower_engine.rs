@@ -18,7 +18,7 @@ mod pressure;
 #[cfg(test)]
 mod secret_tests;
 mod survey;
-pub use camp::camp_party;
+pub use camp::{camp_party, camp_sheltered};
 pub use event_choices::{choose_special_event, event_choice_available, leave_special_event};
 pub use survey::survey_floor;
 #[cfg(test)]
@@ -284,6 +284,31 @@ pub fn explore_party(state: &mut GameState, data: &GameData) -> TowerResult {
     }
     if let Some(run) = &mut state.tower_run {
         run.route_target = None;
+    }
+    let shelter_plan = state.tower_run.as_ref().and_then(|run| {
+        (run.goal == TowerRunGoal::SafeRun
+            && run.camp_cooldown == 0
+            && run.pressure + 2 >= run.pressure_limit)
+            .then(|| {
+                if camp_sheltered(run) {
+                    None
+                } else {
+                    camp::camp_room_center(run)
+                        .and_then(|target| route_direction(&run.map, run.goal, target.0, target.1))
+                }
+            })
+    });
+    if shelter_plan == Some(None) {
+        return result(
+            "The Safe Run route has reached the marked shelter. Tap CAMP to calm the tower.",
+        );
+    }
+    if let Some(Some(direction)) = shelter_plan {
+        let mut outcome = move_party(state, data, direction.0, direction.1);
+        outcome
+            .summary
+            .push_str(" Safe Run is routing back toward the marked shelter.");
+        return outcome;
     }
     let Some(direction) = state
         .tower_run
