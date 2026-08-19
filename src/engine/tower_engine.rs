@@ -12,6 +12,8 @@ mod map_gen;
 mod map_objects;
 mod navigation;
 mod pressure;
+mod survey;
+pub use survey::survey_floor;
 #[cfg(test)]
 mod tests;
 
@@ -634,6 +636,7 @@ fn advance_floor(state: &mut GameState, data: &GameData) -> TowerResult {
         run.stats.floors_descended += 1;
         run.pressure_limit = next_floor_data.pressure_limit;
         run.boss_defeated = false;
+        run.survey_charges = crate::state::survey_charges_for(run.goal);
         run.anomaly_id = anomaly_id;
         run.map = map;
         let summary = format!(

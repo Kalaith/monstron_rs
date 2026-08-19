@@ -409,6 +409,36 @@ fn explore_routes_toward_the_selected_run_goal() {
 }
 
 #[test]
+fn survey_spends_a_floor_charge_to_reveal_remote_map_signatures() {
+    let data = GameDataLoader::load_embedded().expect("embedded data should load");
+    let mut state = GameState::new(&data);
+    start_run(&mut state, &data, TowerRunGoal::Scout);
+    let visible_before = state
+        .tower_run
+        .as_ref()
+        .unwrap()
+        .map
+        .visibility
+        .iter()
+        .filter(|visibility| **visibility == TowerTileVisibility::Visible)
+        .count();
+
+    let result = survey_floor(&mut state, &data);
+    let run = state.tower_run.as_ref().unwrap();
+    let visible_after = run
+        .map
+        .visibility
+        .iter()
+        .filter(|visibility| **visibility == TowerTileVisibility::Visible)
+        .count();
+
+    assert!(result.summary.contains("survey flare charts"));
+    assert_eq!(run.survey_charges, 2);
+    assert_eq!(run.pressure, 1);
+    assert!(visible_after > visible_before);
+}
+
+#[test]
 fn safe_explore_routes_around_a_known_hazard() {
     let mut map = TowerMapState::new(7, 5, 1, 23);
     for x in 1..6 {

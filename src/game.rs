@@ -500,6 +500,11 @@ impl Game {
                     }
                 }
             }
+            TowerAction::Survey => {
+                if let Some(state) = &mut self.state {
+                    self.status_message = tower_engine::survey_floor(state, &self.data).summary;
+                }
+            }
             TowerAction::Camp => {
                 if let Some(state) = &mut self.state {
                     self.status_message = tower_engine::camp_party(state, &self.data).summary;

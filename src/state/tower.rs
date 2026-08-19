@@ -27,6 +27,8 @@ pub struct TowerRunState {
     pub pressure_stage: u8,
     #[serde(default)]
     pub camp_cooldown: u32,
+    #[serde(default = "default_survey_charges")]
+    pub survey_charges: u32,
     #[serde(default)]
     pub goal: TowerRunGoal,
     #[serde(default)]
@@ -171,6 +173,7 @@ impl TowerRunState {
             pressure_limit,
             pressure_stage: 0,
             camp_cooldown: 0,
+            survey_charges: survey_charges_for(goal),
             goal,
             map: TowerMapState::empty(),
             cargo: Vec::new(),
@@ -269,6 +272,18 @@ impl TowerRunState {
         self.blessings.remove(index);
         true
     }
+}
+
+pub fn survey_charges_for(goal: TowerRunGoal) -> u32 {
+    if goal == TowerRunGoal::Scout {
+        3
+    } else {
+        2
+    }
+}
+
+fn default_survey_charges() -> u32 {
+    2
 }
 
 impl TowerDiscoveryState {

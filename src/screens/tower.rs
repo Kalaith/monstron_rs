@@ -18,6 +18,7 @@ pub enum TowerAction {
     Move(i32, i32),
     TapMove(i32, i32),
     Explore,
+    Survey,
     Camp,
     ChooseEvent(String),
     LeaveEvent,
@@ -88,6 +89,9 @@ pub fn handle_input(
         }
         if ui::button_clicked(explore_button_rect(), true) {
             return Some(TowerAction::Explore);
+        }
+        if ui::button_clicked(survey_button_rect(), run_has_survey(state)) {
+            return Some(TowerAction::Survey);
         }
         if ui::button_clicked(camp_button_rect(), true) {
             return Some(TowerAction::Camp);
@@ -342,15 +346,20 @@ fn draw_party_rail(state: &GameState) {
 }
 
 fn draw_action_dock(run: &TowerRunState) {
-    for (index, (icon, title)) in [("+", "Explore"), ("*", "Camp"), ("<", "Retreat")]
-        .iter()
-        .enumerate()
+    for (index, (icon, title)) in [
+        ("+", "Explore"),
+        ("?", "Survey"),
+        ("*", "Camp"),
+        ("<", "Retreat"),
+    ]
+    .iter()
+    .enumerate()
     {
-        let rect = Rect::new(350.0 + index as f32 * 194.0, 650.0, 180.0, 58.0);
+        let rect = Rect::new(300.0 + index as f32 * 162.0, 650.0, 150.0, 58.0);
         draw_overlay_panel(rect);
         draw_ui_text_ex(
             icon,
-            rect.x + 20.0,
+            rect.x + 14.0,
             rect.y + 39.0,
             TextParams {
                 font_size: 29,
@@ -360,15 +369,25 @@ fn draw_action_dock(run: &TowerRunState) {
         );
         draw_ui_text_ex(
             title,
-            rect.x + 62.0,
+            rect.x + 48.0,
             rect.y + 37.0,
             TextParams {
-                font_size: 22,
+                font_size: 20,
                 color: gold_bright(),
                 ..Default::default()
             },
         );
     }
+    draw_ui_text_ex(
+        &format!("{} flare(s)", run.survey_charges),
+        survey_button_rect().x + 36.0,
+        survey_button_rect().y - 8.0,
+        TextParams {
+            font_size: 13,
+            color: ui::TEXT_DIM,
+            ..Default::default()
+        },
+    );
     if run.camp_cooldown > 0 {
         draw_ui_text_ex(
             &format!("Ready in {} steps", run.camp_cooldown),
@@ -545,15 +564,26 @@ fn return_button_rect() -> Rect {
 }
 
 fn explore_button_rect() -> Rect {
-    Rect::new(350.0, 650.0, 180.0, 58.0)
+    Rect::new(300.0, 650.0, 150.0, 58.0)
+}
+
+fn survey_button_rect() -> Rect {
+    Rect::new(462.0, 650.0, 150.0, 58.0)
 }
 
 fn camp_button_rect() -> Rect {
-    Rect::new(544.0, 650.0, 180.0, 58.0)
+    Rect::new(624.0, 650.0, 150.0, 58.0)
 }
 
 fn retreat_button_rect() -> Rect {
-    Rect::new(738.0, 650.0, 180.0, 58.0)
+    Rect::new(786.0, 650.0, 150.0, 58.0)
+}
+
+fn run_has_survey(state: &GameState) -> bool {
+    state
+        .tower_run
+        .as_ref()
+        .is_some_and(|run| run.survey_charges > 0 && run.pressure < run.pressure_limit)
 }
 
 fn guide_button_rect(active_run: bool) -> Rect {
