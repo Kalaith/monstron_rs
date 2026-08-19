@@ -359,7 +359,7 @@ fn room_purpose(
             DungeonRoomPurpose::Traversal
         }
         None if index == 0 => DungeonRoomPurpose::Camp,
-        None if index % 4 == 0 => DungeonRoomPurpose::Shrine,
+        None if index.is_multiple_of(4) => DungeonRoomPurpose::Shrine,
         None => DungeonRoomPurpose::Traversal,
     }
 }

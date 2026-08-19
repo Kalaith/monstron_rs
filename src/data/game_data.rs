@@ -62,6 +62,7 @@ pub struct GameData {
 }
 
 impl GameData {
+    #[allow(clippy::too_many_arguments)]
     pub fn from_parts(
         config: GameConfig,
         balance: BalanceData,

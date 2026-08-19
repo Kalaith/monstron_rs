@@ -358,6 +358,7 @@ pub fn draw_party_portrait(species_id: &str, x: f32, y: f32, size: f32) {
     draw_atlas(PARTY_PORTRAITS, 3, 2, index, x, y, size, size);
 }
 
+#[allow(clippy::too_many_arguments)]
 fn draw_atlas(
     asset: &'static str,
     columns: usize,

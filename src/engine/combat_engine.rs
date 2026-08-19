@@ -403,7 +403,7 @@ fn apply_flee_strain(state: &mut GameState, combat: &CombatState) {
 }
 
 fn encounter_seed(state: &GameState, floor: u32, is_boss: bool) -> u64 {
-    0xC0AB_A7_u64
+    0x00C0_ABA7_u64
         ^ u64::from(state.day).wrapping_mul(97)
         ^ u64::from(floor).wrapping_mul(193)
         ^ u64::from(is_boss as u8).wrapping_mul(389)

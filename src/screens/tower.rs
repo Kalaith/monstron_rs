@@ -50,13 +50,9 @@ pub fn handle_input(
         return Some(TowerAction::OpenGuide);
     }
 
-    if state.tower_run.is_some() {
-        if state
-            .tower_run
-            .as_ref()
-            .is_some_and(|run| run.pending_event.is_some())
-        {
-            return event_prompt::handle_input(state, data, state.tower_run.as_ref().unwrap());
+    if let Some(run) = &state.tower_run {
+        if run.pending_event.is_some() {
+            return event_prompt::handle_input(state, data, run);
         }
         if is_key_pressed(KeyCode::W) || is_key_pressed(KeyCode::Up) {
             return Some(TowerAction::Move(0, -1));
@@ -83,8 +79,8 @@ pub fn handle_input(
         };
     }
 
-    if state.tower_run.is_some() {
-        if let Some(action) = map_view::world_tap_action(state.tower_run.as_ref().unwrap()) {
+    if let Some(run) = &state.tower_run {
+        if let Some(action) = map_view::world_tap_action(run) {
             return Some(action);
         }
         if ui::button_clicked(explore_button_rect(), true) {

@@ -35,3 +35,9 @@ impl ActivityLog {
         }
     }
 }
+
+impl Default for ActivityLog {
+    fn default() -> Self {
+        Self::new()
+    }
+}

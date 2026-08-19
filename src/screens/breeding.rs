@@ -128,6 +128,7 @@ fn draw_pairs(state: &GameState, data: &GameData) {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn draw_pair_row(
     rect: Rect,
     index: usize,
