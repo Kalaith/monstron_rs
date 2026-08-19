@@ -9,7 +9,7 @@ use crate::state::{TowerMapState, TowerPendingEvent, TowerTileKind, TowerTileVis
 fn generated_map_has_start_and_stairs() {
     let data = GameDataLoader::load_embedded().expect("embedded data should load");
     let state = GameState::new(&data);
-    let mut map = generate_map(&state, &data, 1, TowerRunGoal::Scout, 42);
+    let map = generate_map(&state, &data, 1, TowerRunGoal::Scout, 42);
 
     assert!(map.is_passable(map.player_x, map.player_y));
     assert!(map
@@ -33,8 +33,9 @@ fn generated_map_has_start_and_stairs() {
         })
         .expect("generated content should mark a room");
     let identity = map.room_kind(marked_room);
-    map.objects.clear();
-    assert_eq!(map.room_kind(marked_room), identity);
+    let mut cleared_map = map.clone();
+    cleared_map.objects.clear();
+    assert_eq!(cleared_map.room_kind(marked_room), identity);
     assert!(map.rooms.len() >= 4);
     assert!(map.is_visible(map.player_x, map.player_y));
     assert!(map.visibility.contains(&TowerTileVisibility::Hidden));

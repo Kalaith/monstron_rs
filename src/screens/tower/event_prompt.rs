@@ -222,6 +222,12 @@ fn effect_summary(data: &GameData, event: &TowerEventDefinition) -> String {
     if event.refresh_camp {
         effects.push("Camp ready".to_owned());
     }
+    if event.survey_charges > 0 {
+        effects.push(format!("+{} survey", event.survey_charges));
+    }
+    if event.repel_wanderers {
+        effects.push("Repel hunters".to_owned());
+    }
     if effects.is_empty() {
         "Unknown consequence".to_owned()
     } else {

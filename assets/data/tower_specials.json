@@ -107,6 +107,60 @@
       "max_floor": 10,
       "visual": "Hazard",
       "event_ids": ["crown_tribute", "crown_echo"]
+    },
+    {
+      "id": "whispering_cartographer",
+      "name": "Whispering Cartographer",
+      "description": "A paper-thin keeper inks moving rooms onto strips of shed bark.",
+      "min_floor": 1,
+      "max_floor": 4,
+      "visual": "SecretClue",
+      "event_ids": ["chartmakers_signal", "steal_living_map"]
+    },
+    {
+      "id": "hunters_cairn",
+      "name": "Hunter's Cairn",
+      "description": "Claw-marked stones hold the scent trail of everything stalking this floor.",
+      "min_floor": 2,
+      "max_floor": 5,
+      "visual": "Hazard",
+      "event_ids": ["scatter_hunter_marks", "follow_hunter_marks"]
+    },
+    {
+      "id": "rootglass_conservatory",
+      "name": "Rootglass Conservatory",
+      "description": "Medicinal vines grow behind panes warmed by a buried ember pipe.",
+      "min_floor": 3,
+      "max_floor": 6,
+      "visual": "RecoverySpring",
+      "event_ids": ["prune_conservatory", "break_rootglass"]
+    },
+    {
+      "id": "flooded_menagerie",
+      "name": "Flooded Menagerie",
+      "description": "Half-submerged nest cages sway in water disturbed by unseen fins.",
+      "min_floor": 5,
+      "max_floor": 8,
+      "visual": "RelicArchive",
+      "event_ids": ["open_menagerie_nest", "drain_menagerie"]
+    },
+    {
+      "id": "sunken_signal_loft",
+      "name": "Sunken Signal Loft",
+      "description": "A drowned beacon waits for crystal light to reach the rooms beyond.",
+      "min_floor": 6,
+      "max_floor": 9,
+      "visual": "AncientMachinery",
+      "event_ids": ["relight_signal_loft", "ring_drowned_beacon"]
+    },
+    {
+      "id": "last_waystation",
+      "name": "Last Waystation",
+      "description": "The final keeper post still holds sealed flare tubes and a hunter ward.",
+      "min_floor": 8,
+      "max_floor": 10,
+      "visual": "Shrine",
+      "event_ids": ["open_waystation_reserve", "wake_waystation_ward"]
     }
   ],
   "events": [
@@ -294,6 +348,103 @@
       "narrative": "The party's answer returns in the footfall of a crown hand.",
       "enemy_id": "crown_hand",
       "rewards": [{ "resource_id": "coins", "amount": 8 }]
+    },
+    {
+      "id": "chartmakers_signal",
+      "name": "Trade for the Signal Marks",
+      "narrative": "The cartographer burns fresh room signs into two waiting flare tubes.",
+      "cargo_costs": [{ "resource_id": "wood", "amount": 2 }],
+      "required_passive": "Finds small loot",
+      "survey_charges": 2,
+      "repel_wanderers": true
+    },
+    {
+      "id": "steal_living_map",
+      "name": "Take the Living Map",
+      "narrative": "The bark-map shrieks as it is torn free, calling a vault hunter.",
+      "reveal_map": true,
+      "pressure_delta": 2,
+      "enemy_id": "vault_jackal"
+    },
+    {
+      "id": "scatter_hunter_marks",
+      "name": "Scatter the Scent Stones",
+      "narrative": "Earthwise paws grind the marked cairn into a dozen false trails.",
+      "required_element": "Earth",
+      "repel_wanderers": true,
+      "pressure_delta": -1
+    },
+    {
+      "id": "follow_hunter_marks",
+      "name": "Follow the Freshest Mark",
+      "narrative": "The trail reaches a stashed purse one heartbeat before its owner.",
+      "rewards": [{ "resource_id": "coins", "amount": 7 }],
+      "enemy_id": "vault_jackal"
+    },
+    {
+      "id": "prune_conservatory",
+      "name": "Prune the Medicinal Vines",
+      "narrative": "Careful heat frees mature cuttings without cracking the rootglass.",
+      "required_passive": "Burns brambles",
+      "rewards": [{ "resource_id": "herbs", "amount": 6 }],
+      "party_healing": 4
+    },
+    {
+      "id": "break_rootglass",
+      "name": "Break the Warm Panes",
+      "narrative": "The party gathers crystal and herbs as the conservatory vents into the tower.",
+      "rewards": [{ "resource_id": "crystal", "amount": 3 }, { "resource_id": "herbs", "amount": 3 }],
+      "pressure_delta": 2
+    },
+    {
+      "id": "open_menagerie_nest",
+      "name": "Open the Quiet Nest",
+      "narrative": "A water-tuned touch releases the cage without waking the deep pool.",
+      "required_element": "Water",
+      "cargo_costs": [{ "resource_id": "crystal", "amount": 2 }],
+      "egg_type_id": "sunken_egg"
+    },
+    {
+      "id": "drain_menagerie",
+      "name": "Drain the Lower Cages",
+      "narrative": "The sluice opens, along with the plated beast nesting against it.",
+      "enemy_id": "sluice_ram",
+      "rewards": [{ "resource_id": "ore", "amount": 4 }]
+    },
+    {
+      "id": "relight_signal_loft",
+      "name": "Relight the Signal Loft",
+      "narrative": "Crystal fire sketches distant rooms and primes the old flare rack.",
+      "cargo_costs": [{ "resource_id": "crystal", "amount": 3 }],
+      "required_element": "Fire",
+      "survey_charges": 3,
+      "reveal_map": true
+    },
+    {
+      "id": "ring_drowned_beacon",
+      "name": "Ring the Drowned Beacon",
+      "narrative": "The beacon answers with a garden shade rising through the flooded floor.",
+      "enemy_id": "garden_shade",
+      "pressure_delta": 1,
+      "rewards": [{ "resource_id": "crystal", "amount": 5 }]
+    },
+    {
+      "id": "open_waystation_reserve",
+      "name": "Open the Flare Reserve",
+      "narrative": "Old keeper seals yield enough light to finish charting the crownward route.",
+      "cargo_costs": [{ "resource_id": "coins", "amount": 6 }],
+      "survey_charges": 3,
+      "refresh_camp": true,
+      "party_healing": 3
+    },
+    {
+      "id": "wake_waystation_ward",
+      "name": "Wake the Hunter Ward",
+      "narrative": "A low green pulse clears stalking shadows from every marked chamber.",
+      "required_passive": "Soothes injuries",
+      "repel_wanderers": true,
+      "pressure_delta": -3,
+      "blessing": "Wardstone"
     }
   ]
 }

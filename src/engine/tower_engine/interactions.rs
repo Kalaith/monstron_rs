@@ -111,6 +111,8 @@ pub(super) fn apply_tower_event(
     let mut reward_labels = Vec::new();
     let mut found_egg_name = None;
     let mut granted_blessing = None;
+    let mut survey_charges_added = 0;
+    let mut hunters_repelled = 0;
     if let Some(run) = &mut state.tower_run {
         for reward in &event.rewards {
             run.add_cargo(&reward.resource_id, reward.amount);
@@ -132,6 +134,19 @@ pub(super) fn apply_tower_event(
         }
         if event.refresh_camp {
             run.camp_cooldown = 0;
+        }
+        if event.survey_charges > 0 {
+            let before = run.survey_charges;
+            run.survey_charges = run
+                .survey_charges
+                .saturating_add(event.survey_charges)
+                .min(5);
+            survey_charges_added = run.survey_charges - before;
+        }
+        if event.repel_wanderers {
+            let before = run.map.objects.len();
+            run.map.objects.retain(|object| !object.wandering);
+            hunters_repelled = before - run.map.objects.len();
         }
         if let Some(blessing) = event.blessing {
             if run.add_blessing(blessing) {
@@ -188,6 +203,16 @@ pub(super) fn apply_tower_event(
     }
     if event.refresh_camp {
         summary.push_str(" The party can CAMP again immediately.");
+    }
+    if survey_charges_added > 0 {
+        summary.push_str(&format!(
+            " Restocked {survey_charges_added} survey flare(s)."
+        ));
+    }
+    if event.repel_wanderers {
+        summary.push_str(&format!(
+            " Drove off {hunters_repelled} wandering hunter(s)."
+        ));
     }
     if let Some(blessing) = granted_blessing {
         summary.push_str(&format!(" Gained {}.", blessing.label()));

@@ -214,6 +214,10 @@ pub struct TowerEventDefinition {
     #[serde(default)]
     pub refresh_camp: bool,
     #[serde(default)]
+    pub survey_charges: u32,
+    #[serde(default)]
+    pub repel_wanderers: bool,
+    #[serde(default)]
     pub blessing: Option<TowerBlessing>,
 }
 
