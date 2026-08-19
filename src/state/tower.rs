@@ -72,6 +72,19 @@ pub enum TowerMapObjectKind {
     Exit,
 }
 
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub enum TowerRoomKind {
+    #[default]
+    Unknown,
+    Camp,
+    Nest,
+    Cache,
+    Encounter,
+    Hazard,
+    Landmark,
+    Traversal,
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct TowerRoom {
     pub start_x: u32,
@@ -121,6 +134,8 @@ pub struct TowerMapState {
     #[serde(default)]
     pub visibility: Vec<TowerTileVisibility>,
     pub rooms: Vec<TowerRoom>,
+    #[serde(default)]
+    pub room_kinds: Vec<TowerRoomKind>,
     pub objects: Vec<TowerMapObject>,
 }
 
@@ -358,6 +373,7 @@ impl TowerMapState {
             tiles: Vec::new(),
             visibility: Vec::new(),
             rooms: Vec::new(),
+            room_kinds: Vec::new(),
             objects: Vec::new(),
         }
     }
@@ -375,6 +391,7 @@ impl TowerMapState {
             tiles: vec![TowerTileKind::Wall; (width * height) as usize],
             visibility: vec![TowerTileVisibility::Hidden; (width * height) as usize],
             rooms: Vec::new(),
+            room_kinds: Vec::new(),
             objects: Vec::new(),
         }
     }
@@ -409,6 +426,32 @@ impl TowerMapState {
 
         self.visibility = vec![TowerTileVisibility::Hidden; expected_len];
         true
+    }
+
+    pub fn ensure_room_kinds(&mut self) -> bool {
+        if self.room_kinds.len() == self.rooms.len() {
+            return false;
+        }
+        self.room_kinds
+            .resize(self.rooms.len(), TowerRoomKind::Unknown);
+        true
+    }
+
+    pub fn room_kind(&self, index: usize) -> TowerRoomKind {
+        self.room_kinds
+            .get(index)
+            .copied()
+            .unwrap_or(TowerRoomKind::Unknown)
+    }
+
+    pub fn set_room_kind(&mut self, index: usize, kind: TowerRoomKind) {
+        self.ensure_room_kinds();
+        let Some(current) = self.room_kinds.get_mut(index) else {
+            return;
+        };
+        if room_kind_priority(kind) >= room_kind_priority(*current) {
+            *current = kind;
+        }
     }
 
     pub fn visibility_at(&self, x: u32, y: u32) -> TowerTileVisibility {
@@ -460,6 +503,19 @@ impl TowerMapState {
 impl Default for TowerMapState {
     fn default() -> Self {
         Self::empty()
+    }
+}
+
+fn room_kind_priority(kind: TowerRoomKind) -> u8 {
+    match kind {
+        TowerRoomKind::Unknown => 0,
+        TowerRoomKind::Traversal => 1,
+        TowerRoomKind::Camp => 2,
+        TowerRoomKind::Cache => 3,
+        TowerRoomKind::Hazard => 4,
+        TowerRoomKind::Nest => 5,
+        TowerRoomKind::Encounter => 6,
+        TowerRoomKind::Landmark => 7,
     }
 }
 

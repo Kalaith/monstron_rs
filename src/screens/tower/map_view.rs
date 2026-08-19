@@ -5,8 +5,8 @@ use crate::assets::{self, DungeonBiome, DungeonRoomPurpose};
 use crate::data::GameData;
 use crate::engine::tower_engine;
 use crate::state::{
-    GameState, TowerMapObject, TowerMapObjectKind, TowerMapState, TowerRoom, TowerRunState,
-    TowerTileVisibility,
+    GameState, TowerMapObject, TowerMapObjectKind, TowerMapState, TowerRoom, TowerRoomKind,
+    TowerRunState, TowerTileVisibility,
 };
 use crate::ui;
 
@@ -294,6 +294,18 @@ fn draw_light_pool(x: f32, y: f32, radius: f32, purpose: DungeonRoomPurpose) {
 }
 
 fn room_purpose(map: &TowerMapState, room: TowerRoom, index: usize) -> DungeonRoomPurpose {
+    let stored = match map.room_kind(index) {
+        TowerRoomKind::Camp => Some(DungeonRoomPurpose::Camp),
+        TowerRoomKind::Nest => Some(DungeonRoomPurpose::Nest),
+        TowerRoomKind::Cache => Some(DungeonRoomPurpose::Cache),
+        TowerRoomKind::Encounter => Some(DungeonRoomPurpose::Encounter),
+        TowerRoomKind::Hazard | TowerRoomKind::Traversal => Some(DungeonRoomPurpose::Traversal),
+        TowerRoomKind::Landmark => Some(DungeonRoomPurpose::Shrine),
+        TowerRoomKind::Unknown => None,
+    };
+    if let Some(purpose) = stored {
+        return purpose;
+    }
     match object_in_room(map, room).map(|object| object.kind) {
         Some(TowerMapObjectKind::Egg) => DungeonRoomPurpose::Nest,
         Some(TowerMapObjectKind::Loot) => DungeonRoomPurpose::Cache,

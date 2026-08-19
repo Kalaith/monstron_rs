@@ -123,11 +123,12 @@ pub fn ensure_map(state: &mut GameState, data: &GameData) {
             run.anomaly_id = select_anomaly_id(data, run.current_floor, run.map.seed);
         }
         let restored_visibility = run.map.ensure_visibility();
+        let restored_room_kinds = run.map.ensure_room_kinds();
         if restored_visibility || !run.map.is_visible(run.map.player_x, run.map.player_y) {
             reveal_current_area(&mut run.map);
         }
-        if restored_visibility {
-            run.add_event("Recovered the party's map notes.".to_owned());
+        if restored_visibility || restored_room_kinds {
+            run.add_event("Recovered the party's map notes and room markings.".to_owned());
         }
     }
     record_visible_discoveries(state, data, None);

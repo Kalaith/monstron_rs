@@ -292,6 +292,17 @@ pub fn draw_dungeon_room(
             height,
             tint,
         );
+        draw_atlas_tinted(
+            PURPOSE_ROOMS,
+            3,
+            2,
+            purpose.atlas_index(),
+            x,
+            y,
+            width,
+            height,
+            Color::new(tint.r, tint.g, tint.b, tint.a * 0.22),
+        );
     }
 }
 

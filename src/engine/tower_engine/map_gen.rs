@@ -65,6 +65,8 @@ pub(super) fn generate_map(
     map.player_x = start_x;
     map.player_y = start_y;
 
+    map.ensure_room_kinds();
+    map.set_room_kind(0, crate::state::TowerRoomKind::Camp);
     add_map_objects(&mut map, state, data, floor_number, goal, &mut rng);
     reveal_current_area(&mut map);
     map

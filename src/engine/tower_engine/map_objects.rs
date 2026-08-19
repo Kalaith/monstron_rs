@@ -1,7 +1,8 @@
 use super::max_floor;
 use crate::data::{GameData, MonsterRole, PassiveSkill, TowerFloorDefinition};
 use crate::state::{
-    GameState, TowerMapObject, TowerMapObjectKind, TowerMapRng, TowerMapState, TowerRunGoal,
+    GameState, TowerMapObject, TowerMapObjectKind, TowerMapRng, TowerMapState, TowerRoomKind,
+    TowerRunGoal,
 };
 use std::collections::VecDeque;
 
@@ -275,9 +276,11 @@ fn place_object(map: &mut TowerMapState, mut object: TowerMapObject, rng: &mut T
             continue;
         }
 
+        let room_kind = room_kind_for_object(object.kind);
         object.x = x;
         object.y = y;
         map.objects.push(object);
+        map.set_room_kind(room_index, room_kind);
         return;
     }
 }
@@ -397,7 +400,8 @@ fn place_room_landmark(map: &mut TowerMapState, mut object: TowerMapObject, rng:
         return;
     }
     for _ in 0..80 {
-        let room = map.rooms[rng.range(1, map.rooms.len() as u32) as usize];
+        let room_index = rng.range(1, map.rooms.len() as u32) as usize;
+        let room = map.rooms[room_index];
         if map.objects.iter().any(|existing| {
             existing.x >= room.start_x
                 && existing.x < room.start_x + room.width
@@ -410,7 +414,19 @@ fn place_room_landmark(map: &mut TowerMapState, mut object: TowerMapObject, rng:
         object.x = x;
         object.y = y;
         map.objects.push(object);
+        map.set_room_kind(room_index, TowerRoomKind::Landmark);
         return;
+    }
+}
+
+fn room_kind_for_object(kind: TowerMapObjectKind) -> TowerRoomKind {
+    match kind {
+        TowerMapObjectKind::Loot => TowerRoomKind::Cache,
+        TowerMapObjectKind::Egg => TowerRoomKind::Nest,
+        TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => TowerRoomKind::Encounter,
+        TowerMapObjectKind::Hazard => TowerRoomKind::Hazard,
+        TowerMapObjectKind::SpecialLocation => TowerRoomKind::Landmark,
+        TowerMapObjectKind::Stairs | TowerMapObjectKind::Exit => TowerRoomKind::Traversal,
     }
 }
 
