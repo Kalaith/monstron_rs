@@ -1,0 +1,91 @@
+//! Deterministic scene fixtures used by the screenshot verification harness.
+
+use super::Game;
+use crate::screens::AppScreen;
+use crate::state::{TowerRunGoal, TownJobKind};
+
+impl Game {
+    /// Seed a specific scene for the screenshot harness. Bypasses normal
+    /// facility-unlock gating so a fresh save can still reach these screens.
+    pub fn begin_capture_scene(&mut self, scene: &str) {
+        match scene {
+            "town" => self.begin_capture_fixture(AppScreen::Town),
+            "hatchery" => self.begin_capture_fixture(AppScreen::Hatchery),
+            "stable" => self.begin_capture_fixture(AppScreen::Stable),
+            "breeding" => self.begin_capture_fixture(AppScreen::Breeding),
+            "workshop" => self.begin_capture_fixture(AppScreen::Workshop),
+            "shop" => self.begin_capture_fixture(AppScreen::Shop),
+            "tower" => {
+                self.begin_capture_fixture(AppScreen::Town);
+                self.enter_tower(TowerRunGoal::Balanced);
+            }
+            "combat" => {
+                self.begin_capture_fixture(AppScreen::Town);
+                if let Some(state) = &mut self.state {
+                    let result =
+                        crate::engine::combat_engine::start_encounter(state, &self.data, 1, false);
+                    self.status_message = result.summary;
+                    self.screen = AppScreen::Combat;
+                }
+            }
+            "mainmenu" => {
+                self.state = None;
+                self.screen = AppScreen::MainMenu;
+                self.status_message = "Ready.".to_owned();
+            }
+            _ => {
+                // Default: boot state is the main menu.
+            }
+        }
+    }
+
+    fn begin_capture_fixture(&mut self, screen: AppScreen) {
+        self.start_new_game();
+        let Some(state) = &mut self.state else {
+            return;
+        };
+        for building_id in ["hatchery", "stable", "breeding_grove", "workshop", "shop"] {
+            state.town.set_building_level(building_id, 1);
+        }
+        for (resource_id, amount) in [
+            ("coins", 80),
+            ("wood", 60),
+            ("stone", 50),
+            ("ore", 8),
+            ("herbs", 30),
+            ("crystal", 4),
+        ] {
+            state.resources.add(resource_id, amount);
+        }
+        if let Some(species) = self.data.species("rillfin") {
+            state
+                .monster_roster
+                .add_monster("Ripple".to_owned(), species, 0xBEE5_7001);
+        }
+        if let Some(species) = self.data.species("emberkit") {
+            state
+                .monster_roster
+                .add_monster("Ember".to_owned(), species, 0xF17E_2002);
+        }
+        let _ = state.monster_roster.assign_to_party(2);
+        let _ = state.monster_roster.assign_to_party(3);
+        if screen == AppScreen::Stable {
+            if let Some(monster) = state.monster_roster.monster_mut(2) {
+                monster.condition.fatigue = 3;
+            }
+            if let Some(monster) = state.monster_roster.monster_mut(3) {
+                monster.condition.injury_days = 1;
+            }
+        }
+        if screen == AppScreen::Workshop {
+            state.town.set_monster_job(1, TownJobKind::Forage);
+        }
+        state
+            .egg_inventory
+            .add_egg("mossy_egg".to_owned(), 0, 3, 0xA7C4_0001);
+        self.screen = screen;
+        self.town_menu_open = false;
+        self.status_message =
+            "Seeded verification scene. Tap a visible control to continue.".to_owned();
+    }
+}

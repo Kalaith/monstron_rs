@@ -45,10 +45,7 @@ pub(super) fn draw(data: &GameData, run: &TowerRunState) {
             data,
             run,
             object,
-            panel.x + 20.0,
-            panel.y + 78.0,
-            168.0,
-            150.0,
+            Rect::new(panel.x + 20.0, panel.y + 78.0, 168.0, 150.0),
         );
     } else {
         assets::draw_room_vignette(
@@ -164,25 +161,8 @@ fn object_kind_label(object: &TowerMapObject) -> &'static str {
     }
 }
 
-fn draw_context_art(
-    data: &GameData,
-    run: &TowerRunState,
-    object: &TowerMapObject,
-    x: f32,
-    y: f32,
-    w: f32,
-    h: f32,
-) {
-    assets::draw_tower_map_object(
-        data,
-        run,
-        object,
-        boss_gate_is_sealed(data, run),
-        x,
-        y,
-        w,
-        h,
-    );
+fn draw_context_art(data: &GameData, run: &TowerRunState, object: &TowerMapObject, rect: Rect) {
+    assets::draw_tower_map_object(data, run, object, boss_gate_is_sealed(data, run), rect);
 }
 
 fn boss_gate_is_sealed(data: &GameData, run: &TowerRunState) -> bool {

@@ -276,16 +276,7 @@ fn draw_rooms(map: &TowerMapState, transform: WorldTransform) {
             TowerTileVisibility::Explored => color(120, 133, 119, 220),
             TowerTileVisibility::Hidden => color(132, 143, 118, 225),
         };
-        assets::draw_dungeon_room(
-            biome,
-            purpose,
-            map.room_art_variant(index),
-            rect.x,
-            rect.y,
-            rect.w,
-            rect.h,
-            tint,
-        );
+        assets::draw_dungeon_room(biome, purpose, map.room_art_variant(index), rect, tint);
         if visibility == TowerTileVisibility::Hidden {
             draw_rectangle(rect.x, rect.y, rect.w, rect.h, color(3, 12, 14, 30));
             draw_room_mist(rect, index);
@@ -436,10 +427,7 @@ fn draw_objects(
             run,
             object,
             sealed,
-            x - size * 0.5,
-            y - size * 0.62,
-            size,
-            size,
+            Rect::new(x - size * 0.5, y - size * 0.62, size, size),
         );
     }
 }

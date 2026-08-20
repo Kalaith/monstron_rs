@@ -285,11 +285,9 @@ pub fn draw_tower_map_object(
     run: &TowerRunState,
     object: &TowerMapObject,
     sealed: bool,
-    x: f32,
-    y: f32,
-    width: f32,
-    height: f32,
+    rect: Rect,
 ) {
+    let (x, y, width, height) = (rect.x, rect.y, rect.w, rect.h);
     match object.kind {
         TowerMapObjectKind::Loot => draw_dungeon_feature(1, x, y, width, height),
         TowerMapObjectKind::SecretCache => draw_secret_discovery(
@@ -397,12 +395,10 @@ pub fn draw_dungeon_room(
     biome: DungeonBiome,
     purpose: DungeonRoomPurpose,
     variant: usize,
-    x: f32,
-    y: f32,
-    width: f32,
-    height: f32,
+    rect: Rect,
     tint: Color,
 ) {
+    let (x, y, width, height) = (rect.x, rect.y, rect.w, rect.h);
     let base_asset = match variant % 3 {
         0 => ROOM_MODULES,
         1 => BIOME_ROOM_VARIANTS,

@@ -1,4 +1,5 @@
 use super::*;
+use crate::data::{Element, MonsterRole, PassiveSkill, Temperament, TownSkill};
 
 pub(super) fn build() -> GameData {
     let balance = BalanceData {
