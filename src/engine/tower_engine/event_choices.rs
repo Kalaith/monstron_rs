@@ -1,7 +1,9 @@
 use super::interactions::apply_tower_event;
 use super::{result, with_contract_refresh, TowerResult};
 use crate::data::{GameData, TowerEventDefinition};
-use crate::state::{GameState, TowerMapObject, TowerPendingEvent, TowerRunState};
+use crate::state::{
+    GameState, TowerCompletedLandmark, TowerMapObject, TowerPendingEvent, TowerRunState,
+};
 
 pub(super) fn resolve_special_location(
     state: &mut GameState,
@@ -19,7 +21,10 @@ pub(super) fn resolve_special_location(
         run.pending_event = Some(TowerPendingEvent {
             special_location_id: location.id.clone(),
             event_ids,
+            x: object.x,
+            y: object.y,
         });
+        run.stats.landmarks_visited += 1;
         let summary = format!(
             "Discovered {}. Choose a visible approach or tap LEAVE.",
             location.name
@@ -64,6 +69,13 @@ pub fn choose_special_event(state: &mut GameState, data: &GameData, event_id: &s
         run.spend_cargo(&event.cargo_costs);
         run.pending_event = None;
         run.stats.landmarks_resolved += 1;
+        run.completed_landmarks.push(TowerCompletedLandmark {
+            special_location_id: pending.special_location_id.clone(),
+            event_id: event.id.clone(),
+            x: pending.x,
+            y: pending.y,
+            changed_room: event.creates_shelter,
+        });
     }
     let first_record = state.tower_discoveries.discover_event(event_id);
     let mut outcome = apply_tower_event(state, data, &pending.special_location_id, event_id);
@@ -154,6 +166,13 @@ pub fn leave_special_event(state: &mut GameState, data: &GameData) -> TowerResul
         .unwrap_or("the landmark");
     let summary = format!("The party leaves {location_name} undisturbed.");
     if let Some(run) = &mut state.tower_run {
+        run.completed_landmarks.push(TowerCompletedLandmark {
+            special_location_id: pending.special_location_id.clone(),
+            event_id: "left_undisturbed".to_owned(),
+            x: pending.x,
+            y: pending.y,
+            changed_room: false,
+        });
         run.add_event(summary.clone());
     }
     result(summary)

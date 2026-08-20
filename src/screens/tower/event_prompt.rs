@@ -2,6 +2,7 @@ use macroquad::prelude::*;
 use macroquad_toolkit::ui::draw_ui_text_ex;
 
 use super::TowerAction;
+use crate::assets;
 use crate::data::{GameData, TowerEventDefinition};
 use crate::engine::tower_engine;
 use crate::state::{GameState, TowerRunState};
@@ -54,11 +55,34 @@ pub(super) fn draw(state: &GameState, data: &GameData, run: &TowerRunState) {
             "The party has found something the expedition journal cannot identify.",
             |entry| entry.description.as_str(),
         ),
-        panel.x + 34.0,
-        panel.y + 82.0,
-        82,
+        panel.x + 146.0,
+        panel.y + 124.0,
+        54,
         ui::TEXT_DIM,
     );
+    if let Some(location) = location {
+        assets::draw_special_location(location.visual, panel.x + 34.0, panel.y + 88.0, 94.0, 94.0);
+        draw_ui_text_ex(
+            "EVENT SITE",
+            panel.x + 150.0,
+            panel.y + 98.0,
+            TextParams {
+                font_size: 13,
+                color: ui::ACCENT,
+                ..Default::default()
+            },
+        );
+        draw_ui_text_ex(
+            &format!("VISIT {}", run.stats.landmarks_visited),
+            panel.x + 150.0,
+            panel.y + 154.0,
+            TextParams {
+                font_size: 15,
+                color: super::gold_bright(),
+                ..Default::default()
+            },
+        );
+    }
 
     for (index, event_id) in pending.event_ids.iter().take(2).enumerate() {
         draw_choice(

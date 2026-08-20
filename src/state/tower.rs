@@ -41,6 +41,8 @@ pub struct TowerRunState {
     #[serde(default)]
     pub pending_event: Option<TowerPendingEvent>,
     #[serde(default)]
+    pub completed_landmarks: Vec<TowerCompletedLandmark>,
+    #[serde(default)]
     pub contract_id: String,
     #[serde(default)]
     pub contract_complete: bool,
@@ -143,6 +145,8 @@ pub struct TowerMapState {
     pub rooms: Vec<TowerRoom>,
     #[serde(default)]
     pub room_kinds: Vec<TowerRoomKind>,
+    #[serde(default)]
+    pub room_art_variants: Vec<u8>,
     pub objects: Vec<TowerMapObject>,
 }
 
@@ -177,11 +181,27 @@ pub struct TowerFoundEgg {
 pub struct TowerPendingEvent {
     pub special_location_id: String,
     pub event_ids: Vec<String>,
+    #[serde(default)]
+    pub x: u32,
+    #[serde(default)]
+    pub y: u32,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TowerCompletedLandmark {
+    pub special_location_id: String,
+    pub event_id: String,
+    pub x: u32,
+    pub y: u32,
+    #[serde(default)]
+    pub changed_room: bool,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct TowerRunStats {
     pub floors_descended: u32,
+    #[serde(default)]
+    pub landmarks_visited: u32,
     pub landmarks_resolved: u32,
     pub hazards_countered: u32,
 }
@@ -202,6 +222,7 @@ impl TowerRunState {
             found_eggs: Vec::new(),
             event_log: vec![format!("Entered floor {current_floor} on a {goal} run.")],
             pending_event: None,
+            completed_landmarks: Vec::new(),
             contract_id: goal.contract_id().to_owned(),
             contract_complete: false,
             stats: TowerRunStats::default(),
@@ -401,6 +422,7 @@ impl TowerMapState {
             visibility: Vec::new(),
             rooms: Vec::new(),
             room_kinds: Vec::new(),
+            room_art_variants: Vec::new(),
             objects: Vec::new(),
         }
     }
@@ -419,6 +441,7 @@ impl TowerMapState {
             visibility: vec![TowerTileVisibility::Hidden; (width * height) as usize],
             rooms: Vec::new(),
             room_kinds: Vec::new(),
+            room_art_variants: Vec::new(),
             objects: Vec::new(),
         }
     }
@@ -462,6 +485,25 @@ impl TowerMapState {
         self.room_kinds
             .resize(self.rooms.len(), TowerRoomKind::Unknown);
         true
+    }
+
+    pub fn ensure_room_art_variants(&mut self) -> bool {
+        if self.room_art_variants.len() == self.rooms.len() {
+            return false;
+        }
+        self.room_art_variants.resize(self.rooms.len(), 0);
+        true
+    }
+
+    pub fn room_art_variant(&self, index: usize) -> usize {
+        self.room_art_variants.get(index).copied().unwrap_or(0) as usize
+    }
+
+    pub fn set_room_art_variant(&mut self, index: usize, variant: u8) {
+        self.ensure_room_art_variants();
+        if let Some(slot) = self.room_art_variants.get_mut(index) {
+            *slot = variant % 3;
+        }
     }
 
     pub fn room_kind(&self, index: usize) -> TowerRoomKind {

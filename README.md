@@ -42,8 +42,9 @@ Playable camp and tower loop with monsters, hatching, breeding, jobs, goal-drive
 
 The ten-floor tower currently includes:
 
-- 72 authored dungeon enemies across 11 active combat behaviors, six visual families, roaming hunters, and two floor guardians.
-- 18 special locations with 36 persistent, touch-first event approaches, including party requirements, cargo costs, map effects, blessings, ambushes, and shelter-building outcomes.
+- 80 authored dungeon enemies across 11 active combat behaviors, six visual families, roaming hunters, and two floor guardians.
+- 22 special locations with 44 persistent, touch-first event approaches, including party requirements, cargo costs, map effects, blessings, ambushes, and shelter-building outcomes.
+- Deterministic room-art variants keep each generated chamber's visual identity stable through save/load, while completed landmarks leave an authored event trail on the map.
 - Six hazards, six anomalies, six expedition contracts, persistent room purposes, and goal-aware automated routing.
 - Concealed floor caches that use the secret-discovery atlas and can be exposed by SURVEY, loot-finder passives, or map-reading landmark events. Salvage runs hide two caches per floor.
 - A persistent Field Guide that records enemies, hazards, landmarks, and tried approaches; knowledge ranks improve future survey kits and reveal known hunter tracks in explored rooms.

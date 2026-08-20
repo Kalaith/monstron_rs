@@ -40,7 +40,8 @@ pub(super) fn draw_map_world(state: &GameState, data: &GameData, run: &TowerRunS
         draw_rooms(map, transform);
     }
     draw_route_target(map, transform, run.route_target);
-    draw_objects(state, data, map, transform, run.boss_defeated);
+    draw_objects(state, data, run, transform);
+    draw_completed_landmarks(data, run, transform);
     draw_party(state, map, transform);
     draw_world_fog(map);
 }
@@ -275,7 +276,16 @@ fn draw_rooms(map: &TowerMapState, transform: WorldTransform) {
             TowerTileVisibility::Explored => color(120, 133, 119, 220),
             TowerTileVisibility::Hidden => color(132, 143, 118, 225),
         };
-        assets::draw_dungeon_room(biome, purpose, rect.x, rect.y, rect.w, rect.h, tint);
+        assets::draw_dungeon_room(
+            biome,
+            purpose,
+            map.room_art_variant(index),
+            rect.x,
+            rect.y,
+            rect.w,
+            rect.h,
+            tint,
+        );
         if visibility == TowerTileVisibility::Hidden {
             draw_rectangle(rect.x, rect.y, rect.w, rect.h, color(3, 12, 14, 30));
             draw_room_mist(rect, index);
@@ -392,10 +402,10 @@ fn object_in_room(map: &TowerMapState, room: TowerRoom) -> Option<&TowerMapObjec
 fn draw_objects(
     state: &GameState,
     data: &GameData,
-    map: &TowerMapState,
+    run: &TowerRunState,
     transform: WorldTransform,
-    boss_defeated: bool,
 ) {
+    let map = &run.map;
     for object in &map.objects {
         if object.kind == TowerMapObjectKind::SecretCache && !object.revealed {
             continue;
@@ -417,98 +427,55 @@ fn draw_objects(
             _ => 58.0,
         };
         draw_object_glow(x, y, size, object.kind);
-        match object.kind {
-            TowerMapObjectKind::Loot => {
-                assets::draw_dungeon_feature(1, x - size * 0.5, y - size * 0.55, size, size)
-            }
-            TowerMapObjectKind::SecretCache => assets::draw_secret_discovery(
-                (map.seed as usize + object.x as usize + object.y as usize) % 6,
-                x - size * 0.5,
-                y - size * 0.55,
-                size,
-                size,
-            ),
-            TowerMapObjectKind::Egg => assets::draw_egg_badge(
-                &object.egg_type_id,
-                x - size * 0.42,
-                y - size * 0.5,
-                size * 0.84,
-            ),
-            TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => {
-                if let Some(enemy) = data.enemy(&object.enemy_id) {
-                    if object.wandering {
-                        assets::draw_wandering_enemy_visual(
-                            enemy.visual,
-                            x - size * 0.5,
-                            y - size * 0.62,
-                            size,
-                            size,
-                        );
-                    } else {
-                        assets::draw_dungeon_enemy_visual(
-                            enemy.visual,
-                            x - size * 0.5,
-                            y - size * 0.62,
-                            size,
-                            size,
-                        );
-                    }
-                }
-            }
-            TowerMapObjectKind::SpecialLocation => {
-                if let Some(location) = data.tower_special_location(&object.special_location_id) {
-                    assets::draw_special_location(
-                        location.visual,
-                        x - size * 0.5,
-                        y - size * 0.62,
-                        size,
-                        size,
-                    );
-                } else {
-                    assets::draw_dungeon_feature(4, x - size * 0.5, y - size * 0.6, size, size);
-                }
-            }
-            TowerMapObjectKind::Hazard => {
-                if let Some(hazard) = data.tower_hazard(&object.hazard_id) {
-                    assets::draw_tower_hazard(
-                        hazard.visual,
-                        x - size * 0.5,
-                        y - size * 0.58,
-                        size,
-                        size,
-                    );
-                }
-            }
-            TowerMapObjectKind::Stairs => assets::draw_escalation_landmark(
-                DungeonBiome::for_floor(map.floor),
-                x - size * 0.5,
-                y - size * 0.58,
-                size,
-                size,
-            ),
-            TowerMapObjectKind::Exit => {
-                let sealed_floor = data.tower_floor(map.floor).is_some_and(|floor| {
-                    floor.is_boss_floor || !floor.guardian_enemy_id.is_empty()
-                });
-                if sealed_floor && !boss_defeated {
-                    assets::draw_escalation_landmark(
-                        DungeonBiome::for_floor(map.floor),
-                        x - size * 0.5,
-                        y - size * 0.58,
-                        size,
-                        size,
-                    )
-                } else {
-                    assets::draw_escape_cue(
-                        DungeonBiome::for_floor(map.floor),
-                        x - size * 0.5,
-                        y - size * 0.58,
-                        size,
-                        size,
-                    )
-                }
-            }
+        let sealed = data
+            .tower_floor(map.floor)
+            .is_some_and(|floor| floor.is_boss_floor || !floor.guardian_enemy_id.is_empty())
+            && !run.boss_defeated;
+        assets::draw_tower_map_object(
+            data,
+            run,
+            object,
+            sealed,
+            x - size * 0.5,
+            y - size * 0.62,
+            size,
+            size,
+        );
+    }
+}
+
+fn draw_completed_landmarks(data: &GameData, run: &TowerRunState, transform: WorldTransform) {
+    for landmark in &run.completed_landmarks {
+        if !run.map.is_visible(landmark.x, landmark.y) {
+            continue;
         }
+        let Some(location) = data.tower_special_location(&landmark.special_location_id) else {
+            continue;
+        };
+        let position = map_point(&run.map, transform, landmark.x, landmark.y);
+        let size = 54.0;
+        draw_circle(position.x, position.y, size * 0.58, color(82, 196, 156, 18));
+        assets::draw_resolved_special_location(
+            location.visual,
+            position.x - size * 0.5,
+            position.y - size * 0.58,
+            size,
+            size,
+        );
+        draw_circle_lines(
+            position.x,
+            position.y,
+            size * 0.47,
+            2.0,
+            color(116, 216, 172, 160),
+        );
+        draw_text(
+            if landmark.changed_room { "✓" } else { "·" },
+            position.x - 7.0,
+            position.y + 7.0,
+            22.0,
+            color(221, 237, 185, 225),
+        );
     }
 }
 

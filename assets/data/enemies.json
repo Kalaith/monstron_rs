@@ -491,6 +491,62 @@
       "rewards": [{"resource_id": "ore", "amount": 7}, {"resource_id": "crystal", "amount": 6}]
     },
     {
+      "id": "lampglass_scavenger", "name": "Lampglass Scavenger",
+      "description": "A long-limbed thief snatches glowing shards and retreats behind the nearest denizen.",
+      "min_floor": 2, "max_floor": 4, "max_hp": 18, "attack": 7, "defense": 2, "speed": 10,
+      "xp_reward": 10, "behavior": "Harrier", "visual": "Wisp", "pack_size": 2,
+      "rewards": [{"resource_id": "crystal", "amount": 2}, {"resource_id": "coins", "amount": 4}]
+    },
+    {
+      "id": "rootbound_cantor", "name": "Rootbound Cantor",
+      "description": "Its low hymn knots enemy roots together and makes every wound feel remembered.",
+      "min_floor": 3, "max_floor": 6, "max_hp": 26, "attack": 8, "defense": 4, "speed": 6,
+      "xp_reward": 14, "behavior": "Hexer", "visual": "Rooted", "pack_size": 1,
+      "rewards": [{"resource_id": "herbs", "amount": 4}, {"resource_id": "wood", "amount": 3}]
+    },
+    {
+      "id": "cinder_burrower", "name": "Cinder Burrower",
+      "description": "A hot-backed tunneler vanishes under ash before bursting through an exposed flank.",
+      "min_floor": 4, "max_floor": 7, "max_hp": 24, "attack": 11, "defense": 3, "speed": 8,
+      "xp_reward": 16, "behavior": "Ambusher", "visual": "Crawler", "pack_size": 1,
+      "rewards": [{"resource_id": "ore", "amount": 4}, {"resource_id": "coins", "amount": 5}]
+    },
+    {
+      "id": "runoff_widow", "name": "Runoff Widow",
+      "description": "A many-eyed swimmer knits its crystal shell back together in the quiet between attacks.",
+      "min_floor": 5, "max_floor": 8, "max_hp": 36, "attack": 10, "defense": 5, "speed": 6,
+      "xp_reward": 20, "behavior": "Regenerator", "visual": "Aquatic", "pack_size": 1,
+      "rewards": [{"resource_id": "crystal", "amount": 5}, {"resource_id": "herbs", "amount": 3}]
+    },
+    {
+      "id": "rime_sentinel", "name": "Rime Sentinel",
+      "description": "A frost-plated keeper angles its body between the party and the weakest crown denizen.",
+      "min_floor": 6, "max_floor": 9, "max_hp": 40, "attack": 9, "defense": 9, "speed": 3,
+      "xp_reward": 23, "behavior": "Bulwark", "visual": "Armored", "pack_size": 2,
+      "rewards": [{"resource_id": "crystal", "amount": 5}, {"resource_id": "ore", "amount": 4}]
+    },
+    {
+      "id": "orchard_mimic", "name": "Orchard Mimic",
+      "description": "Three fruit-bright mouths share one vine body and multiply each time a guard falls.",
+      "min_floor": 7, "max_floor": 10, "max_hp": 34, "attack": 10, "defense": 5, "speed": 7,
+      "xp_reward": 24, "behavior": "Swarm", "visual": "Rooted", "pack_size": 3,
+      "rewards": [{"resource_id": "herbs", "amount": 6}, {"resource_id": "wood", "amount": 4}]
+    },
+    {
+      "id": "belfry_harrier", "name": "Belfry Harrier",
+      "description": "A bell-winged hunter turns every ringing step into another dive from the rafters.",
+      "min_floor": 8, "max_floor": 10, "max_hp": 32, "attack": 14, "defense": 4, "speed": 11,
+      "xp_reward": 27, "behavior": "Harrier", "visual": "Winged", "pack_size": 2,
+      "rewards": [{"resource_id": "crystal", "amount": 6}, {"resource_id": "coins", "amount": 8}]
+    },
+    {
+      "id": "crown_reliquary", "name": "Crown Reliquary",
+      "description": "A walking reliquary locks its plated doors around the final floor's wounded guardians.",
+      "min_floor": 9, "max_floor": 10, "max_hp": 48, "attack": 11, "defense": 10, "speed": 3,
+      "xp_reward": 31, "behavior": "Warden", "visual": "Armored", "pack_size": 2,
+      "rewards": [{"resource_id": "ore", "amount": 8}, {"resource_id": "crystal", "amount": 5}]
+    },
+    {
       "id": "mirror_matriarch", "name": "Mirror Matriarch",
       "description": "The first runoff guardian, grown around a flawless crystal shell and a choir of reflected claws.",
       "min_floor": 5, "max_floor": 5, "is_boss": true,

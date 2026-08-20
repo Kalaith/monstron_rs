@@ -173,59 +173,16 @@ fn draw_context_art(
     w: f32,
     h: f32,
 ) {
-    match object.kind {
-        TowerMapObjectKind::Loot => assets::draw_dungeon_feature(1, x, y, w, h),
-        TowerMapObjectKind::SecretCache => assets::draw_secret_discovery(
-            (run.map.seed as usize + object.x as usize + object.y as usize) % 6,
-            x,
-            y,
-            w,
-            h,
-        ),
-        TowerMapObjectKind::Egg => assets::draw_egg_badge(&object.egg_type_id, x + 18.0, y, h),
-        TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => {
-            if let Some(enemy) = data.enemy(&object.enemy_id) {
-                if object.wandering {
-                    assets::draw_wandering_enemy_visual(enemy.visual, x, y, w, h);
-                } else {
-                    assets::draw_dungeon_enemy_visual(enemy.visual, x, y, w, h);
-                }
-            }
-        }
-        TowerMapObjectKind::SpecialLocation => {
-            if let Some(location) = data.tower_special_location(&object.special_location_id) {
-                assets::draw_special_location(location.visual, x, y, w, h);
-            }
-        }
-        TowerMapObjectKind::Hazard => {
-            if let Some(hazard) = data.tower_hazard(&object.hazard_id) {
-                assets::draw_tower_hazard(hazard.visual, x, y, w, h);
-            }
-        }
-        TowerMapObjectKind::Stairs => assets::draw_escalation_landmark(
-            assets::DungeonBiome::for_floor(run.current_floor),
-            x,
-            y,
-            w,
-            h,
-        ),
-        TowerMapObjectKind::Exit if boss_gate_is_sealed(data, run) => {
-            assets::draw_escalation_landmark(
-                assets::DungeonBiome::for_floor(run.current_floor),
-                x,
-                y,
-                w,
-                h,
-            )
-        }
-        TowerMapObjectKind::Exit => assets::draw_escape_cue(
-            assets::DungeonBiome::for_floor(run.current_floor),
-            x,
-            y,
-            w,
-            h,
-        ),
-    }
+    assets::draw_tower_map_object(
+        data,
+        run,
+        object,
+        boss_gate_is_sealed(data, run),
+        x,
+        y,
+        w,
+        h,
+    );
 }
 
 fn boss_gate_is_sealed(data: &GameData, run: &TowerRunState) -> bool {

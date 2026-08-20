@@ -3,7 +3,8 @@ use std::collections::HashMap;
 
 use macroquad::prelude::*;
 
-use crate::data::{DungeonEnemyVisual, TowerHazardVisual, TowerLocationVisual};
+use crate::data::{DungeonEnemyVisual, GameData, TowerHazardVisual, TowerLocationVisual};
+use crate::state::{TowerMapObject, TowerMapObjectKind, TowerRunState};
 
 const MONSTERS: &str = "monsters";
 const EGGS: &str = "eggs";
@@ -15,6 +16,8 @@ const VFX: &str = "vfx";
 const DUNGEON_FEATURES: &str = "dungeon_features";
 const DUNGEON_ENEMIES: &str = "dungeon_enemies";
 const ROOM_MODULES: &str = "room_modules";
+const BIOME_ROOM_VARIANTS: &str = "biome_room_variants";
+const EXPEDITION_ROOM_VARIANTS: &str = "expedition_room_variants";
 const PARTY_PORTRAITS: &str = "party_portraits";
 const PURPOSE_ROOMS: &str = "purpose_rooms";
 const MOSS_GATE_WORLD: &str = "moss_gate_world";
@@ -231,15 +234,124 @@ fn enemy_visual_index(visual: DungeonEnemyVisual) -> usize {
 }
 
 pub fn draw_special_location(visual: TowerLocationVisual, x: f32, y: f32, width: f32, height: f32) {
-    let index = match visual {
+    draw_special_location_tinted(visual, x, y, width, height, WHITE);
+}
+
+pub fn draw_resolved_special_location(
+    visual: TowerLocationVisual,
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+) {
+    draw_special_location_tinted(
+        visual,
+        x,
+        y,
+        width,
+        height,
+        Color::new(0.42, 0.60, 0.55, 0.62),
+    );
+}
+
+fn draw_special_location_tinted(
+    visual: TowerLocationVisual,
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+    tint: Color,
+) {
+    let index = special_location_index(visual);
+    draw_atlas_tinted(SPECIAL_LOCATIONS, 3, 2, index, x, y, width, height, tint);
+}
+
+fn special_location_index(visual: TowerLocationVisual) -> usize {
+    match visual {
         TowerLocationVisual::Shrine => 0,
         TowerLocationVisual::RecoverySpring => 1,
         TowerLocationVisual::AncientMachinery => 2,
         TowerLocationVisual::RelicArchive => 3,
         TowerLocationVisual::SecretClue => 4,
         TowerLocationVisual::Hazard => 5,
-    };
-    draw_atlas(SPECIAL_LOCATIONS, 3, 2, index, x, y, width, height);
+    }
+}
+
+/// Resolves every actionable map object to the same authored art used by both
+/// the world map and the context drawer. Keeping this binding here prevents a
+/// map icon and its inspection card from silently choosing different assets.
+pub fn draw_tower_map_object(
+    data: &GameData,
+    run: &TowerRunState,
+    object: &TowerMapObject,
+    sealed: bool,
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+) {
+    match object.kind {
+        TowerMapObjectKind::Loot => draw_dungeon_feature(1, x, y, width, height),
+        TowerMapObjectKind::SecretCache => draw_secret_discovery(
+            (run.map.seed as usize + object.x as usize + object.y as usize) % 6,
+            x,
+            y,
+            width,
+            height,
+        ),
+        TowerMapObjectKind::Egg => draw_egg_badge(
+            &object.egg_type_id,
+            x + width * 0.08,
+            y,
+            height.min(width * 0.84),
+        ),
+        TowerMapObjectKind::Enemy | TowerMapObjectKind::Boss => {
+            if let Some(enemy) = data.enemy(&object.enemy_id) {
+                if object.wandering {
+                    draw_wandering_enemy_visual(enemy.visual, x, y, width, height);
+                } else {
+                    draw_dungeon_enemy_visual(enemy.visual, x, y, width, height);
+                }
+            } else {
+                draw_dungeon_enemy(0, x, y, width, height);
+            }
+        }
+        TowerMapObjectKind::SpecialLocation => {
+            if let Some(location) = data.tower_special_location(&object.special_location_id) {
+                draw_special_location(location.visual, x, y, width, height);
+            } else {
+                draw_dungeon_feature(4, x, y, width, height);
+            }
+        }
+        TowerMapObjectKind::Hazard => {
+            if let Some(hazard) = data.tower_hazard(&object.hazard_id) {
+                draw_tower_hazard(hazard.visual, x, y, width, height);
+            } else {
+                draw_dungeon_feature(4, x, y, width, height);
+            }
+        }
+        TowerMapObjectKind::Stairs => draw_escalation_landmark(
+            DungeonBiome::for_floor(run.current_floor),
+            x,
+            y,
+            width,
+            height,
+        ),
+        TowerMapObjectKind::Exit if sealed => draw_escalation_landmark(
+            DungeonBiome::for_floor(run.current_floor),
+            x,
+            y,
+            width,
+            height,
+        ),
+        TowerMapObjectKind::Exit => draw_escape_cue(
+            DungeonBiome::for_floor(run.current_floor),
+            x,
+            y,
+            width,
+            height,
+        ),
+    }
 }
 
 pub fn draw_tower_hazard(visual: TowerHazardVisual, x: f32, y: f32, width: f32, height: f32) {
@@ -284,51 +396,40 @@ pub fn draw_secret_discovery(index: usize, x: f32, y: f32, width: f32, height: f
 pub fn draw_dungeon_room(
     biome: DungeonBiome,
     purpose: DungeonRoomPurpose,
+    variant: usize,
     x: f32,
     y: f32,
     width: f32,
     height: f32,
     tint: Color,
 ) {
-    // Moss Gate uses the purpose atlas because its rooms closely mirror the
-    // nest, cache, encounter, stair and shrine compositions in the mockup.
-    // Deeper floors retain those silhouettes beneath their biome colourway.
-    if biome == DungeonBiome::Moss {
-        draw_atlas_tinted(
-            PURPOSE_ROOMS,
-            3,
-            2,
-            purpose.atlas_index(),
-            x,
-            y,
-            width,
-            height,
-            tint,
-        );
-    } else {
-        draw_atlas_tinted(
-            ROOM_MODULES,
-            3,
-            2,
-            biome.atlas_index(),
-            x,
-            y,
-            width,
-            height,
-            tint,
-        );
-        draw_atlas_tinted(
-            PURPOSE_ROOMS,
-            3,
-            2,
-            purpose.atlas_index(),
-            x,
-            y,
-            width,
-            height,
-            Color::new(tint.r, tint.g, tint.b, tint.a * 0.22),
-        );
-    }
+    let base_asset = match variant % 3 {
+        0 => ROOM_MODULES,
+        1 => BIOME_ROOM_VARIANTS,
+        _ => EXPEDITION_ROOM_VARIANTS,
+    };
+    draw_atlas_tinted(
+        base_asset,
+        3,
+        2,
+        biome.atlas_index(),
+        x,
+        y,
+        width,
+        height,
+        tint,
+    );
+    draw_atlas_tinted(
+        PURPOSE_ROOMS,
+        3,
+        2,
+        purpose.atlas_index(),
+        x,
+        y,
+        width,
+        height,
+        Color::new(tint.r, tint.g, tint.b, tint.a * 0.25),
+    );
 }
 
 pub fn draw_moss_gate_world(x: f32, y: f32, width: f32, height: f32) {
@@ -442,6 +543,12 @@ fn asset_bytes(asset: &str) -> &'static [u8] {
         }
         ROOM_MODULES => include_bytes!(
             "../../assets/generated/dungeon/dungeon_biome_room_module_v2_atlas_v1.png"
+        ),
+        BIOME_ROOM_VARIANTS => {
+            include_bytes!("../../assets/generated/dungeon/dungeon_biome_room_atlas_v1.png")
+        }
+        EXPEDITION_ROOM_VARIANTS => include_bytes!(
+            "../../assets/generated/dungeon/dungeon_room_module_expedition_space_v2_atlas_v1.png"
         ),
         PARTY_PORTRAITS => include_bytes!(
             "../../assets/generated/monster_art/monster_party_context_portrait_v3_atlas_v1.png"

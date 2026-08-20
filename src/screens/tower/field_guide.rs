@@ -52,9 +52,11 @@ pub(super) fn draw(state: &GameState, data: &GameData, requested_page: usize) {
     let page = requested_page.min(page_count - 1);
     draw_ui_text_ex(
         &format!(
-            "Discovered {} / {} records     {}     Page {} / {}",
+            "Discovered {} / {} records  ·  Event approaches {}/{}     {}     Page {} / {}",
             entries.len(),
             data.enemies.len() + data.tower_special_locations.len() + data.tower_hazards.len(),
+            state.tower_discoveries.event_ids.len(),
+            data.tower_events.len(),
             preparation_label(state),
             page + 1,
             page_count

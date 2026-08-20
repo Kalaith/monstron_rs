@@ -66,10 +66,18 @@ pub(super) fn generate_map(
     map.player_y = start_y;
 
     map.ensure_room_kinds();
+    seed_room_art_variants(&mut map, &mut rng);
     map.set_room_kind(0, crate::state::TowerRoomKind::Camp);
     add_map_objects(&mut map, state, data, floor_number, goal, &mut rng);
     reveal_current_area(&mut map);
     map
+}
+
+fn seed_room_art_variants(map: &mut TowerMapState, rng: &mut TowerMapRng) {
+    map.ensure_room_art_variants();
+    for index in 0..map.rooms.len() {
+        map.set_room_art_variant(index, (rng.next_u32() % 3) as u8);
+    }
 }
 
 fn room_target(floor: u32, goal: TowerRunGoal) -> u32 {

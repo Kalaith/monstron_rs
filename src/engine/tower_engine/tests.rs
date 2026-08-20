@@ -159,6 +159,8 @@ fn landmark_cost_is_atomic_and_keeps_the_decision_open_when_unaffordable() {
     run.pending_event = Some(TowerPendingEvent {
         special_location_id: "cinder_engine".to_owned(),
         event_ids: vec!["engine_salvage".to_owned(), "engine_backdraft".to_owned()],
+        x: 0,
+        y: 0,
     });
 
     assert!(!event_choice_available(&state, &data, "engine_salvage"));
@@ -187,6 +189,8 @@ fn landmark_party_requirement_keeps_cost_and_decision_intact() {
     run.pending_event = Some(TowerPendingEvent {
         special_location_id: "lantern_well".to_owned(),
         event_ids: vec!["restorative_draught".to_owned()],
+        x: 0,
+        y: 0,
     });
 
     assert!(!event_choice_available(
@@ -262,6 +266,8 @@ fn landmark_ambush_waits_for_the_players_visible_choice() {
             "keepers_blessing".to_owned(),
             "moss_mite_offering".to_owned(),
         ],
+        x: 0,
+        y: 0,
     });
 
     let result = choose_special_event(&mut state, &data, "moss_mite_offering");
@@ -281,6 +287,8 @@ fn party_can_leave_a_landmark_without_triggering_an_outcome() {
     state.tower_run.as_mut().unwrap().pending_event = Some(TowerPendingEvent {
         special_location_id: "mossbound_shrine".to_owned(),
         event_ids: vec!["keepers_blessing".to_owned()],
+        x: 0,
+        y: 0,
     });
 
     let result = leave_special_event(&mut state, &data);
@@ -298,6 +306,8 @@ fn landmark_events_can_grant_eggs_and_refresh_camp() {
     state.tower_run.as_mut().unwrap().pending_event = Some(TowerPendingEvent {
         special_location_id: "echo_nursery".to_owned(),
         event_ids: vec!["cradle_resonance".to_owned()],
+        x: 0,
+        y: 0,
     });
 
     choose_special_event(&mut state, &data, "cradle_resonance");
@@ -310,6 +320,8 @@ fn landmark_events_can_grant_eggs_and_refresh_camp() {
     state.tower_run.as_mut().unwrap().pending_event = Some(TowerPendingEvent {
         special_location_id: "waykeeper_camp".to_owned(),
         event_ids: vec!["rekindle_camp".to_owned()],
+        x: 0,
+        y: 0,
     });
     choose_special_event(&mut state, &data, "rekindle_camp");
     assert_eq!(state.tower_run.as_ref().unwrap().camp_cooldown, 0);
@@ -326,6 +338,8 @@ fn charting_event_reveals_every_passable_route() {
     state.tower_run.as_mut().unwrap().pending_event = Some(TowerPendingEvent {
         special_location_id: "moonwell_chartroom".to_owned(),
         event_ids: vec!["moonwell_chart".to_owned()],
+        x: 0,
+        y: 0,
     });
 
     choose_special_event(&mut state, &data, "moonwell_chart");

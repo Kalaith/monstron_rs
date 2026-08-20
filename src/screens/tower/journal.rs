@@ -66,11 +66,24 @@ pub(super) fn draw(data: &GameData, run: &TowerRunState) {
             },
         );
     }
+    draw_ui_text_ex(
+        &format!(
+            "Landmarks visited {}  ·  resolved {}",
+            run.stats.landmarks_visited, run.stats.landmarks_resolved
+        ),
+        panel.x + 16.0,
+        panel.y + 88.0,
+        TextParams {
+            font_size: 11,
+            color: ui::TEXT_DIM,
+            ..Default::default()
+        },
+    );
     for (index, message) in run.event_log.iter().rev().take(2).enumerate() {
         draw_ui_text_ex(
             &format!("• {}", message),
             panel.x + 16.0,
-            panel.y + 88.0 + index as f32 * 22.0,
+            panel.y + 105.0 + index as f32 * 22.0,
             TextParams {
                 font_size: 12,
                 color: ui::TEXT_DIM,

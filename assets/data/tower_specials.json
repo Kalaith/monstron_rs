@@ -161,6 +161,42 @@
       "max_floor": 10,
       "visual": "Shrine",
       "event_ids": ["open_waystation_reserve", "wake_waystation_ward"]
+    },
+    {
+      "id": "mycelial_apothecary",
+      "name": "Mycelial Apothecary",
+      "description": "A warm shelf of living bottles filters poison from the tower's damp breath.",
+      "min_floor": 1,
+      "max_floor": 4,
+      "visual": "RecoverySpring",
+      "event_ids": ["distill_spore_tonic", "wake_apothecary"]
+    },
+    {
+      "id": "emberglass_switchyard",
+      "name": "Emberglass Switchyard",
+      "description": "Brass routes cross beneath a glass furnace where the lift once changed floors.",
+      "min_floor": 4,
+      "max_floor": 7,
+      "visual": "AncientMachinery",
+      "event_ids": ["route_switchyard", "overload_switchyard"]
+    },
+    {
+      "id": "drowned_nestworks",
+      "name": "Drowned Nestworks",
+      "description": "Suspended cages sway over black water, each tagged with a nest that never hatched.",
+      "min_floor": 6,
+      "max_floor": 9,
+      "visual": "RelicArchive",
+      "event_ids": ["free_nestworks", "flood_nestworks"]
+    },
+    {
+      "id": "crown_seed_vault",
+      "name": "Crown Seed Vault",
+      "description": "A sealed seed chamber listens for the element that first woke the living crown.",
+      "min_floor": 9,
+      "max_floor": 10,
+      "visual": "Shrine",
+      "event_ids": ["claim_seed_vault", "ring_seed_vault"]
     }
   ],
   "events": [
@@ -454,6 +490,81 @@
       "repel_wanderers": true,
       "pressure_delta": -3,
       "blessing": "Wardstone"
+    },
+    {
+      "id": "distill_spore_tonic",
+      "name": "Distill Spore Tonic",
+      "narrative": "The apothecary separates medicine from the bitter cloud and seals it in travel vials.",
+      "cargo_costs": [{ "resource_id": "herbs", "amount": 2 }],
+      "required_passive": "Resists poison",
+      "rewards": [{ "resource_id": "herbs", "amount": 4 }],
+      "pressure_delta": -2,
+      "party_healing": 6,
+      "creates_shelter": true
+    },
+    {
+      "id": "wake_apothecary",
+      "name": "Wake the Bottle-Keeper",
+      "narrative": "A cork pops in the dark; the bottle-keeper climbs out with a nest of spores behind it.",
+      "enemy_id": "spore_bailiff",
+      "rewards": [{ "resource_id": "herbs", "amount": 3 }],
+      "pressure_delta": 1
+    },
+    {
+      "id": "route_switchyard",
+      "name": "Route the Switchyard",
+      "narrative": "A fire-tuned hand moves the brass points until a safe line burns through the floor plan.",
+      "cargo_costs": [{ "resource_id": "ore", "amount": 2 }],
+      "required_element": "Fire",
+      "survey_charges": 2,
+      "reveal_map": true,
+      "pressure_delta": -1,
+      "blessing": "QuietSteps"
+    },
+    {
+      "id": "overload_switchyard",
+      "name": "Overload the Switchyard",
+      "narrative": "The party forces every route open at once and wakes the furnace chorus beneath the glass.",
+      "enemy_id": "boiler_chorus",
+      "rewards": [{ "resource_id": "ore", "amount": 4 }],
+      "pressure_delta": 3
+    },
+    {
+      "id": "free_nestworks",
+      "name": "Free the Nestworks",
+      "narrative": "Water slips through the oldest lock, and one surviving egg rolls into the party's hands.",
+      "cargo_costs": [{ "resource_id": "crystal", "amount": 2 }],
+      "required_element": "Water",
+      "egg_type_id": "sunken_egg",
+      "reveal_secrets": 1,
+      "blessing": "CacheSense"
+    },
+    {
+      "id": "flood_nestworks",
+      "name": "Open the Floodgates",
+      "narrative": "The cages fall into the water together, and a drowned keeper rebuilds itself below them.",
+      "enemy_id": "canal_revenant",
+      "rewards": [{ "resource_id": "crystal", "amount": 5 }],
+      "pressure_delta": 2
+    },
+    {
+      "id": "claim_seed_vault",
+      "name": "Claim the Crown Seed",
+      "narrative": "An earth-bound touch breaks the vault's seal around a seed that remembers the first root.",
+      "cargo_costs": [{ "resource_id": "crystal", "amount": 3 }],
+      "required_element": "Earth",
+      "egg_type_id": "boss_egg",
+      "rewards": [{ "resource_id": "crystal", "amount": 3 }],
+      "pressure_delta": 2,
+      "blessing": "Wardstone"
+    },
+    {
+      "id": "ring_seed_vault",
+      "name": "Ring the Seed Vault",
+      "narrative": "The vault answers with a procession of crown ushers carrying the sound toward the cap.",
+      "enemy_id": "crown_usher",
+      "rewards": [{ "resource_id": "coins", "amount": 10 }],
+      "pressure_delta": 2
     }
   ]
 }

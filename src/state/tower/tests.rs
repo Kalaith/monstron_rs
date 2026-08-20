@@ -28,3 +28,32 @@ fn field_guide_records_unlock_two_survey_preparation_ranks() {
     assert!(!discoveries.discover_event("keepers_blessing"));
     assert_eq!(discoveries.record_count(), 30);
 }
+
+#[test]
+fn room_art_variants_are_bounded_and_restore_for_legacy_maps() {
+    let mut map = TowerMapState::new(12, 8, 4, 77);
+    map.rooms.push(TowerRoom {
+        start_x: 1,
+        start_y: 1,
+        width: 5,
+        height: 4,
+    });
+    map.rooms.push(TowerRoom {
+        start_x: 7,
+        start_y: 2,
+        width: 4,
+        height: 4,
+    });
+
+    assert!(map.ensure_room_art_variants());
+    map.set_room_art_variant(0, 8);
+    map.set_room_art_variant(1, 4);
+
+    assert_eq!(map.room_art_variant(0), 2);
+    assert_eq!(map.room_art_variant(1), 1);
+    assert!(!map.ensure_room_art_variants());
+
+    map.room_art_variants.clear();
+    assert!(map.ensure_room_art_variants());
+    assert_eq!(map.room_art_variant(1), 0);
+}

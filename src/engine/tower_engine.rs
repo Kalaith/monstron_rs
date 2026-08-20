@@ -100,7 +100,7 @@ pub fn start_run(state: &mut GameState, data: &GameData, goal: TowerRunGoal) -> 
         String::new()
     };
     let summary = format!(
-        "The party enters floor {}: {} under {}. Move through the map to find stairs, eggs, caches, and enemies.",
+        "The party enters floor {}: {} under {}. Move through the map to find event sites, hazards, stairs, eggs, caches, and denizens.",
         floor.floor, floor.name, anomaly_name
     );
     let summary = format!("{summary}{guide_note}");
@@ -138,10 +138,11 @@ pub fn ensure_map(state: &mut GameState, data: &GameData) {
         }
         let restored_visibility = run.map.ensure_visibility();
         let restored_room_kinds = run.map.ensure_room_kinds();
+        let restored_room_art = run.map.ensure_room_art_variants();
         if restored_visibility || !run.map.is_visible(run.map.player_x, run.map.player_y) {
             reveal_current_area(&mut run.map);
         }
-        if restored_visibility || restored_room_kinds {
+        if restored_visibility || restored_room_kinds || restored_room_art {
             run.add_event("Recovered the party's map notes and room markings.".to_owned());
         }
     }

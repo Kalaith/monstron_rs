@@ -457,7 +457,7 @@ fn draw_empty_run() {
         },
     );
     draw_wrapped_line(
-        "Dungeon maps are generated each run with rooms, corridors, caches, eggs, enemies, stairs, and exits.",
+        "Dungeon maps are generated each run with rooms, landmarks, event sites, hazards, caches, eggs, enemies, stairs, and exits.",
         rect.x + 20.0,
         rect.y + 132.0,
         58,
